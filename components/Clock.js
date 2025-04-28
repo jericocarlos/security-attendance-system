@@ -20,8 +20,8 @@ export default function Clock() {
 
   return (
     <div className="text-center mb-6">
-      <h2 className="text-4xl font-bold">{dateTime.toLocaleTimeString()}</h2>
-      <p className="text-lg text-gray-600">{dateTime.toDateString()}</p>
+      <h2 className="text-9xl font-bold">{dateTime.toLocaleTimeString()}</h2>
+      <p className="text-4xl text-gray-600">{dateTime.toDateString()}</p>
     </div>
   );
 }

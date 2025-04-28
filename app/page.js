@@ -6,25 +6,9 @@ import Clock from '@/components/Clock';
 
 export default function Home() {
   const [logs, setLogs] = useState([]); // Attendance logs
-  const [latestTag, setLatestTag] = useState(null); // Latest RFID tag scanned
   const [employeeInfo, setEmployeeInfo] = useState(null); // Employee information
-  const [employeeStatus, setEmployeeStatus] = useState('Clocked Out'); // Employee status
-
-  // Function to fetch attendance logs from the API
-  const fetchLogs = async () => {
-    try {
-      const response = await fetch('/api/attendance/logs');
-      const data = await response.json();
-
-      if (response.ok) {
-        setLogs(data); // Update logs state
-      } else {
-        console.error('Error fetching logs:', data.error);
-      }
-    } catch (error) {
-      console.error('Error fetching logs:', error);
-    }
-  };
+  const [employeeStatus, setEmployeeStatus] = useState(null); // Employee status
+  const [error, setError] = useState(null); // Error message
 
   // Function to handle an RFID tag scan
   const handleTagRead = async (tag) => {
@@ -40,79 +24,119 @@ export default function Home() {
       if (response.ok) {
         setLogs((prevLogs) => [result, ...prevLogs]); // Prepend the new log to the logs
         setEmployeeInfo(result.employee); // Update employee info
+        setError(null); // Clear any previous errors
 
         // Determine the employee's current status based on the latest log type
         const status = result.logType === 'IN' ? 'Clocked In' : 'Clocked Out';
         setEmployeeStatus(status);
+      } else if (response.status === 404) {
+        // Handle case where RFID tag does not exist in the database
+        console.error('RFID tag not found:', result.error);
+        setError('RFID tag not found. Please try again with a valid tag.');
+        setEmployeeInfo(null); // Clear employee info if RFID tag is invalid
+        setEmployeeStatus(null); // Clear employee status if RFID tag is invalid
       } else {
         console.error('Error processing tag:', result.error);
+        setError(result.error || 'An unexpected error occurred.'); // Display the error message to the user
+        setEmployeeInfo(null); // Clear employee info on error
+        setEmployeeStatus(null); // Clear employee status on error
       }
     } catch (error) {
       console.error('Error sending tag to server:', error);
+      setError('An unexpected error occurred while processing the RFID tag.');
+      setEmployeeInfo(null); // Clear employee info on error
+      setEmployeeStatus(null); // Clear employee status on error
     }
-
-    setLatestTag(tag); // Update the latest scanned tag
   };
 
   // Fetch attendance logs on initial load
+  const fetchLogs = async () => {
+    try {
+      const response = await fetch('/api/attendance/logs');
+      const data = await response.json();
+
+      if (response.ok) {
+        setLogs(data.logs || []);
+      } else {
+        console.error('Error fetching logs:', data.error);
+        setError(data.error || 'Failed to fetch logs.');
+      }
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+      setError('An unexpected error occurred while fetching logs.');
+    }
+  };
+
   useEffect(() => {
     fetchLogs();
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="max-w-7xl mx-auto px-10 py-12">
       {/* Clock */}
-      <Clock />
+      <div className="mb-10 text-center">
+        <Clock />
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
         {/* Employee Info Card */}
-        <div className="bg-white shadow-lg rounded-2xl p-6 space-y-4">
+        <div className="bg-white shadow-2xl rounded-3xl p-10 space-y-6 transform transition-all duration-300 hover:scale-105">
           {employeeInfo ? (
             <>
-              <p><strong>Ashima ID:</strong> {employeeInfo.ashima_id}</p>
-              <p><strong>Name:</strong> {employeeInfo.name}</p>
-              <p><strong>Department:</strong> {employeeInfo.department}</p>
-              <p><strong>Position:</strong> {employeeInfo.position}</p>
+              <h2 className="text-2xl font-bold text-gray-800">Employee Information</h2>
+              <p className="text-lg"><strong className="text-gray-700">Ashima ID:</strong> {employeeInfo.ashima_id}</p>
+              <p className="text-lg"><strong className="text-gray-700">Name:</strong> {employeeInfo.name}</p>
+              <p className="text-lg"><strong className="text-gray-700">Department:</strong> {employeeInfo.department || 'N/A'}</p>
+              <p className="text-lg"><strong className="text-gray-700">Position:</strong> {employeeInfo.position || 'N/A'}</p>
 
-              <div className="mt-4 border-t pt-4">
-                <p className="text-xl font-semibold">Time Logs</p>
-                <p><strong>Time In:</strong> {employeeInfo.timeIn || 'N/A'}</p>
-                <p><strong>Time Out:</strong> {employeeInfo.timeOut || 'N/A'}</p>
+              <div className="mt-6 border-t border-gray-300 pt-6">
+                <h3 className="text-xl font-semibold text-gray-800">Time Logs</h3>
+                <p className="text-[30px]">
+                  <strong className="text-gray-700">Time In:</strong>{' '}
+                  <span className="font-bold text-[40px]">
+                    {employeeInfo?.timeIn ? new Date(employeeInfo.timeIn).toLocaleTimeString() : 'N/A'}
+                  </span>
+                </p>
+                {/* Conditionally render "Time Out" only if it exists and the employee has clocked out */}
+                {employeeStatus === 'Clocked Out' && employeeInfo?.timeOut && (
+                  <p className="text-[30px]">
+                    <strong className="text-gray-700">Time Out:</strong>{' '}
+                    <span className="font-bold text-[40px]">
+                      {new Date(employeeInfo.timeOut).toLocaleTimeString()}
+                    </span>
+                  </p>
+                )}
               </div>
             </>
           ) : (
-            <p className="text-gray-500 italic">Scan your RFID to view logs.</p>
+            <p className="text-gray-500 italic text-lg">Scan your RFID to view logs.</p>
           )}
+
+          {error && <p className="text-red-500 mt-4 text-lg">{error}</p>}
         </div>
 
         {/* Image & Status */}
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-60 h-60 rounded-xl overflow-hidden shadow-md">
+        <div className="flex flex-col items-center space-y-6">
+          <div className="w-96 h-96 rounded-3xl overflow-hidden shadow-lg transform transition-all duration-300 hover:scale-105">
             <img
-              src={employeeInfo?.photoUrl || '/placeholder.png'}
+              src={employeeInfo ? `/api/employees/photo?ashima_id=${employeeInfo.ashima_id}` : '/placeholder.png'}
               alt={employeeInfo?.name || 'Placeholder'}
               className="w-full h-full object-cover"
             />
           </div>
-          <div
-            className={`text-2xl font-bold ${
-              employeeStatus === 'Clocked Out'
-                ? 'text-red-600'
-                : 'text-green-600'
-            }`}
-          >
-            {employeeStatus} {/* Dynamically display the employee status */}
-          </div>
+          {employeeStatus && (
+            <div
+              className={`text-3xl font-bold ${
+                employeeStatus === 'Clocked Out'
+                  ? 'text-red-600'
+                  : 'text-green-600'
+              }`}
+            >
+              {employeeStatus} {/* Dynamically display the employee status */}
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Latest Tag */}
-      {latestTag && (
-        <div className="mt-6 bg-green-100 text-green-800 px-4 py-2 rounded-md">
-          Latest Tag Scanned: <strong>{latestTag}</strong>
-        </div>
-      )}
-
       {/* HID Listener */}
       <HIDListener onTagRead={handleTagRead} />
     </div>

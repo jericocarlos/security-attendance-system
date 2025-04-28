@@ -19,7 +19,7 @@ export async function GET(req) {
         attendance_logs.log_type,
         attendance_logs.timestamp
       FROM attendance_logs
-      JOIN employees ON attendance_logs.employee_id = employees.id
+      JOIN employees ON attendance_logs.ashima_id = ashima.id
       ORDER BY attendance_logs.timestamp DESC
       LIMIT ? OFFSET ?
     `;

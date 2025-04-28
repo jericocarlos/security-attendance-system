@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 
 export default function AttendanceLogs() {
-  const [logs, setLogs] = useState([]); // Initialize as an empty array
+  const [logs, setLogs] = useState([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [limit, setLimit] = useState(10);
@@ -15,8 +15,8 @@ export default function AttendanceLogs() {
       try {
         const response = await fetch(`/api/admin/attendance-logs?page=${page}&limit=${limit}`);
         const data = await response.json();
-        setLogs(data.data || []); // Fallback to an empty array if data.data is undefined
-        setTotal(data.total || 0); // Fallback to 0 if total is undefined
+        setLogs(data.data || []);
+        setTotal(data.total || 0);
       } catch (err) {
         console.error("Failed to fetch attendance logs:", err);
       } finally {
@@ -29,12 +29,34 @@ export default function AttendanceLogs() {
 
   const totalPages = Math.ceil(total / limit);
 
+  const handleExportCSV = async () => {
+    try {
+      const response = await fetch(`/api/admin/attendance-logs/export`);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'attendance_logs.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      console.error("Failed to export CSV:", err);
+    }
+  };
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Attendance Logs</h1>
+      <button
+        onClick={handleExportCSV}
+        className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+      >
+        Export as CSV
+      </button>
       {loading ? (
         <p>Loading...</p>
-      ) : logs.length > 0 ? ( // Check if logs has data before rendering the table
+      ) : logs.length > 0 ? (
         <div>
           <table className="min-w-full table-auto bg-white shadow-md rounded-lg">
             <thead>
@@ -49,7 +71,7 @@ export default function AttendanceLogs() {
             <tbody>
               {logs.map((log) => (
                 <tr key={log.id}>
-                  <td className="border px-4 py-2">{log.employee_id}</td>
+                  <td className="border px-4 py-2">{log.ashima_id}</td>
                   <td className="border px-4 py-2">{log.name}</td>
                   <td className="border px-4 py-2">{log.department}</td>
                   <td className="border px-4 py-2">{log.log_type}</td>

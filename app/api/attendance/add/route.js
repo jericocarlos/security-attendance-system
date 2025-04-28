@@ -12,8 +12,20 @@ export async function POST(request) {
       );
     }
 
-    // Fetch employee by RFID tag
-    const employeeQuery = 'SELECT * FROM employees WHERE rfid_tag = ?';
+    // Step 1: Fetch employee information by RFID tag
+    const employeeQuery = `
+      SELECT 
+        id AS employee_id, 
+        ashima_id, 
+        name, 
+        department, 
+        position, 
+        photo, 
+        emp_stat, 
+        status
+      FROM employees
+      WHERE rfid_tag = ?
+    `;
     const [employee] = await executeQuery({ query: employeeQuery, values: [rfid_tag] });
 
     if (!employee) {
@@ -23,31 +35,52 @@ export async function POST(request) {
       );
     }
 
-    // Check the last log type to determine IN or OUT
-    const lastLogQuery = `
-      SELECT log_type FROM attendance_logs
-      WHERE employee_id = ?
+    // Step 2: Convert photo blob to Base64 (if photo exists)
+    if (employee.photo) {
+      employee.photo = `data:image/png;base64,${Buffer.from(employee.photo).toString('base64')}`;
+    }
+
+    // Step 3: Determine the log type (IN or OUT) based on the latest log
+    const latestLogQuery = `
+      SELECT log_type
+      FROM attendance_logs
+      WHERE ashima_id = ?
       ORDER BY timestamp DESC
       LIMIT 1
     `;
-    const [lastLog] = await executeQuery({ query: lastLogQuery, values: [employee.id] });
+    const [latestLog] = await executeQuery({ query: latestLogQuery, values: [employee.ashima_id] });
+    const nextLogType = latestLog?.log_type === 'IN' ? 'OUT' : 'IN';
 
-    const logType = lastLog?.log_type === 'IN' ? 'OUT' : 'IN';
+    // Step 4: Insert the new attendance log
+    const insertLogQuery = `
+      INSERT INTO attendance_logs (ashima_id, log_type)
+      VALUES (?, ?)
+    `;
+    await executeQuery({ query: insertLogQuery, values: [employee.ashima_id, nextLogType] });
 
-    // Insert new attendance log
-    const insertLogQuery = 'INSERT INTO attendance_logs (employee_id, log_type) VALUES (?, ?)';
-    await executeQuery({ query: insertLogQuery, values: [employee.id, logType] });
+    // Step 5: Fetch the latest "Time In" and "Time Out" logs
+    const timeLogsQuery = `
+      SELECT 
+        MAX(CASE WHEN log_type = 'IN' THEN timestamp END) AS timeIn,
+        MAX(CASE WHEN log_type = 'OUT' THEN timestamp END) AS timeOut
+      FROM attendance_logs
+      WHERE ashima_id = ?
+    `;
+    const [timeLogs] = await executeQuery({ query: timeLogsQuery, values: [employee.ashima_id] });
 
+    // Step 6: Return the employee data and the updated time logs
     return NextResponse.json({
-      success: true,
-      message: `Attendance ${logType} recorded successfully!`,
-      employee,
-      logType,
+      employee: {
+        ...employee,
+        timeIn: timeLogs.timeIn,
+        timeOut: timeLogs.timeOut,
+      },
+      logType: nextLogType, // Return the current log type (IN or OUT)
     });
   } catch (error) {
-    console.error('Error adding attendance log:', error);
+    console.error('Error processing attendance log:', error);
     return NextResponse.json(
-      { error: 'Failed to add attendance log.' },
+      { error: 'Failed to process attendance log.' },
       { status: 500 }
     );
   }
