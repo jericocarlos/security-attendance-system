@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 28, 2025 at 09:30 AM
+-- Generation Time: Apr 29, 2025 at 10:31 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -29,7 +29,7 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `attendance_logs` (
   `id` int(11) NOT NULL,
-  `ashima_id` int(11) DEFAULT NULL,
+  `ashima_id` varchar(50) NOT NULL,
   `log_type` enum('IN','OUT') NOT NULL,
   `timestamp` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -39,19 +39,10 @@ CREATE TABLE `attendance_logs` (
 --
 
 INSERT INTO `attendance_logs` (`id`, `ashima_id`, `log_type`, `timestamp`) VALUES
-(53, 22, 'IN', '2025-04-28 06:58:53'),
-(54, 22, 'OUT', '2025-04-28 06:58:54'),
-(55, 22, 'IN', '2025-04-28 06:58:55'),
-(56, 22, 'OUT', '2025-04-28 06:58:57'),
-(57, 22, 'IN', '2025-04-28 06:58:58'),
-(58, 22, 'OUT', '2025-04-28 06:58:59'),
-(59, 22, 'IN', '2025-04-28 06:59:04'),
-(60, 22, 'OUT', '2025-04-28 06:59:06'),
-(61, 22, 'IN', '2025-04-28 06:59:07'),
-(62, 22, 'OUT', '2025-04-28 06:59:08'),
-(63, 22, 'IN', '2025-04-28 06:59:09'),
-(64, 22, 'OUT', '2025-04-28 07:28:38'),
-(65, 22, 'IN', '2025-04-28 07:29:35');
+(1, '22-04019', 'IN', '2025-04-29 08:14:38'),
+(2, '18-01864', 'IN', '2025-04-29 08:16:52'),
+(3, '18-01864', 'OUT', '2025-04-29 08:17:12'),
+(4, '18-01864', 'IN', '2025-04-29 08:23:47');
 
 -- --------------------------------------------------------
 
@@ -61,7 +52,7 @@ INSERT INTO `attendance_logs` (`id`, `ashima_id`, `log_type`, `timestamp`) VALUE
 
 CREATE TABLE `employees` (
   `id` int(11) NOT NULL,
-  `ashima_id` varchar(12) NOT NULL,
+  `ashima_id` varchar(50) NOT NULL,
   `name` varchar(150) DEFAULT NULL,
   `department` varchar(50) DEFAULT NULL,
   `position` varchar(42) DEFAULT NULL,
@@ -1118,14 +1109,16 @@ INSERT INTO `employees` (`id`, `ashima_id`, `name`, `department`, `position`, `r
 -- Indexes for table `attendance_logs`
 --
 ALTER TABLE `attendance_logs`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `ashima_id` (`ashima_id`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `employees`
 --
 ALTER TABLE `employees`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `ashima_id` (`ashima_id`),
+  ADD UNIQUE KEY `ashima_id_2` (`ashima_id`),
+  ADD UNIQUE KEY `ashima_id_3` (`ashima_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -1135,23 +1128,13 @@ ALTER TABLE `employees`
 -- AUTO_INCREMENT for table `attendance_logs`
 --
 ALTER TABLE `attendance_logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `employees`
 --
 ALTER TABLE `employees`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=893;
-
---
--- Constraints for dumped tables
---
-
---
--- Constraints for table `attendance_logs`
---
-ALTER TABLE `attendance_logs`
-  ADD CONSTRAINT `attendance_logs_ibfk_1` FOREIGN KEY (`ashima_id`) REFERENCES `employees` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
