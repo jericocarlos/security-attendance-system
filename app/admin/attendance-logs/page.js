@@ -15,7 +15,7 @@ export default function AttendanceLogs() {
       try {
         const response = await fetch(`/api/admin/attendance-logs?page=${page}&limit=${limit}`);
         const data = await response.json();
-        setLogs(data.data || []);
+        setLogs(data.logs || []);
         setTotal(data.total || 0);
       } catch (err) {
         console.error("Failed to fetch attendance logs:", err);
@@ -34,9 +34,9 @@ export default function AttendanceLogs() {
       const response = await fetch(`/api/admin/attendance-logs/export`);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = 'attendance_logs.csv';
+      a.download = "attendance_logs.csv";
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -50,7 +50,7 @@ export default function AttendanceLogs() {
       <h1 className="text-2xl font-bold mb-4">Attendance Logs</h1>
       <button
         onClick={handleExportCSV}
-        className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        className="mb-4 px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
       >
         Export as CSV
       </button>

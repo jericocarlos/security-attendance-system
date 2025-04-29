@@ -1,50 +1,40 @@
-import { executeQuery } from '@/lib/db';
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+import { executeQuery } from "@/lib/db";
 
-// Fetch attendance logs with employee details
-export async function GET(req) {
+// Fetch attendance logs with pagination
+export async function GET(request) {
   try {
-    const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page")) || 1; // Default to page 1
+    const limit = parseInt(searchParams.get("limit")) || 20; // Default 20 logs per page
     const offset = (page - 1) * limit;
 
-    // Query to fetch attendance logs with employee details
+    // Fetch logs with pagination and join with employees table for additional details
     const query = `
       SELECT 
-        attendance_logs.id,
-        employees.ashima_id,
-        employees.name,
-        employees.department,
-        attendance_logs.log_type,
-        attendance_logs.timestamp
-      FROM attendance_logs
-      JOIN employees ON attendance_logs.ashima_id = ashima.id
-      ORDER BY attendance_logs.timestamp DESC
+        al.id AS log_id,
+        al.ashima_id,
+        e.name AS employee_name,
+        e.department,
+        e.position,
+        al.log_type,
+        al.timestamp
+      FROM attendance_logs al
+      LEFT JOIN employees e ON al.ashima_id = e.ashima_id
+      ORDER BY al.timestamp DESC
       LIMIT ? OFFSET ?
     `;
+    const logs = await executeQuery({ query, values: [limit, offset] });
 
-    const rows = await executeQuery({
-      query,
-      values: [limit, offset],
-    });
-
-    // Query to count total attendance logs
+    // Fetch total count for pagination
     const countQuery = `SELECT COUNT(*) AS total FROM attendance_logs`;
-    const countResult = await executeQuery({
-      query: countQuery,
-    });
+    const [{ total }] = await executeQuery({ query: countQuery });
 
-    return NextResponse.json({
-      data: rows,
-      total: countResult[0]?.total || 0,
-      page,
-      limit,
-    });
-  } catch (err) {
-    console.error('Failed to fetch attendance logs:', err);
+    return NextResponse.json({ logs, total });
+  } catch (error) {
+    console.error("Error fetching attendance logs:", error);
     return NextResponse.json(
-      { message: 'Failed to fetch attendance logs' },
+      { error: "Failed to fetch attendance logs." },
       { status: 500 }
     );
   }
