@@ -16,10 +16,9 @@ CREATE TABLE employees (
 
 CREATE TABLE attendance_logs (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  ashima_id INT,
+  ashima_id VARCHAR(50) NOT NULL,
   log_type ENUM('IN', 'OUT') NOT NULL,
-  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (ashima_id) REFERENCES employees(id)
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Insert some sample employees

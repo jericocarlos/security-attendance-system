@@ -10,6 +10,21 @@ export default function Home() {
   const [employeeStatus, setEmployeeStatus] = useState(null); // Employee status
   const [error, setError] = useState(null); // Error message
 
+  // Function to fetch attendance logs
+  const fetchLogs = async () => {
+    try {
+      const response = await fetch('/api/attendance/logs');
+      if (!response.ok) {
+        throw new Error('Failed to fetch attendance logs');
+      }
+      const data = await response.json();
+      setLogs(data.logs || []);
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+      setError('Failed to load attendance logs.');
+    }
+  };
+
   // Function to handle an RFID tag scan
   const handleTagRead = async (tag) => {
     try {
@@ -49,26 +64,8 @@ export default function Home() {
     }
   };
 
-  // Fetch attendance logs on initial load
-  const fetchLogs = async () => {
-    try {
-      const response = await fetch('/api/attendance/logs');
-      const data = await response.json();
-
-      if (response.ok) {
-        setLogs(data.logs || []);
-      } else {
-        console.error('Error fetching logs:', data.error);
-        setError(data.error || 'Failed to fetch logs.');
-      }
-    } catch (error) {
-      console.error('Error fetching logs:', error);
-      setError('An unexpected error occurred while fetching logs.');
-    }
-  };
-
   useEffect(() => {
-    fetchLogs();
+    fetchLogs(); // Call fetchLogs on component mount
   }, []);
 
   return (
@@ -117,7 +114,7 @@ export default function Home() {
 
         {/* Image & Status */}
         <div className="flex flex-col items-center space-y-6">
-          <div className="w-120 h-120 rounded-3xl overflow-hidden shadow-lg transform transition-all duration-300 hover:scale-105">
+          <div className="w-110 h-110 rounded-3xl overflow-hidden shadow-lg transform transition-all duration-300 hover:scale-105">
             <img
               src={employeeInfo ? `/api/employees/photo?ashima_id=${employeeInfo.ashima_id}` : '/placeholder.png'}
               alt={employeeInfo?.name || 'Placeholder'}

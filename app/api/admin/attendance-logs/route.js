@@ -13,13 +13,13 @@ export async function GET(req) {
     const query = `
       SELECT 
         attendance_logs.id,
-        employees.ashima_id,
+        attendance_logs.ashima_id,
         employees.name,
         employees.department,
         attendance_logs.log_type,
         attendance_logs.timestamp
       FROM attendance_logs
-      JOIN employees ON attendance_logs.ashima_id = ashima.id
+      LEFT JOIN employees ON attendance_logs.ashima_id = employees.ashima_id
       ORDER BY attendance_logs.timestamp DESC
       LIMIT ? OFFSET ?
     `;
@@ -35,6 +35,7 @@ export async function GET(req) {
       query: countQuery,
     });
 
+    // Return the logs along with pagination details
     return NextResponse.json({
       data: rows,
       total: countResult[0]?.total || 0,
