@@ -9,6 +9,7 @@ CREATE TABLE employees (
   position VARCHAR(100),
   rfid_tag VARCHAR(50) UNIQUE NOT NULL,
   photo_url VARCHAR(255),
+  emp_stat varchar(50) DEFAULT NULL,
   status ENUM('active', 'inactive') DEFAULT 'active',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
