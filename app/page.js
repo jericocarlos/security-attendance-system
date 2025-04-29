@@ -114,7 +114,7 @@ export default function Home() {
 
         {/* Image & Status */}
         <div className="flex flex-col items-center space-y-6">
-          <div className="w-110 h-110 rounded-3xl overflow-hidden shadow-lg transform transition-all duration-300 hover:scale-105">
+          <div className="w-120 h-120 rounded-3xl overflow-hidden shadow-lg transform transition-all duration-300 hover:scale-105">
             <img
               src={employeeInfo ? `/api/employees/photo?ashima_id=${employeeInfo.ashima_id}` : '/placeholder.png'}
               alt={employeeInfo?.name || 'Placeholder'}
