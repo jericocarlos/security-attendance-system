@@ -7,17 +7,13 @@ export default function AttendanceLogs() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [limit, setLimit] = useState(10);
-  const [search, setSearch] = useState(""); // State for search term
-  const [filter, setFilter] = useState(""); // State for filter
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchLogs = async () => {
       setLoading(true);
       try {
-        const response = await fetch(
-          `/api/admin/attendance-logs?page=${page}&limit=${limit}&search=${search}&filter=${filter}`
-        );
+        const response = await fetch(`/api/admin/attendance-logs?page=${page}&limit=${limit}`);
         const data = await response.json();
         setLogs(data.data || []);
         setTotal(data.total || 0);
@@ -29,7 +25,7 @@ export default function AttendanceLogs() {
     };
 
     fetchLogs();
-  }, [page, limit, search, filter]); // Trigger fetch when search or filter changes
+  }, [page, limit]);
 
   const totalPages = Math.ceil(total / limit);
 
@@ -38,9 +34,9 @@ export default function AttendanceLogs() {
       const response = await fetch(`/api/admin/attendance-logs/export`);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
-      a.download = "attendance_logs.csv";
+      a.download = 'attendance_logs.csv';
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -49,47 +45,15 @@ export default function AttendanceLogs() {
     }
   };
 
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
-    setPage(1); // Reset to the first page
-  };
-
-  const handleFilterChange = (e) => {
-    setFilter(e.target.value);
-    setPage(1); // Reset to the first page
-  };
-
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Attendance Logs</h1>
-      
-      {/* Search and Filter Inputs */}
-      <div className="flex mb-4 gap-4">
-        <input
-          type="text"
-          value={search}
-          onChange={handleSearchChange}
-          placeholder="Search by ID or Name"
-          className="px-4 py-2 border rounded-md w-full"
-        />
-        <select
-          value={filter}
-          onChange={handleFilterChange}
-          className="px-4 py-2 border rounded-md"
-        >
-          <option value="">All Logs</option>
-          <option value="IN">IN Logs</option>
-          <option value="OUT">OUT Logs</option>
-        </select>
-      </div>
-
       <button
         onClick={handleExportCSV}
-        className="mb-4 px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
       >
         Export as CSV
       </button>
-
       {loading ? (
         <p>Loading...</p>
       ) : logs.length > 0 ? (
@@ -97,7 +61,7 @@ export default function AttendanceLogs() {
           <table className="min-w-full table-auto bg-white shadow-md rounded-lg">
             <thead>
               <tr>
-                <th className="px-4 py-2">Ashima ID</th>
+                <th className="px-4 py-2">Employee ID</th>
                 <th className="px-4 py-2">Name</th>
                 <th className="px-4 py-2">Department</th>
                 <th className="px-4 py-2">Log Type</th>
@@ -106,7 +70,7 @@ export default function AttendanceLogs() {
             </thead>
             <tbody>
               {logs.map((log) => (
-                <tr key={log.log_id}>
+                <tr key={log.id}>
                   <td className="border px-4 py-2">{log.ashima_id}</td>
                   <td className="border px-4 py-2">{log.name}</td>
                   <td className="border px-4 py-2">{log.department}</td>
