@@ -1,43 +1,214 @@
 "use client";
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
+import ConfirmationModal from "./_components/ConfirmationModal";
 import EmployeeForm from "./_components/EmployeeForm";
 
 
 export default function EmployeeManagement() {
-  const [showForm, setShowForm] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [employees, setEmployees] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [limit, setLimit] = useState(10);
+  const [search, setSearch] = useState("");
+  const [departmentFilter, setDepartmentFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false); // For Add/Edit modal
+  const [selectedEmployee, setSelectedEmployee] = useState(null); // Employee being edited
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState(null);
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `/api/admin/employees?page=${page}&limit=${limit}&search=${search}&department=${departmentFilter}&status=${statusFilter}`
+        );
+        const data = await response.json();
+        setEmployees(data.data || []);
+        setTotal(data.total || 0);
+      } catch (err) {
+        console.error("Failed to fetch employees:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEmployees();
+  }, [page, limit, search, departmentFilter, statusFilter]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    setPage(1); // Reset to first page
+  };
+
+  const handleFilterChange = (e, type) => {
+    if (type === "department") setDepartmentFilter(e.target.value);
+    if (type === "status") setStatusFilter(e.target.value);
+    setPage(1); // Reset to first page
+  };
 
   const handleAddEmployee = () => {
-    setSelectedEmployee(null); // Reset form for adding a new employee
+    setSelectedEmployee(null); // Reset form for adding new employee
     setShowForm(true);
   };
 
   const handleEditEmployee = (employee) => {
-    setSelectedEmployee(employee); // Load employee data into the form
+    setSelectedEmployee(employee);
     setShowForm(true);
   };
 
-  const handleSaveEmployee = (newEmployee) => {
-    // Update the employee list or refresh the data
-    console.log("Employee saved:", newEmployee);
-    setShowForm(false);
+  const handleDeleteEmployee = (employee) => {
+    setEmployeeToDelete(employee);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await fetch(`/api/admin/employees/${employeeToDelete.id}`, {
+        method: "DELETE",
+      });
+      setEmployees((prev) =>
+        prev.filter((emp) => emp.id !== employeeToDelete.id)
+      );
+      setShowDeleteModal(false);
+    } catch (err) {
+      console.error("Failed to delete employee:", err);
+    }
   };
 
   return (
     <div>
-      <button
-        onClick={handleAddEmployee}
-        className="px-4 py-2 bg-green-500 text-white rounded-md"
-      >
-        Add Employee
-      </button>
+      <h1 className="text-2xl font-bold mb-4">Employee Management</h1>
 
-      {/* Render the EmployeeForm modal when showForm is true */}
+      {/* Search and Filters */}
+      <div className="flex mb-4 gap-4">
+        <input
+          type="text"
+          value={search}
+          onChange={handleSearchChange}
+          placeholder="Search by ID or Name"
+          className="px-4 py-2 border rounded-md w-full"
+        />
+        <select
+          value={departmentFilter}
+          onChange={(e) => handleFilterChange(e, "department")}
+          className="px-4 py-2 border rounded-md"
+        >
+          <option value="">All Departments</option>
+          <option value="HR">HR</option>
+          <option value="IT">IT</option>
+          <option value="Finance">Finance</option>
+        </select>
+        <select
+          value={statusFilter}
+          onChange={(e) => handleFilterChange(e, "status")}
+          className="px-4 py-2 border rounded-md"
+        >
+          <option value="">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <button
+          onClick={handleAddEmployee}
+          className="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+        >
+          Add Employee
+        </button>
+      </div>
+
+      {/* Employee Table */}
+      {loading ? (
+        <p>Loading...</p>
+      ) : employees.length > 0 ? (
+        <div>
+          <table className="min-w-full table-auto bg-white shadow-md rounded-lg">
+            <thead>
+              <tr>
+                <th className="px-4 py-2">Ashima ID</th>
+                <th className="px-4 py-2">Name</th>
+                <th className="px-4 py-2">Department</th>
+                <th className="px-4 py-2">Status</th>
+                <th className="px-4 py-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {employees.map((employee) => (
+                <tr key={employee.id}>
+                  <td className="border px-4 py-2">{employee.ashima_id}</td>
+                  <td className="border px-4 py-2">{employee.name}</td>
+                  <td className="border px-4 py-2">{employee.department}</td>
+                  <td className="border px-4 py-2">{employee.status}</td>
+                  <td className="border px-4 py-2 flex gap-2">
+                    <button
+                      onClick={() => handleEditEmployee(employee)}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteEmployee(employee)}
+                      className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Pagination */}
+          <div className="flex justify-between items-center mt-4">
+            <button
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              disabled={page === 1}
+              className="px-4 py-2 bg-gray-200 rounded-md"
+            >
+              Previous
+            </button>
+            <span>
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={page === totalPages}
+              className="px-4 py-2 bg-gray-200 rounded-md"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p>No employees available.</p>
+      )}
+
+      {/* Modals */}
       {showForm && (
         <EmployeeForm
           employee={selectedEmployee}
-          onSave={handleSaveEmployee}
           onClose={() => setShowForm(false)}
+          onSave={(newEmployee) => {
+            setEmployees((prev) =>
+              selectedEmployee
+                ? prev.map((emp) =>
+                    emp.id === newEmployee.id ? newEmployee : emp
+                  )
+                : [...prev, newEmployee]
+            );
+            setShowForm(false);
+          }}
+        />
+      )}
+      {showDeleteModal && (
+        <ConfirmationModal
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleConfirmDelete}
+          message={`Are you sure you want to delete ${employeeToDelete?.name}?`}
         />
       )}
     </div>
