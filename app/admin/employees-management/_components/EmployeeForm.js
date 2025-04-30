@@ -216,10 +216,16 @@ export default function EmployeeForm({ employee, onSave, onClose }) {
               <div className="flex flex-col items-center">
                 {formData.photo ? (
                   <img
-                    src={formData.photo}
-                    alt="Captured"
-                    className="w-full h-70 object-cover mb-2 rounded-md"
-                  />
+                  src={
+                    isEditing && formData.ashima_id
+                      ? `/api/employees/photo?ashima_id=${formData.ashima_id}` // Fetch photo using ashima_id in edit mode
+                      : formData.photo // Use captured photo in add mode
+                        ? formData.photo
+                        : '/placeholder.png' // Default placeholder image
+                  }
+                  alt="Captured"
+                  className="w-full h-70 object-cover mb-2 rounded-md"
+                />
                 ) : (
                   <div className="w-90 h-70 bg-gray-200 flex items-center justify-center rounded-md mb-2">
                     <span className="text-gray-500">No Photo Captured</span>

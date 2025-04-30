@@ -46,7 +46,12 @@ export async function GET(req) {
     ];
 
     const employees = await executeQuery({ query, values });
-    
+    const formattedEmployees = employees.map((employee) => ({
+      ...employee,
+      photo: employee.photo
+        ? `data:image/jpeg;base64,${employee.photo}`
+        : null,
+    }));
 
     const countQuery = `
       SELECT COUNT(*) AS total 

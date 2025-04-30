@@ -131,6 +131,8 @@ export default function EmployeeManagement() {
                 <th className="px-4 py-2">Ashima ID</th>
                 <th className="px-4 py-2">Name</th>
                 <th className="px-4 py-2">Department</th>
+                <th className="px-4 py-2">Position</th>
+                <th className="px-4 py-2">Employee Status</th>
                 <th className="px-4 py-2">Status</th>
                 <th className="px-4 py-2">Actions</th>
               </tr>
@@ -141,6 +143,8 @@ export default function EmployeeManagement() {
                   <td className="border px-4 py-2">{employee.ashima_id}</td>
                   <td className="border px-4 py-2">{employee.name}</td>
                   <td className="border px-4 py-2">{employee.department}</td>
+                  <td className="border px-4 py-2">{employee.position}</td>
+                  <td className="border px-4 py-2">{employee.emp_stat}</td>
                   <td className="border px-4 py-2">{employee.status}</td>
                   <td className="border px-4 py-2 flex gap-2">
                     <button
