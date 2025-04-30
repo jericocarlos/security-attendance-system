@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import ConfirmationModal from "./_components/ConfirmationModal";
-import EmployeeForm from "./_components/EmployeeForm";
+import EditEmployeeForm from "./_components/EditEmployeeForm";
+import AddEmployeeForm from "./_components/AddEmployeeForm";
+
 
 export default function EmployeeManagement() {
   const [employees, setEmployees] = useState([]);
@@ -13,7 +15,8 @@ export default function EmployeeManagement() {
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showForm, setShowForm] = useState(false); // For Add/Edit modal
+  const [showAddForm, setShowAddForm] = useState(false); // Show Add Employee Form
+  const [showEditForm, setShowEditForm] = useState(false); // Show Edit Employee Form
   const [selectedEmployee, setSelectedEmployee] = useState(null); // Employee being edited
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
@@ -52,13 +55,12 @@ export default function EmployeeManagement() {
   };
 
   const handleAddEmployee = () => {
-    setSelectedEmployee(null); // Reset form for adding new employee
-    setShowForm(true);
+    setShowAddForm(true); // Show Add Employee Form
   };
 
   const handleEditEmployee = (employee) => {
     setSelectedEmployee(employee);
-    setShowForm(true);
+    setShowEditForm(true); // Show Edit Employee Form
   };
 
   const handleDeleteEmployee = (employee) => {
@@ -78,6 +80,18 @@ export default function EmployeeManagement() {
     } catch (err) {
       console.error("Failed to delete employee:", err);
     }
+  };
+
+  const handleSaveEmployee = (newEmployee) => {
+    setEmployees((prev) =>
+      selectedEmployee
+        ? prev.map((emp) =>
+            emp.id === newEmployee.id ? newEmployee : emp
+          )
+        : [...prev, newEmployee]
+    );
+    setShowAddForm(false); // Hide Add Form
+    setShowEditForm(false); // Hide Edit Form
   };
 
   return (
@@ -190,23 +204,24 @@ export default function EmployeeManagement() {
         <p>No employees available.</p>
       )}
 
-      {/* Modals */}
-      {showForm && (
-        <EmployeeForm
-          employee={selectedEmployee}
-          onClose={() => setShowForm(false)}
-          onSave={(newEmployee) => {
-            setEmployees((prev) =>
-              selectedEmployee
-                ? prev.map((emp) =>
-                    emp.id === newEmployee.id ? newEmployee : emp
-                  )
-                : [...prev, newEmployee]
-            );
-            setShowForm(false);
-          }}
+      {/* Add Employee Form */}
+      {showAddForm && (
+        <AddEmployeeForm
+          onClose={() => setShowAddForm(false)}
+          onSave={handleSaveEmployee}
         />
       )}
+
+      {/* Edit Employee Form */}
+      {showEditForm && selectedEmployee && (
+        <EditEmployeeForm
+          employee={selectedEmployee}
+          onClose={() => setShowEditForm(false)}
+          onSave={handleSaveEmployee}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <ConfirmationModal
           onClose={() => setShowDeleteModal(false)}

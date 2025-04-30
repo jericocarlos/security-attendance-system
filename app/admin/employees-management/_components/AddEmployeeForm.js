@@ -1,0 +1,275 @@
+"use client";
+
+import { useState, useRef } from "react";
+
+export default function AddEmployeeForm({ onSave, onClose }) {
+  const [formData, setFormData] = useState({
+    ashima_id: "",
+    name: "",
+    department: "",
+    position: "",
+    rfid_tag: "",
+    photo: "", // Base64 string for the photo
+    emp_stat: "Regular", // Default to "Regular"
+    status: "active",
+  });
+  const [loading, setLoading] = useState(false);
+  const [capturing, setCapturing] = useState(false); // State for camera capture
+  const videoRef = useRef(null); // Ref for the video element
+  const canvasRef = useRef(null); // Ref for the canvas element
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleStartCapture = async () => {
+    setCapturing(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      videoRef.current.srcObject = stream;
+      videoRef.current.play();
+    } catch (err) {
+      console.error("Failed to access webcam:", err);
+      setCapturing(false);
+    }
+  };
+
+  const handleCapturePhoto = () => {
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+
+    canvas.width = 300;
+    canvas.height = 300;
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, 300, 300);
+
+    const stream = video.srcObject;
+    const tracks = stream.getTracks();
+    tracks.forEach((track) => track.stop());
+    video.srcObject = null;
+
+    const photo = canvas.toDataURL("image/jpeg", 0.7);
+    setFormData((prev) => ({ ...prev, photo }));
+
+    setCapturing(false);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await fetch(`/api/admin/employees`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        onSave(data);
+      } else {
+        console.error("Failed to save employee:", await response.text());
+      }
+    } catch (err) {
+      console.error("Failed to save employee:", err);
+    } finally {
+      setLoading(false);
+      onClose();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div className="bg-white rounded-lg p-6 shadow-lg w-150">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">Add Employee</h2>
+        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+          {/* Shared form fields */}
+          <FormFields formData={formData} handleChange={handleChange} />
+          {/* Photo Capture */}
+          <PhotoCapture
+            capturing={capturing}
+            photo={formData.photo}
+            handleStartCapture={handleStartCapture}
+            handleCapturePhoto={handleCapturePhoto}
+            videoRef={videoRef}
+          />
+          {/* Form Actions */}
+          <FormActions
+            loading={loading}
+            onClose={onClose}
+            submitLabel="Save"
+          />
+        </form>
+        <canvas ref={canvasRef} className="hidden"></canvas>
+      </div>
+    </div>
+  );
+}
+
+function FormFields({ formData, handleChange }) {
+  return (
+    <>
+      {/* Ashima ID */}
+      <div className="col-span-1">
+        <label className="block text-gray-700 mb-2">Ashima ID</label>
+        <input
+          type="text"
+          name="ashima_id"
+          value={formData.ashima_id}
+          onChange={handleChange}
+          required
+          className="w-full px-4 py-2 border rounded-md"
+        />
+      </div>
+
+      {/* Name */}
+      <div className="col-span-1">
+        <label className="block text-gray-700 mb-2">Name</label>
+        <input
+          type="text"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          required
+          className="w-full px-4 py-2 border rounded-md"
+        />
+      </div>
+
+      {/* Department */}
+      <div className="col-span-1">
+        <label className="block text-gray-700 mb-2">Department</label>
+        <input
+          type="text"
+          name="department"
+          value={formData.department}
+          onChange={handleChange}
+          className="w-full px-4 py-2 border rounded-md"
+        />
+      </div>
+
+      {/* Position */}
+      <div className="col-span-1">
+        <label className="block text-gray-700 mb-2">Position</label>
+        <input
+          type="text"
+          name="position"
+          value={formData.position}
+          onChange={handleChange}
+          className="w-full px-4 py-2 border rounded-md"
+        />
+      </div>
+
+      {/* RFID Tag */}
+      <div className="col-span-1">
+        <label className="block text-gray-700 mb-2">RFID Tag</label>
+        <input
+          type="text"
+          name="rfid_tag"
+          value={formData.rfid_tag}
+          onChange={handleChange}
+          required
+          className="w-full px-4 py-2 border rounded-md"
+        />
+      </div>
+
+      {/* Employee Status */}
+      <div className="col-span-1">
+        <label className="block text-gray-700 mb-2">Employee Status</label>
+        <select
+          name="emp_stat"
+          value={formData.emp_stat}
+          onChange={handleChange}
+          className="w-full px-4 py-2 border rounded-md"
+        >
+          <option value="Regular">Regular</option>
+          <option value="Probationary">Probationary</option>
+          <option value="Consultant">Consultant</option>
+        </select>
+      </div>
+
+      {/* Status */}
+      <div className="col-span-1">
+        <label className="block text-gray-700 mb-2">Status</label>
+        <select
+          name="status"
+          value={formData.status}
+          onChange={handleChange}
+          className="w-full px-4 py-2 border rounded-md"
+        >
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+    </>
+  );
+}
+
+function PhotoCapture({
+  capturing,
+  photo,
+  handleStartCapture,
+  handleCapturePhoto,
+  videoRef,
+}) {
+  return (
+    <div className="col-span-2 justify-center items-center flex flex-col">
+      {capturing ? (
+        <div className="flex flex-col items-center">
+          <video ref={videoRef} className="w-full h-70 bg-gray-200 mb-2" />
+          <button
+            type="button"
+            onClick={handleCapturePhoto}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 mb-2"
+          >
+            Capture Photo
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center">
+          <img
+            src={photo || "/placeholder.png"}
+            alt="Captured"
+            className="w-full h-70 object-cover mb-2 rounded-md"
+          />
+          <button
+            type="button"
+            onClick={handleStartCapture}
+            className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 mb-2"
+          >
+            Start Camera
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FormActions({ loading, onClose, submitLabel }) {
+  return (
+    <div className="col-span-2 flex justify-end gap-4">
+      <button
+        type="button"
+        onClick={onClose}
+        className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 text-gray-800"
+        disabled={loading}
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        disabled={loading}
+      >
+        {loading ? "Saving..." : submitLabel}
+      </button>
+    </div>
+  );
+}
