@@ -1,6 +1,11 @@
 import { executeQuery } from "@/lib/db";
 import { NextResponse } from "next/server";
 
+// Helper function to decode Base64 to binary
+function decodeBase64ToBinary(base64String) {
+  return Buffer.from(base64String.replace(/^data:image\/\w+;base64,/, ""), "base64");
+}
+
 // GET: Fetch Employees with Search, Filters, and Pagination
 export async function GET(req) {
   try {
@@ -41,6 +46,7 @@ export async function GET(req) {
     ];
 
     const employees = await executeQuery({ query, values });
+    
 
     const countQuery = `
       SELECT COUNT(*) AS total 
@@ -78,12 +84,15 @@ export async function POST(req) {
     const body = await req.json();
     const { ashima_id, name, department, position, rfid_tag, photo, emp_stat, status } = body;
 
+    // Decode Base64 photo to binary
+    const binaryPhoto = photo ? decodeBase64ToBinary(photo) : null;
+
     const query = `
       INSERT INTO employees (ashima_id, name, department, position, rfid_tag, photo, emp_stat, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    const values = [ashima_id, name, department, position, rfid_tag, photo, emp_stat, status || "active"];
+    const values = [ashima_id, name, department, position, rfid_tag, binaryPhoto, emp_stat, status || "active"];
 
     const result = await executeQuery({ query, values });
 
@@ -103,6 +112,9 @@ export async function PUT(req) {
     const body = await req.json();
     const { id, ashima_id, name, department, position, rfid_tag, photo, emp_stat, status } = body;
 
+    // Decode Base64 photo to binary
+    const binaryPhoto = photo ? decodeBase64ToBinary(photo) : null;
+
     const query = `
       UPDATE employees 
       SET 
@@ -118,7 +130,7 @@ export async function PUT(req) {
         id = ?
     `;
 
-    const values = [ashima_id, name, department, position, rfid_tag, photo, emp_stat, status, id];
+    const values = [ashima_id, name, department, position, rfid_tag, binaryPhoto, emp_stat, status, id];
 
     await executeQuery({ query, values });
 
