@@ -22,12 +22,12 @@ export async function GET(req) {
 
     const query = `
       SELECT 
-        id, ashima_id, name, department, position, rfid_tag, photo_url, emp_stat, status, created_at
+        id, ashima_id, name, department, position, rfid_tag, photo, emp_stat, status
       FROM 
         employees
       ${whereClause}
       ORDER BY 
-        created_at DESC
+        id DESC
       LIMIT ? OFFSET ?
     `;
 
@@ -76,14 +76,14 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { ashima_id, name, department, position, rfid_tag, photo_url, emp_stat, status } = body;
+    const { ashima_id, name, department, position, rfid_tag, photo, emp_stat, status } = body;
 
     const query = `
-      INSERT INTO employees (ashima_id, name, department, position, rfid_tag, photo_url, emp_stat, status)
+      INSERT INTO employees (ashima_id, name, department, position, rfid_tag, photo, emp_stat, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    const values = [ashima_id, name, department, position, rfid_tag, photo_url, emp_stat, status || "active"];
+    const values = [ashima_id, name, department, position, rfid_tag, photo, emp_stat, status || "active"];
 
     const result = await executeQuery({ query, values });
 
@@ -101,7 +101,7 @@ export async function POST(req) {
 export async function PUT(req) {
   try {
     const body = await req.json();
-    const { id, ashima_id, name, department, position, rfid_tag, photo_url, emp_stat, status } = body;
+    const { id, ashima_id, name, department, position, rfid_tag, photo, emp_stat, status } = body;
 
     const query = `
       UPDATE employees 
@@ -111,14 +111,14 @@ export async function PUT(req) {
         department = ?, 
         position = ?, 
         rfid_tag = ?, 
-        photo_url = ?, 
+        photo = ?, 
         emp_stat = ?, 
         status = ?
       WHERE 
         id = ?
     `;
 
-    const values = [ashima_id, name, department, position, rfid_tag, photo_url, emp_stat, status, id];
+    const values = [ashima_id, name, department, position, rfid_tag, photo, emp_stat, status, id];
 
     await executeQuery({ query, values });
 

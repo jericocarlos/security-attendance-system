@@ -21,8 +21,21 @@ CREATE TABLE attendance_logs (
   timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert some sample employees
-INSERT INTO employees (ashima_id, name, department, rfid_tag) VALUES
-('EMP001', 'John Doe', 'Engineering', 'A1B2C3D4'),
-('EMP002', 'Jane Smith', 'HR', 'E5F6G7H8'),
-('EMP003', 'Bob Johnson', 'Marketing', 'I9J0K1L2');
+CREATE TABLE `attendance_logs` (
+  `id` int(11) NOT NULL,
+  `ashima_id` varchar(50) NOT NULL,
+  `log_type` enum('IN','OUT') NOT NULL,
+  `timestamp` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `employees` (
+  `id` int(11) NOT NULL,
+  `ashima_id` varchar(50) NOT NULL,
+  `name` varchar(150) DEFAULT NULL,
+  `department` varchar(50) DEFAULT NULL,
+  `position` varchar(42) DEFAULT NULL,
+  `rfid_tag` varchar(50) DEFAULT NULL,
+  `photo` longblob DEFAULT NULL,
+  `emp_stat` varchar(12) DEFAULT NULL,
+  `status` enum('active','inactive') DEFAULT 'active'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;

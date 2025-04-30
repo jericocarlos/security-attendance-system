@@ -10,7 +10,7 @@ export default function EmployeeForm({ employee, onSave, onClose }) {
     department: employee?.department || "",
     position: employee?.position || "",
     rfid_tag: employee?.rfid_tag || "",
-    photo_url: employee?.photo_url || "",
+    photo: employee?.photo || "",
     emp_stat: employee?.emp_stat || "",
     status: employee?.status || "active",
   });
@@ -112,12 +112,16 @@ export default function EmployeeForm({ employee, onSave, onClose }) {
             />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700 mb-2">Photo URL</label>
+            <label className="block text-gray-700 mb-2">Photo</label>
             <input
-              type="url"
-              name="photo_url"
-              value={formData.photo_url}
-              onChange={handleChange}
+              type="file"
+              name="photo"
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  photo: e.target.files[0],
+                }))
+              }
               className="w-full px-4 py-2 border rounded-md"
             />
           </div>

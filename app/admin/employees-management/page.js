@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import ConfirmationModal from "./_components/ConfirmationModal";
 import EmployeeForm from "./_components/EmployeeForm";
 
-
 export default function EmployeeManagement() {
   const [employees, setEmployees] = useState([]);
   const [page, setPage] = useState(1);
@@ -69,7 +68,7 @@ export default function EmployeeManagement() {
 
   const handleConfirmDelete = async () => {
     try {
-      await fetch(`/api/admin/employees/${employeeToDelete.id}`, {
+      await fetch(`/api/admin/employees?id=${employeeToDelete.id}`, {
         method: "DELETE",
       });
       setEmployees((prev) =>
