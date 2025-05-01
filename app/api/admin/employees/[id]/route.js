@@ -28,7 +28,8 @@ export async function PUT(req, context) {
     const body = await req.json();
     const { ashima_id, name, department, position, rfid_tag, photo, emp_stat, status } = body;
 
-    console.log("Updating employee photo status:", photo ? "Photo provided" : "No photo provided");
+    console.log("Updating employee ID:", id);
+    console.log("Photo provided:", photo ? `${photo.substring(0, 30)}... (length: ${photo.length})` : "None");
     
     // Validate required fields
     if (!ashima_id || !name || !rfid_tag) {
@@ -40,6 +41,7 @@ export async function PUT(req, context) {
 
     // Decode Base64 photo to binary, if provided
     const binaryPhoto = photo ? decodeBase64ToBinary(photo) : null;
+    console.log("Binary photo processed:", binaryPhoto ? `(${binaryPhoto.length} bytes)` : "None");
 
     // Build the update query dynamically
     const updateFields = [
@@ -62,13 +64,25 @@ export async function PUT(req, context) {
       WHERE id = ?
     `;
 
-    await executeQuery({ query: updateQuery, values });
+    // Log the query and first few values (without the full photo)
+    console.log("Update query:", updateQuery);
+    console.log("Update values (partial):", [
+      ashima_id, name, department, position, rfid_tag, 
+      binaryPhoto ? `[Binary data: ${binaryPhoto.length} bytes]` : null,
+      emp_stat, status, id
+    ]);
 
-    return NextResponse.json({ message: "Employee updated successfully" });
+    const result = await executeQuery({ query: updateQuery, values });
+    console.log("Database update result:", result);
+
+    return NextResponse.json({ 
+      message: "Employee updated successfully",
+      employeeId: id
+    });
   } catch (err) {
     console.error("Failed to update employee:", err);
     return NextResponse.json(
-      { message: "Failed to update employee" },
+      { message: `Failed to update employee: ${err.message}` },
       { status: 500 }
     );
   }

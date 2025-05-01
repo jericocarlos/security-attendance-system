@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 export default function PhotoCapture({
   capturing,
   photo,
@@ -9,6 +11,18 @@ export default function PhotoCapture({
 }) {
   // Ensure photo is a string or fallback to null
   const validPhoto = typeof photo === "string" ? photo : null;
+
+  // Inside the component
+  const imageUrl = useMemo(() => {
+    if (validPhoto && validPhoto.startsWith("data:image/")) {
+      return validPhoto;
+    } else if (ashima_id) {
+      // Add a timestamp to prevent caching
+      return `/api/employees/photo?ashima_id=${ashima_id}&t=${new Date().getTime()}`;
+    } else {
+      return "/placeholder.png";
+    }
+  }, [validPhoto, ashima_id]);
 
   return (
     <div className="flex flex-col">
@@ -35,15 +49,13 @@ export default function PhotoCapture({
           <div className="flex flex-col items-center">
             <div className="w-full aspect-square">
               <img
-                src={
-                  validPhoto && validPhoto.startsWith("data:image/")
-                    ? validPhoto
-                    : ashima_id
-                    ? `/api/employees/photo?ashima_id=${ashima_id}`
-                    : "/placeholder.png"
-                }
+                src={imageUrl}
                 alt="Employee"
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  console.error("Failed to load image");
+                  e.target.src = "/placeholder.png";
+                }}
               />
             </div>
             

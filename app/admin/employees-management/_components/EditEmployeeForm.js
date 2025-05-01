@@ -53,20 +53,23 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
     const canvas = canvasRef.current;
     const video = videoRef.current;
   
-    canvas.width = 300;
-    canvas.height = 300;
+    // Reduce the image size to 250x250
+    canvas.width = 250;
+    canvas.height = 250;
   
     const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, 300, 300);
+    ctx.drawImage(video, 0, 0, 250, 250);
   
     const stream = video.srcObject;
     const tracks = stream.getTracks();
     tracks.forEach((track) => track.stop());
     video.srcObject = null;
   
-    // Convert the captured image to Base64 with proper formatting
-    const photo = canvas.toDataURL("image/jpeg", 0.7); 
-    console.log("Captured new photo:", photo.substring(0, 50) + "..."); // Log the start of the string
+    // Reduce quality to 0.6 to make the image smaller
+    const photo = canvas.toDataURL("image/jpeg", 0.6); 
+    console.log("Captured new photo:", photo.substring(0, 50) + "...");
+    console.log("Photo size:", Math.round(photo.length / 1024), "KB");
+    
     setFormData((prev) => ({ ...prev, photo }));
     setCapturing(false);
   };
@@ -81,19 +84,25 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null); // Clear previous errors
+    setError(null);
 
     if (!validateForm()) {
       return;
     }
 
-    // Prepare data for submission, ensuring photo is either a string or null
+    // Prepare data for submission with better photo handling
     const submissionData = {
       ...formData,
-      photo: typeof formData.photo === "string" ? formData.photo : null
+      photo: formData.photo || null // Use null if photo is empty string or falsy
     };
 
-    console.log("Submitting photo type:", typeof submissionData.photo);
+    console.log("Submitting employee update:");
+    console.log("- ID:", employee.id);
+    console.log("- Photo included:", submissionData.photo ? "Yes" : "No");
+    if (submissionData.photo) {
+      console.log("- Photo data type:", typeof submissionData.photo);
+      console.log("- Photo length:", submissionData.photo.length);
+    }
 
     setLoading(true);
     try {
@@ -105,14 +114,23 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
         body: JSON.stringify(submissionData),
       });
 
+      const responseData = await response.text();
+      console.log("Server response:", responseData);
+      
+      let data;
+      try {
+        data = JSON.parse(responseData);
+      } catch (err) {
+        console.error("Failed to parse response as JSON:", responseData);
+        throw new Error("Invalid server response");
+      }
+
       if (response.ok) {
-        const data = await response.json();
         onSave(data); // Pass updated employee data to the parent
         onClose();
       } else {
-        const errorResponse = await response.text();
-        setError(`Failed to update employee: ${errorResponse}`);
-        console.error("API Error Response:", errorResponse);
+        setError(`Failed to update employee: ${data.message || responseData}`);
+        console.error("API Error Response:", data);
       }
     } catch (err) {
       setError(`An unexpected error occurred: ${err.message}`);
