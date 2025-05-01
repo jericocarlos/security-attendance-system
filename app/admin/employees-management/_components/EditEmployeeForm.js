@@ -132,8 +132,8 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white rounded-lg p-6 shadow-lg w-150">
-        <h2 className="text-lg font-semibold mb-4 text-gray-800">Edit Employee</h2>
+      <div className="bg-white rounded-lg p-6 shadow-lg w-[800px] max-w-full">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Edit Employee</h2>
 
         {error && (
           <div className="mb-4 p-2 bg-red-100 text-red-600 rounded">
@@ -141,12 +141,14 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
-          {/* Shared Form Fields */}
-          <FormFields formData={formData} handleChange={handleChange} />
-
-          {/* Photo Capture with option to remove */}
-          <div className="col-span-1 flex flex-col">
+        <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-6">
+          {/* Left side - Form Fields */}
+          <div className="flex-1">
+            <FormFields formData={formData} handleChange={handleChange} />
+          </div>
+          
+          {/* Right side - Photo Capture */}
+          <div className="w-full md:w-64 md:min-w-[250px]">
             <PhotoCapture
               capturing={capturing}
               photo={formData.photo}
@@ -154,29 +156,31 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
               handleCapturePhoto={handleCapturePhoto}
               videoRef={videoRef}
               ashima_id={formData.ashima_id}
-              onRemovePhoto={handleRemovePhoto} // Keep this one
+              onRemovePhoto={handleRemovePhoto}
             />
-            
-            {/* Remove this duplicate button */}
-            {/* {formData.photo && (
-              <button
-                type="button"
-                onClick={handleRemovePhoto}
-                className="mt-2 text-red-500 text-sm"
-              >
-                Remove Photo
-              </button>
-            )} */}
           </div>
-
-          {/* Form Actions */}
-          <FormActions
-            loading={loading}
-            onClose={onClose}
-            submitLabel={loading ? "Updating..." : "Update"}
-          />
         </form>
-
+        
+        {/* Form Actions - now at the bottom */}
+        <div className="mt-6 pt-4 border-t flex justify-end gap-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 text-gray-800 transition-colors"
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+            disabled={loading}
+          >
+            {loading ? "Updating..." : "Update"}
+          </button>
+        </div>
+        
         <canvas ref={canvasRef} className="hidden"></canvas>
       </div>
     </div>

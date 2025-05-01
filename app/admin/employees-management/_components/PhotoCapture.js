@@ -5,61 +5,70 @@ export default function PhotoCapture({
   handleCapturePhoto,
   videoRef,
   ashima_id,
-  onRemovePhoto, // New prop for handling photo removal
+  onRemovePhoto,
 }) {
   // Ensure photo is a string or fallback to null
   const validPhoto = typeof photo === "string" ? photo : null;
 
   return (
-    <div className="col-span-2 justify-center items-center flex flex-col">
-      {capturing ? (
-        <div className="flex flex-col items-center">
-          <video ref={videoRef} className="w-full h-70 bg-gray-200 mb-2" />
-          <button
-            type="button"
-            onClick={handleCapturePhoto}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 mb-2"
-          >
-            Capture Photo
-          </button>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center">
-          {/* Dynamically display existing photo or placeholder */}
-          <img
-            src={
-              validPhoto && validPhoto.startsWith("data:image/")
-                ? validPhoto // If photo is a valid Base64 string, use it
-                : ashima_id
-                ? `/api/employees/photo?ashima_id=${ashima_id}` // Fetch existing photo from the server
-                : "/placeholder.png" // Default placeholder image
-            }
-            alt="Captured"
-            className="w-full h-70 object-cover mb-2 rounded-md"
-          />
-          
-          <div className="flex space-x-2">
+    <div className="flex flex-col">
+      <h3 className="font-medium text-gray-700 mb-2">Employee Photo</h3>
+      
+      <div className="bg-gray-100 border rounded-md overflow-hidden">
+        {capturing ? (
+          <div className="flex flex-col items-center">
+            <video 
+              ref={videoRef} 
+              className="w-full aspect-square object-cover" 
+              autoPlay 
+              playsInline
+            />
             <button
               type="button"
-              onClick={handleStartCapture}
-              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 mb-2"
+              onClick={handleCapturePhoto}
+              className="w-full py-2 bg-blue-500 text-white text-sm hover:bg-blue-600 transition-colors"
             >
-              {validPhoto ? "Change Photo" : "Start Camera"}
+              Capture Photo
             </button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center">
+            <div className="w-full aspect-square">
+              <img
+                src={
+                  validPhoto && validPhoto.startsWith("data:image/")
+                    ? validPhoto
+                    : ashima_id
+                    ? `/api/employees/photo?ashima_id=${ashima_id}`
+                    : "/placeholder.png"
+                }
+                alt="Employee"
+                className="w-full h-full object-cover"
+              />
+            </div>
             
-            {/* Only show Remove Photo button if there is a photo to remove */}
-            {validPhoto && onRemovePhoto && (
+            <div className="w-full flex flex-col">
               <button
                 type="button"
-                onClick={onRemovePhoto}
-                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 mb-2"
+                onClick={handleStartCapture}
+                className="w-full py-2 bg-green-500 text-white text-sm hover:bg-green-600 transition-colors"
               >
-                Remove Photo
+                {validPhoto ? "Change Photo" : "Take Photo"}
               </button>
-            )}
+              
+              {validPhoto && onRemovePhoto && (
+                <button
+                  type="button"
+                  onClick={onRemovePhoto}
+                  className="w-full py-2 bg-red-500 text-white text-sm hover:bg-red-600 transition-colors"
+                >
+                  Remove Photo
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
