@@ -1,26 +1,33 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import FormFields from "./FormFields"; // Import shared FormFields component
 import PhotoCapture from "./PhotoCapture"; // Import shared PhotoCapture component
 import FormActions from "./FormActions"; // Import shared FormActions component
 
 export default function EditEmployeeForm({ employee, onSave, onClose }) {
+  // Initialize form data with safer photo handling
   const [formData, setFormData] = useState({
     ashima_id: employee?.ashima_id || "",
     name: employee?.name || "",
     department: employee?.department || "",
     position: employee?.position || "",
     rfid_tag: employee?.rfid_tag || "",
-    photo: employee?.photo || "", // Base64 string for the photo
+    photo: typeof employee?.photo === "string" ? employee.photo : "", // Ensure photo is a string
     emp_stat: employee?.emp_stat || "Regular",
     status: employee?.status || "active",
   });
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null); // New state for error messages
   const [capturing, setCapturing] = useState(false); // State for camera capture
   const videoRef = useRef(null); // Ref for the video element
   const canvasRef = useRef(null); // Ref for the canvas element
+
+  // Debug logging for initial photo data
+  useEffect(() => {
+    console.log("Initial photo type:", typeof formData.photo);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -57,11 +64,10 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
     tracks.forEach((track) => track.stop());
     video.srcObject = null;
   
-    // Convert the captured image to Base64
-    const photo = canvas.toDataURL("image/jpeg", 0.7); // Quality at 70%
-    console.log("Captured Photo (Base64):", photo); // Debugging log
-    setFormData((prev) => ({ ...prev, photo })); // Update the form data with the new photo
-  
+    // Convert the captured image to Base64 with proper formatting
+    const photo = canvas.toDataURL("image/jpeg", 0.7); 
+    console.log("Captured new photo:", photo.substring(0, 50) + "..."); // Log the start of the string
+    setFormData((prev) => ({ ...prev, photo }));
     setCapturing(false);
   };
 
@@ -81,34 +87,47 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
       return;
     }
 
+    // Prepare data for submission, ensuring photo is either a string or null
+    const submissionData = {
+      ...formData,
+      photo: typeof formData.photo === "string" ? formData.photo : null
+    };
+
+    console.log("Submitting photo type:", typeof submissionData.photo);
+
     setLoading(true);
-    console.log("Photo being sent:", formData.photo);
     try {
       const response = await fetch(`/api/admin/employees/${employee.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submissionData),
       });
 
       if (response.ok) {
         const data = await response.json();
         onSave(data); // Pass updated employee data to the parent
+        onClose();
       } else {
-        const errorText = await response.text();
-        setError(`Failed to update employee: ${errorText}`);
-        console.error("Failed to update employee:", errorText);
+        const errorResponse = await response.text();
+        setError(`Failed to update employee: ${errorResponse}`);
+        console.error("API Error Response:", errorResponse);
       }
     } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+      setError(`An unexpected error occurred: ${err.message}`);
       console.error("Failed to update employee:", err);
     } finally {
       setLoading(false);
-      if (!error) {
-        onClose();
-      }
     }
+  };
+
+  // Option to remove photo
+  const handleRemovePhoto = () => {
+    setFormData(prev => ({
+      ...prev,
+      photo: "" // Set photo to empty string to clear it
+    }));
   };
 
   return (
@@ -126,21 +145,35 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
           {/* Shared Form Fields */}
           <FormFields formData={formData} handleChange={handleChange} />
 
-          {/* Photo Capture */}
-          <PhotoCapture
-            capturing={capturing}
-            photo={formData.photo} // This should be a string or null
-            handleStartCapture={handleStartCapture}
-            handleCapturePhoto={handleCapturePhoto}
-            videoRef={videoRef}
-            ashima_id={formData.ashima_id} // Pass ashima_id to fetch existing photo
-          />
+          {/* Photo Capture with option to remove */}
+          <div className="col-span-1 flex flex-col">
+            <PhotoCapture
+              capturing={capturing}
+              photo={formData.photo}
+              handleStartCapture={handleStartCapture}
+              handleCapturePhoto={handleCapturePhoto}
+              videoRef={videoRef}
+              ashima_id={formData.ashima_id}
+              onRemovePhoto={handleRemovePhoto} // Keep this one
+            />
+            
+            {/* Remove this duplicate button */}
+            {/* {formData.photo && (
+              <button
+                type="button"
+                onClick={handleRemovePhoto}
+                className="mt-2 text-red-500 text-sm"
+              >
+                Remove Photo
+              </button>
+            )} */}
+          </div>
 
           {/* Form Actions */}
           <FormActions
             loading={loading}
             onClose={onClose}
-            submitLabel={loading ? "Updating..." : "Update"} // Dynamic button label
+            submitLabel={loading ? "Updating..." : "Update"}
           />
         </form>
 

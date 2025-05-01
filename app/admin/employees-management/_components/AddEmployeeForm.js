@@ -53,8 +53,9 @@ export default function AddEmployeeForm({ onSave, onClose }) {
     tracks.forEach((track) => track.stop());
     video.srcObject = null;
 
-    const photo = canvas.toDataURL("image/jpeg", 0.7);
-    setFormData((prev) => ({ ...prev, photo }));
+    const photo = canvas.toDataURL("image/jpeg", 0.7); // Convert the captured image to Base64
+    setFormData((prev) => ({ ...prev, photo }));  // Update the form data with the new photo
+
 
     setCapturing(false);
   };
@@ -62,7 +63,6 @@ export default function AddEmployeeForm({ onSave, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const response = await fetch(`/api/admin/employees`, {
         method: "POST",

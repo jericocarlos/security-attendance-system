@@ -4,7 +4,8 @@ export default function PhotoCapture({
   handleStartCapture,
   handleCapturePhoto,
   videoRef,
-  ashima_id, // Add ashima_id to dynamically fetch the existing photo
+  ashima_id,
+  onRemovePhoto, // New prop for handling photo removal
 }) {
   // Ensure photo is a string or fallback to null
   const validPhoto = typeof photo === "string" ? photo : null;
@@ -36,13 +37,27 @@ export default function PhotoCapture({
             alt="Captured"
             className="w-full h-70 object-cover mb-2 rounded-md"
           />
-          <button
-            type="button"
-            onClick={handleStartCapture}
-            className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 mb-2"
-          >
-            Start Camera
-          </button>
+          
+          <div className="flex space-x-2">
+            <button
+              type="button"
+              onClick={handleStartCapture}
+              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 mb-2"
+            >
+              {validPhoto ? "Change Photo" : "Start Camera"}
+            </button>
+            
+            {/* Only show Remove Photo button if there is a photo to remove */}
+            {validPhoto && onRemovePhoto && (
+              <button
+                type="button"
+                onClick={onRemovePhoto}
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 mb-2"
+              >
+                Remove Photo
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

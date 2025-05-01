@@ -1,9 +1,24 @@
 import { executeQuery } from "@/lib/db";
 import { NextResponse } from "next/server";
 
-// Helper function to decode Base64 to binary
+// Helper function to decode Base64 to binary with better error handling
 function decodeBase64ToBinary(base64String) {
-  return Buffer.from(base64String.replace(/^data:image\/\w+;base64,/, ""), "base64");
+  if (!base64String || typeof base64String !== "string") {
+    console.log("Invalid or missing base64String");
+    return null;
+  }
+  
+  try {
+    // Handle both formats: with data:image prefix and without
+    const base64Data = base64String.includes("data:image") 
+      ? base64String.replace(/^data:image\/\w+;base64,/, "")
+      : base64String;
+      
+    return Buffer.from(base64Data, "base64");
+  } catch (error) {
+    console.error("Error decoding base64 string:", error);
+    return null;
+  }
 }
 
 // PUT: Update an Existing Employee
@@ -13,6 +28,8 @@ export async function PUT(req, context) {
     const body = await req.json();
     const { ashima_id, name, department, position, rfid_tag, photo, emp_stat, status } = body;
 
+    console.log("Updating employee photo status:", photo ? "Photo provided" : "No photo provided");
+    
     // Validate required fields
     if (!ashima_id || !name || !rfid_tag) {
       return NextResponse.json(
