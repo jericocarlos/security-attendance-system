@@ -5,7 +5,6 @@ import ConfirmationModal from "./_components/ConfirmationModal";
 import EditEmployeeForm from "./_components/EditEmployeeForm";
 import AddEmployeeForm from "./_components/AddEmployeeForm";
 
-
 export default function EmployeeManagement() {
   const [employees, setEmployees] = useState([]);
   const [page, setPage] = useState(1);
@@ -15,9 +14,9 @@ export default function EmployeeManagement() {
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false); // Show Add Employee Form
-  const [showEditForm, setShowEditForm] = useState(false); // Show Edit Employee Form
-  const [selectedEmployee, setSelectedEmployee] = useState(null); // Employee being edited
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
 
@@ -45,22 +44,22 @@ export default function EmployeeManagement() {
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
-    setPage(1); // Reset to first page
+    setPage(1);
   };
 
   const handleFilterChange = (e, type) => {
     if (type === "department") setDepartmentFilter(e.target.value);
     if (type === "status") setStatusFilter(e.target.value);
-    setPage(1); // Reset to first page
+    setPage(1);
   };
 
   const handleAddEmployee = () => {
-    setShowAddForm(true); // Show Add Employee Form
+    setShowAddForm(true);
   };
 
   const handleEditEmployee = (employee) => {
     setSelectedEmployee(employee);
-    setShowEditForm(true); // Show Edit Employee Form
+    setShowEditForm(true);
   };
 
   const handleDeleteEmployee = (employee) => {
@@ -90,22 +89,31 @@ export default function EmployeeManagement() {
           )
         : [...prev, newEmployee]
     );
-    setShowAddForm(false); // Hide Add Form
-    setShowEditForm(false); // Hide Edit Form
+    setShowAddForm(false);
+    setShowEditForm(false);
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Employee Management</h1>
+    <div className="max-w-7xl mx-auto px-6 py-8">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">Employee Management</h1>
+        <button
+          onClick={handleAddEmployee}
+          className="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+        >
+          Add Employee
+        </button>
+      </div>
 
       {/* Search and Filters */}
-      <div className="flex mb-4 gap-4">
+      <div className="flex flex-wrap gap-4 mb-6">
         <input
           type="text"
           value={search}
           onChange={handleSearchChange}
           placeholder="Search by ID or Name"
-          className="px-4 py-2 border rounded-md w-full"
+          className="flex-1 px-4 py-2 border rounded-md"
         />
         <select
           value={departmentFilter}
@@ -126,50 +134,45 @@ export default function EmployeeManagement() {
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
-        <button
-          onClick={handleAddEmployee}
-          className="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-        >
-          Add Employee
-        </button>
       </div>
 
       {/* Employee Table */}
       {loading ? (
         <p>Loading...</p>
       ) : employees.length > 0 ? (
-        <div>
-          <table className="min-w-full table-auto bg-white shadow-md rounded-lg">
-            <thead>
+        <div className="overflow-x-auto bg-white shadow-md rounded-lg">
+          <table className="min-w-full table-auto">
+            <thead className="bg-gray-100">
               <tr>
-                <th className="px-4 py-2">Ashima ID</th>
-                <th className="px-4 py-2">Name</th>
-                <th className="px-4 py-2">Department</th>
-                <th className="px-4 py-2">Position</th>
-                <th className="px-4 py-2">Employee Status</th>
-                <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2">Actions</th>
+                <th className="px-4 py-2 text-left text-gray-600 font-medium">Ashima ID</th>
+                <th className="px-4 py-2 text-left text-gray-600 font-medium">Name</th>
+                <th className="px-4 py-2 text-left text-gray-600 font-medium">Department</th>
+                <th className="px-4 py-2 text-left text-gray-600 font-medium">Position</th>
+                <th className="px-4 py-2 text-left text-gray-600 font-medium">Employee Status</th>
+                <th className="px-4 py-2 text-left text-gray-600 font-medium">Status</th>
+                <th className="px-4 py-2 text-left text-gray-600 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {employees.map((employee) => (
-                <tr key={employee.id}>
-                  <td className="border px-4 py-2">{employee.ashima_id}</td>
-                  <td className="border px-4 py-2">{employee.name}</td>
-                  <td className="border px-4 py-2">{employee.department}</td>
-                  <td className="border px-4 py-2">{employee.position}</td>
-                  <td className="border px-4 py-2">{employee.emp_stat}</td>
-                  <td className="border px-4 py-2">{employee.status}</td>
-                  <td className="border px-4 py-2 flex gap-2">
+                <tr
+                  key={employee.id}
+                  className="border-t cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleEditEmployee(employee)} // Make row clickable
+                >
+                  <td className="px-4 py-2">{employee.ashima_id}</td>
+                  <td className="px-4 py-2">{employee.name}</td>
+                  <td className="px-4 py-2">{employee.department}</td>
+                  <td className="px-4 py-2">{employee.position}</td>
+                  <td className="px-4 py-2">{employee.emp_stat}</td>
+                  <td className="px-4 py-2">{employee.status}</td>
+                  <td className="px-4 py-2 flex gap-2">
                     <button
-                      onClick={() => handleEditEmployee(employee)}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteEmployee(employee)}
-                      className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent row click
+                        handleDeleteEmployee(employee);
+                      }}
+                      className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
                     >
                       Delete
                     </button>
@@ -178,31 +181,31 @@ export default function EmployeeManagement() {
               ))}
             </tbody>
           </table>
-
-          {/* Pagination */}
-          <div className="flex justify-between items-center mt-4">
-            <button
-              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-              disabled={page === 1}
-              className="px-4 py-2 bg-gray-200 rounded-md"
-            >
-              Previous
-            </button>
-            <span>
-              Page {page} of {totalPages}
-            </span>
-            <button
-              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={page === totalPages}
-              className="px-4 py-2 bg-gray-200 rounded-md"
-            >
-              Next
-            </button>
-          </div>
         </div>
       ) : (
-        <p>No employees available.</p>
+        <p className="text-gray-500 italic">No employees available.</p>
       )}
+
+      {/* Pagination */}
+      <div className="flex justify-between items-center mt-6">
+        <button
+          onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+          disabled={page === 1}
+          className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+        >
+          Previous
+        </button>
+        <span className="text-gray-600">
+          Page {page} of {totalPages}
+        </span>
+        <button
+          onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+          disabled={page === totalPages}
+          className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+        >
+          Next
+        </button>
+      </div>
 
       {/* Add Employee Form */}
       {showAddForm && (
