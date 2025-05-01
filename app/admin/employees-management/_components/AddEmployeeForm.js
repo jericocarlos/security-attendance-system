@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import FormFields from "./FormFields"; // Import shared component
 import PhotoCapture from "./PhotoCapture"; // Import shared component
-import FormActions from "./FormActions"; // Import shared component
+
 
 export default function AddEmployeeForm({ onSave, onClose }) {
   const [formData, setFormData] = useState({

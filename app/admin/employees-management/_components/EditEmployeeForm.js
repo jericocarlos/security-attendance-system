@@ -66,7 +66,7 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
     video.srcObject = null;
   
     // Reduce quality to 0.6 to make the image smaller
-    const photo = canvas.toDataURL("image/jpeg", 0.6); 
+    const photo = canvas.toDataURL("image/jpeg", 0.7); 
     console.log("Captured new photo:", photo.substring(0, 50) + "...");
     console.log("Photo size:", Math.round(photo.length / 1024), "KB");
     
