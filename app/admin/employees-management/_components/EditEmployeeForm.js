@@ -41,9 +41,15 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
   const handleStartCapture = async () => {
     setCapturing(true);
     try {
+      if (typeof navigator === 'undefined' || !navigator.mediaDevices) {
+        throw new Error('Media Devices API not supported in this environment');
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      videoRef.current.srcObject = stream;
-      videoRef.current.play();
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
     } catch (err) {
       console.error("Failed to access webcam:", err);
       setCapturing(false);
