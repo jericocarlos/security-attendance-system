@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import HIDListener from '@/lib/HIDListeners';
 import Clock from '@/components/Clock';
+import Image from 'next/image';
 
 export default function Home() {
   const [logs, setLogs] = useState([]); // Attendance logs
@@ -163,10 +164,12 @@ function EmployeeImageAndStatus({ employeeInfo, employeeStatus }) {
   return (
     <div className="flex flex-col items-center space-y-6">
       <div className="w-120 h-120 rounded-3xl overflow-hidden shadow-lg transform transition-all duration-300 hover:scale-105">
-        <img
+        <Image
           src={employeeInfo ? `/api/employees/photo?ashima_id=${employeeInfo.ashima_id}&t=${new Date().getTime()}` : '/placeholder.png'}
           alt={employeeInfo?.name || 'Placeholder'}
           className="w-full h-full object-cover"
+          width={250} // Add width and height for next/image
+          height={250}
         />
       </div>
       {employeeStatus && (

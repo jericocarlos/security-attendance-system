@@ -23,16 +23,19 @@ export async function GET(request) {
     const [result] = await executeQuery({ query: photoQuery, values: [ashima_id] });
 
     if (!result || !result.photo) {
+      console.error(`Photo not found for Ashima ID: ${ashima_id}`);
       return NextResponse.json(
         { error: 'Photo not found for the provided Ashima ID.' },
         { status: 404 }
       );
     }
 
+    console.log(`Photo fetched for Ashima ID: ${ashima_id}, size: ${result.photo.length} bytes`);
+
     // Serve the photo as binary data
     return new Response(result.photo, {
       headers: {
-        'Content-Type': 'image/png', // Adjust based on the image type stored
+        'Content-Type': 'image/jpeg', // Adjust based on the image type stored
         'Cache-Control': 'public, max-age=31536000', // Cache the image for a year
       },
     });

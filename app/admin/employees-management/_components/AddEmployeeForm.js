@@ -128,7 +128,7 @@ export default function AddEmployeeForm({ onSave, onClose }) {
         <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-6">
           {/* Left side - Form Fields */}
           <div className="flex-1">
-            <FormFields formData={formData} handleChange={handleChange} />
+            <FormFields formData={formData} handleChange={handleChange} disabled={false} />
           </div>
           
           {/* Right side - Photo Capture */}

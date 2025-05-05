@@ -150,7 +150,7 @@ export default function EmployeeManagement() {
                 <th className="px-4 py-2 text-left text-gray-600 font-medium">Position</th>
                 <th className="px-4 py-2 text-left text-gray-600 font-medium">Employee Status</th>
                 <th className="px-4 py-2 text-left text-gray-600 font-medium">Status</th>
-                <th className="px-4 py-2 text-left text-gray-600 font-medium">Actions</th>
+                {/* <th className="px-4 py-2 text-left text-gray-600 font-medium">Actions</th> */}
               </tr>
             </thead>
             <tbody>
@@ -166,7 +166,7 @@ export default function EmployeeManagement() {
                   <td className="px-4 py-2">{employee.position}</td>
                   <td className="px-4 py-2">{employee.emp_stat}</td>
                   <td className="px-4 py-2">{employee.status}</td>
-                  <td className="px-4 py-2 flex gap-2">
+                  {/* <td className="px-4 py-2 flex gap-2">
                     <button
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent row click
@@ -176,7 +176,7 @@ export default function EmployeeManagement() {
                     >
                       Delete
                     </button>
-                  </td>
+                  </td> */}
                 </tr>
               ))}
             </tbody>

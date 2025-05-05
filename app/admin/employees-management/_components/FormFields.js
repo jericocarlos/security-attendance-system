@@ -1,4 +1,4 @@
-export default function FormFields({ formData, handleChange }) {
+export default function FormFields({ formData, handleChange, disabled }) {
   return (
     <div className="grid grid-cols-2 gap-4">
       {/* Ashima ID */}
@@ -10,7 +10,10 @@ export default function FormFields({ formData, handleChange }) {
           value={formData.ashima_id}
           onChange={handleChange}
           required
-          className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none"
+          className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none ${
+            disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
+          }`}
+          disabled={disabled}
         />
       </div>
 
@@ -60,9 +63,11 @@ export default function FormFields({ formData, handleChange }) {
           value={formData.rfid_tag}
           onChange={handleChange}
           required
-          className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none"
+          className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none ${
+            disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
+          }`}
         />
-      </div>
+      </div> 
 
       {/* Employee Status */}
       <div className="col-span-1">

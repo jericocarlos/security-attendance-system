@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 
 export default function PhotoCapture({
   capturing,
@@ -9,32 +10,37 @@ export default function PhotoCapture({
   ashima_id,
   onRemovePhoto,
 }) {
-  // Ensure photo is a string or fallback to null
-  const validPhoto = typeof photo === "string" ? photo : null;
+  // State to manage the image source
+  const [imageSrc, setImageSrc] = useState(null); // Initialize with `null`
 
-  // Inside the component
-  const imageUrl = useMemo(() => {
-    if (validPhoto && validPhoto.startsWith("data:image/")) {
-      return validPhoto;
+  // Update imageSrc whenever the photo or ashima_id changes
+  useEffect(() => {
+    if (typeof photo === "string" && photo.startsWith("data:image/")) {
+      setImageSrc(photo); // Use Base64 photo if available
     } else if (ashima_id) {
-      // Add a timestamp to prevent caching
-      return `/api/employees/photo?ashima_id=${ashima_id}&t=${new Date().getTime()}`;
+      setImageSrc(`/api/employees/photo?ashima_id=${ashima_id}&t=${new Date().getTime()}`);
     } else {
-      return "/placeholder.png";
+      setImageSrc(null); // Set to `null` if no valid photo or ashima_id
     }
-  }, [validPhoto, ashima_id]);
+  }, [photo, ashima_id]);
+
+  // Handle image load error
+  const handleImageError = () => {
+    console.error("Failed to load image, switching to placeholder.");
+    setImageSrc("/placeholder.png"); // Set fallback to placeholder
+  };
 
   return (
     <div className="flex flex-col">
       <h3 className="font-medium text-gray-700 mb-2">Employee Photo</h3>
-      
       <div className="bg-gray-100 border rounded-md overflow-hidden">
         {capturing ? (
+          // Webcam capture mode
           <div className="flex flex-col items-center">
-            <video 
-              ref={videoRef} 
-              className="w-full aspect-square object-cover" 
-              autoPlay 
+            <video
+              ref={videoRef}
+              className="w-full aspect-square object-cover"
+              autoPlay
               playsInline
             />
             <button
@@ -46,29 +52,33 @@ export default function PhotoCapture({
             </button>
           </div>
         ) : (
+          // Display photo or placeholder
           <div className="flex flex-col items-center">
             <div className="w-full aspect-square">
-              <img
-                src={imageUrl}
-                alt="Employee"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  console.error("Failed to load image");
-                  e.target.src = "/placeholder.png";
-                }}
-              />
+              {imageSrc ? (
+                <Image
+                  src={imageSrc}
+                  alt="Employee"
+                  className="w-full h-full object-cover"
+                  onError={handleImageError} // Handle image load error
+                  width={250}
+                  height={250}
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                  <span className="text-gray-500">No Image Available</span>
+                </div>
+              )}
             </div>
-            
             <div className="w-full flex flex-col">
               <button
                 type="button"
                 onClick={handleStartCapture}
                 className="w-full py-2 bg-green-500 text-white text-sm hover:bg-green-600 transition-colors"
               >
-                {validPhoto ? "Change Photo" : "Take Photo"}
+                {photo ? "Change Photo" : "Take Photo"}
               </button>
-              
-              {validPhoto && onRemovePhoto && (
+              {photo && onRemovePhoto && (
                 <button
                   type="button"
                   onClick={onRemovePhoto}
