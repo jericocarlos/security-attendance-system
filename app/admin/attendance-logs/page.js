@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export default function AttendanceLogs() {
   const [logs, setLogs] = useState([]);
@@ -8,24 +8,42 @@ export default function AttendanceLogs() {
   const [total, setTotal] = useState(0);
   const [limit, setLimit] = useState(10);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchLogs = useCallback(async (signal) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`/api/admin/attendance-logs?page=${page}&limit=${limit}`, {
+        signal
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setLogs(data.data || []);
+      setTotal(data.total || 0);
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error("Failed to fetch attendance logs:", err);
+        setError("Failed to load attendance logs. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [page, limit]);
 
   useEffect(() => {
-    const fetchLogs = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/admin/attendance-logs?page=${page}&limit=${limit}`);
-        const data = await response.json();
-        setLogs(data.data || []);
-        setTotal(data.total || 0);
-      } catch (err) {
-        console.error("Failed to fetch attendance logs:", err);
-      } finally {
-        setLoading(false);
-      }
+    const controller = new AbortController();
+    fetchLogs(controller.signal);
+    
+    return () => {
+      controller.abort();
     };
-
-    fetchLogs();
-  }, [page, limit]);
+  }, [fetchLogs]);
 
   const totalPages = Math.ceil(total / limit);
 

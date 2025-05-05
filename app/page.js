@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import HIDListener from '@/lib/HIDListeners';
 import Clock from '@/components/Clock';
 import Image from 'next/image';
@@ -10,19 +10,31 @@ export default function Home() {
   const [employeeInfo, setEmployeeInfo] = useState(null); // Employee information
   const [employeeStatus, setEmployeeStatus] = useState(null); // Employee status
   const [error, setError] = useState(null); // Error message
+  const [isLoading, setIsLoading] = useState(false); // Loading state
 
-  // Fetch attendance logs
-  const fetchLogs = async () => {
+  // Improved fetchLogs with AbortController support
+  const fetchLogs = useCallback(async (signal) => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      const response = await fetch('/api/attendance/logs');
-      if (!response.ok) throw new Error('Failed to fetch attendance logs');
+      const response = await fetch('/api/attendance/logs', { signal });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch attendance logs: ${response.status}`);
+      }
+      
       const data = await response.json();
       setLogs(data.logs || []);
     } catch (err) {
-      console.error('Error fetching logs:', err);
-      setError('Failed to load attendance logs.');
+      if (err.name !== 'AbortError') {
+        console.error('Error fetching logs:', err);
+        setError('Failed to load attendance logs. Please try again later.');
+      }
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, []);
 
   // Handle RFID tag scan
   const handleTagRead = async (tag) => {
@@ -81,8 +93,12 @@ export default function Home() {
   };
 
   useEffect(() => {
-    fetchLogs(); // Fetch logs on component mount
-  }, []);
+    const controller = new AbortController();
+    fetchLogs(controller.signal);
+    
+    // Cleanup function to abort fetch if component unmounts
+    return () => controller.abort();
+  }, [fetchLogs]);
 
   return (
     <div className="max-w-7xl mx-auto px-10 py-12">

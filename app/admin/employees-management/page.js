@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ConfirmationModal from "./_components/ConfirmationModal";
 import EditEmployeeForm from "./_components/EditEmployeeForm";
 import AddEmployeeForm from "./_components/AddEmployeeForm";
@@ -20,25 +20,39 @@ export default function EmployeeManagement() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
 
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(
-          `/api/admin/employees?page=${page}&limit=${limit}&search=${search}&department=${departmentFilter}&status=${statusFilter}`
-        );
-        const data = await response.json();
-        setEmployees(data.data || []);
-        setTotal(data.total || 0);
-      } catch (err) {
-        console.error("Failed to fetch employees:", err);
-      } finally {
-        setLoading(false);
+  const fetchEmployees = useCallback(async (signal) => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `/api/admin/employees?page=${page}&limit=${limit}&search=${search}&department=${departmentFilter}&status=${statusFilter}`,
+        { signal }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
-    };
-
-    fetchEmployees();
+      
+      const data = await response.json();
+      setEmployees(data.data || []);
+      setTotal(data.total || 0);
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error("Failed to fetch employees:", err);
+        // You could add error state handling here if needed
+      }
+    } finally {
+      setLoading(false);
+    }
   }, [page, limit, search, departmentFilter, statusFilter]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchEmployees(controller.signal);
+    
+    return () => {
+      controller.abort();
+    };
+  }, [fetchEmployees]);
 
   const totalPages = Math.ceil(total / limit);
 
