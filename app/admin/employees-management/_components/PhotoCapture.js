@@ -9,6 +9,7 @@ export default function PhotoCapture({
   videoRef,
   ashima_id,
   onRemovePhoto,
+  onPhotoUpload, // Add a prop for handling uploaded photos
 }) {
   // State to manage the image source
   const [imageSrc, setImageSrc] = useState(null); // Initialize with `null`
@@ -28,6 +29,22 @@ export default function PhotoCapture({
   const handleImageError = () => {
     console.error("Failed to load image, switching to placeholder.");
     setImageSrc("/placeholder.png"); // Set fallback to placeholder
+  };
+
+  // Handle file input change
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64Image = reader.result;
+        setImageSrc(base64Image); // Update the image source
+        if (onPhotoUpload) {
+          onPhotoUpload(base64Image); // Pass the Base64 image to the parent component
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -87,6 +104,15 @@ export default function PhotoCapture({
                   Remove Photo
                 </button>
               )}
+              <label className="w-full py-2 bg-gray-500 text-black text-sm hover:bg-gray-600 transition-colors text-center cursor-pointer mt-2">
+                Upload Photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
             </div>
           </div>
         )}

@@ -34,7 +34,7 @@ export default function usePhotoCapture(setFormData) {
     tracks.forEach((track) => track.stop());
     video.srcObject = null;
 
-    const photo = canvas.toDataURL("image/jpeg", 0.7);
+    const photo = canvas.toDataURL("image/jpeg", 0.9);
     setFormData((prev) => ({ ...prev, photo }));
     setCapturing(false);
   };

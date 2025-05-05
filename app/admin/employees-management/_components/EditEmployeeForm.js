@@ -4,6 +4,24 @@ import { useState, useRef, useEffect } from "react";
 import FormFields from "./FormFields";
 import PhotoCapture from "./PhotoCapture";
 
+// Add this component to display helpful instructions
+const WebcamTroubleshootingGuide = ({ show }) => {
+  if (!show) return null;
+  
+  return (
+    <div className="mt-4 p-3 bg-blue-50 text-sm text-blue-800 rounded border border-blue-200">
+      <h4 className="font-semibold">Troubleshooting Camera Access:</h4>
+      <ul className="list-disc ml-5 mt-2 space-y-1">
+        <li>Check the camera icon in your browser's address bar</li>
+        <li>Reset permissions: <code>chrome://settings/content/camera</code> (Chrome)</li>
+        <li>Try using a different browser</li>
+        <li>Ensure no other applications are using your camera</li>
+        <li>Run the application on proper localhost URL (not IP address)</li>
+      </ul>
+    </div>
+  );
+};
+
 export default function EditEmployeeForm({ employee, onSave, onClose }) {
   const [formData, setFormData] = useState({
     ashima_id: employee?.ashima_id || "",
@@ -19,6 +37,10 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [capturing, setCapturing] = useState(false);
+  const [webcamPermission, setWebcamPermission] = useState({
+    status: "not-asked", // "not-asked", "granted", "denied", "error"
+    message: null
+  });
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -37,22 +59,72 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
     });
   };
 
-  // Start webcam capture
+  // Add this helper function to your component
+  const checkBrowserPermissions = async () => {
+    try {
+      // Check if permissions API is available
+      if (navigator.permissions && navigator.permissions.query) {
+        const result = await navigator.permissions.query({ name: 'camera' });
+        
+        if (result.state === 'denied') {
+          setWebcamPermission({
+            status: "denied",
+            message: "Camera access is blocked. Please reset permissions in your browser settings."
+          });
+          return false;
+        }
+      }
+      return true;
+    } catch (err) {
+      console.warn("Permission check failed:", err);
+      return true; // Continue anyway if permissions API isn't available
+    }
+  };
+
+  // Start webcam capture with permission tracking
   const handleStartCapture = async () => {
     setCapturing(true);
+    setWebcamPermission({ status: "not-asked", message: null });
+    
+    // Check for existing permission issues
+    const canProceed = await checkBrowserPermissions();
+    if (!canProceed) {
+      setCapturing(false);
+      return;
+    }
+    
     try {
       if (typeof navigator === 'undefined' || !navigator.mediaDevices) {
+        setWebcamPermission({
+          status: "error",
+          message: "Media Devices API not supported in this environment"
+        });
         throw new Error('Media Devices API not supported in this environment');
       }
       
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
+        setWebcamPermission({ status: "granted", message: null });
       }
     } catch (err) {
       console.error("Failed to access webcam:", err);
       setCapturing(false);
+      
+      // Set appropriate permission status based on error
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        setWebcamPermission({
+          status: "denied",
+          message: "Camera permission was denied. Please allow camera access and try again."
+        });
+      } else {
+        setWebcamPermission({
+          status: "error",
+          message: `Camera error: ${err.message}`
+        });
+      }
     }
   };
 
@@ -72,7 +144,7 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
     tracks.forEach((track) => track.stop());
     video.srcObject = null;
 
-    const photo = canvas.toDataURL("image/jpeg", 0.7);
+    const photo = canvas.toDataURL("image/jpeg", 9);
     console.log("Captured new photo:", photo.substring(0, 50) + "...");
     console.log("Photo size:", Math.round(photo.length / 1024), "KB");
 
@@ -132,6 +204,18 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
     setFormData((prev) => ({ ...prev, photo: "" }));
   };
 
+  // Show webcam permission message in UI
+  const renderWebcamPermissionMessage = () => {
+    if (webcamPermission.status === "denied" || webcamPermission.status === "error") {
+      return (
+        <div className="mt-2 p-2 bg-yellow-100 text-yellow-800 rounded text-sm">
+          {webcamPermission.message}
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="bg-white rounded-lg p-6 shadow-lg w-[800px] max-w-full">
@@ -163,7 +247,11 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
               videoRef={videoRef}
               ashima_id={formData.ashima_id}
               onRemovePhoto={handleRemovePhoto}
+              permissionStatus={webcamPermission.status}
+              onPhotoUpload={(uploadedPhoto) => setFormData((prev) => ({ ...prev, photo: uploadedPhoto }))}
             />
+            {renderWebcamPermissionMessage()}
+            <WebcamTroubleshootingGuide show={webcamPermission.status === "denied" || webcamPermission.status === "error"} />
           </div>
         </form>
 

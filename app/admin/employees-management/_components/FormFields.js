@@ -66,6 +66,7 @@ export default function FormFields({ formData, handleChange, disabled }) {
           className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none ${
             disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
           }`}
+          disabled={disabled}
         />
       </div> 
 

@@ -107,6 +107,7 @@ export default function AddEmployeeForm({ onSave, onClose }) {
               handleCapturePhoto={handleCapturePhoto}
               videoRef={videoRef}
               onRemovePhoto={() => handleRemovePhoto(setFormData)}
+              onPhotoUpload={(uploadedPhoto) => setFormData((prev) => ({ ...prev, photo: uploadedPhoto }))}
             />
           </div>
         </form>
