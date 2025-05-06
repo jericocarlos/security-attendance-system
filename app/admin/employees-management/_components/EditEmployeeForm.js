@@ -12,7 +12,7 @@ const WebcamTroubleshootingGuide = ({ show }) => {
     <div className="mt-4 p-3 bg-blue-50 text-sm text-blue-800 rounded border border-blue-200">
       <h4 className="font-semibold">Troubleshooting Camera Access:</h4>
       <ul className="list-disc ml-5 mt-2 space-y-1">
-        <li>Check the camera icon in your browser's address bar</li>
+        <li>Check the camera icon in your browser&apos;s address bar</li>
         <li>Reset permissions: <code>chrome://settings/content/camera</code> (Chrome)</li>
         <li>Try using a different browser</li>
         <li>Ensure no other applications are using your camera</li>
