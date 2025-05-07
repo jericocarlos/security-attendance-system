@@ -33,6 +33,22 @@ export default function FormFields({ formData, handleChange, disabled }) {
     fetchDepartmentsAndPositions();
   }, []);
 
+  // Handle name input to convert to uppercase
+  const handleNameChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Create a new event-like object with uppercase value
+    const modifiedEvent = {
+      target: {
+        name,
+        value: value.toUpperCase()
+      }
+    };
+    
+    // Call the original handleChange with our modified event
+    handleChange(modifiedEvent);
+  };
+
   return (
     <div className="grid grid-cols-2 gap-4">
       {/* Ashima ID */}
@@ -51,20 +67,20 @@ export default function FormFields({ formData, handleChange, disabled }) {
         />
       </div>
 
-      {/* Name */}
+      {/* Name  */}
       <div className="col-span-1">
         <label className="block text-gray-700 mb-2 font-medium">Name</label>
         <input
           type="text"
           name="name"
           value={formData.name}
-          onChange={handleChange}
+          onChange={handleNameChange}
           required
           className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none"
         />
       </div>
 
-      {/* Department - Changed to dropdown */}
+      {/* Department */}
       <div className="col-span-1">
         <label className="block text-gray-700 mb-2 font-medium">Department</label>
         {isLoading ? (
@@ -86,7 +102,7 @@ export default function FormFields({ formData, handleChange, disabled }) {
         )}
       </div>
 
-      {/* Position - Changed to dropdown */}
+      {/* Position */}
       <div className="col-span-1">
         <label className="block text-gray-700 mb-2 font-medium">Position</label>
         {isLoading ? (
@@ -150,6 +166,7 @@ export default function FormFields({ formData, handleChange, disabled }) {
         >
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
+          <option value="resigned">Resigned</option>
         </select>
       </div>
     </div>
