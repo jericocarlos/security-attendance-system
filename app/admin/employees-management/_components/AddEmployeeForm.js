@@ -3,8 +3,8 @@
 import { useState } from "react";
 import FormFields from "./FormFields";
 import PhotoCapture from "./PhotoCapture";
-import FormActions from "./FormActions";
 import usePhotoCapture from "@/hooks/usePhotoCapture";
+import FormActions from "@/components/FormActions";
 
 
 export default function AddEmployeeForm({ onSave, onClose }) {
@@ -114,7 +114,7 @@ export default function AddEmployeeForm({ onSave, onClose }) {
         
         {/* Form Actions - using the shared component */}
         <div className="mt-6 pt-4 border-t">
-          <FormActions 
+          <FormActions
             loading={loading} 
             onClose={onClose}
             submitLabel="Save"
