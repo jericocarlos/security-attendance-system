@@ -9,13 +9,17 @@ export async function GET() {
         al.id, 
         e.rfid_tag, 
         e.name, 
-        e.department, 
-        e.position, 
+        d.name AS department, 
+        p.name AS position, 
         al.log_type, 
         al.timestamp 
       FROM attendance_logs al
       JOIN employees e 
         ON al.ashima_id = e.ashima_id
+      LEFT JOIN departments d
+        ON e.department_id = d.id
+      LEFT JOIN positions p
+        ON e.position_id = p.id
       ORDER BY al.timestamp DESC
       LIMIT 20
     `;
