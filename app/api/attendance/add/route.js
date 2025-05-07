@@ -12,19 +12,21 @@ export async function POST(request) {
       );
     }
 
-    // Step 1: Fetch employee information by RFID tag
+    // Step 1: Fetch employee information by RFID tag, including department and position names
     const employeeQuery = `
       SELECT 
-        id AS employee_id, 
-        ashima_id, 
-        name, 
-        department, 
-        position, 
-        photo, 
-        emp_stat, 
-        status
-      FROM employees
-      WHERE rfid_tag = ?
+        e.id AS employee_id, 
+        e.ashima_id, 
+        e.name, 
+        d.name AS department, 
+        p.name AS position, 
+        e.photo, 
+        e.emp_stat, 
+        e.status
+      FROM employees e
+      LEFT JOIN departments d ON e.department_id = d.id
+      LEFT JOIN positions p ON e.position_id = p.id
+      WHERE e.rfid_tag = ?
     `;
     const [employee] = await executeQuery({ query: employeeQuery, values: [rfid_tag] });
 
@@ -53,8 +55,8 @@ export async function POST(request) {
 
     // Step 4: Insert the new attendance log
     const insertLogQuery = `
-      INSERT INTO attendance_logs (ashima_id, log_type)
-      VALUES (?, ?)
+      INSERT INTO attendance_logs (ashima_id, log_type, timestamp)
+      VALUES (?, ?, NOW())
     `;
     await executeQuery({ query: insertLogQuery, values: [employee.ashima_id, nextLogType] });
 

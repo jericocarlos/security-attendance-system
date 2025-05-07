@@ -16,14 +16,14 @@ export default function Home() {
   const fetchLogs = useCallback(async (signal) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch('/api/attendance/logs', { signal });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch attendance logs: ${response.status}`);
       }
-      
+
       const data = await response.json();
       setLogs(data.logs || []);
     } catch (err) {
@@ -95,7 +95,7 @@ export default function Home() {
   useEffect(() => {
     const controller = new AbortController();
     fetchLogs(controller.signal);
-    
+
     // Cleanup function to abort fetch if component unmounts
     return () => controller.abort();
   }, [fetchLogs]);

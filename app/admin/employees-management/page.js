@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import ConfirmationModal from "./_components/ConfirmationModal";
 import EditEmployeeForm from "./_components/EditEmployeeForm";
 import AddEmployeeForm from "./_components/AddEmployeeForm";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 export default function EmployeeManagement() {
   const [employees, setEmployees] = useState([]);
