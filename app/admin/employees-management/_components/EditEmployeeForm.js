@@ -26,8 +26,8 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
   const [formData, setFormData] = useState({
     ashima_id: employee?.ashima_id || "",
     name: employee?.name || "",
-    department: employee?.department || "",
-    position: employee?.position || "",
+    department_id: employee?.department_id || "",
+    position_id: employee?.position_id || "",
     rfid_tag: employee?.rfid_tag || "",
     photo: typeof employee?.photo === "string" ? employee.photo : "", // Ensure photo is a string
     emp_stat: employee?.emp_stat || "Regular",
@@ -170,6 +170,8 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
 
     const submissionData = {
       ...formData,
+      department_id: formData.department_id || null,
+      position_id: formData.position_id || null,
       photo: formData.photo || null, // Use null if photo is empty
     };
 

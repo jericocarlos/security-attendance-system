@@ -7,6 +7,7 @@ import ConfirmationModal from "@/components/ConfirmationModal";
 
 export default function EmployeeManagement() {
   const [employees, setEmployees] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [limit, setLimit] = useState(20);
@@ -19,6 +20,23 @@ export default function EmployeeManagement() {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
+
+  // Fetch departments for filter dropdown
+  useEffect(() => {
+    async function fetchDepartments() {
+      try {
+        const response = await fetch('/api/admin/departments');
+        if (response.ok) {
+          const data = await response.json();
+          setDepartments(data.departments || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch departments:", error);
+      }
+    }
+    
+    fetchDepartments();
+  }, []);
 
   const fetchEmployees = useCallback(async (signal) => {
     setLoading(true);
@@ -96,13 +114,8 @@ export default function EmployeeManagement() {
   };
 
   const handleSaveEmployee = (newEmployee) => {
-    setEmployees((prev) =>
-      selectedEmployee
-        ? prev.map((emp) =>
-            emp.id === newEmployee.id ? newEmployee : emp
-          )
-        : [...prev, newEmployee]
-    );
+    // Refresh the employee list after adding/editing
+    fetchEmployees();
     setShowAddForm(false);
     setShowEditForm(false);
   };
@@ -135,9 +148,9 @@ export default function EmployeeManagement() {
           className="px-4 py-2 border rounded-md"
         >
           <option value="">All Departments</option>
-          <option value="HR">HR</option>
-          <option value="IT">IT</option>
-          <option value="Finance">Finance</option>
+          {departments.map(dept => (
+            <option key={dept.id} value={dept.id}>{dept.name}</option>
+          ))}
         </select>
         <select
           value={statusFilter}
@@ -164,7 +177,6 @@ export default function EmployeeManagement() {
                 <th className="px-4 py-2 text-left text-gray-600 font-medium">Position</th>
                 <th className="px-4 py-2 text-left text-gray-600 font-medium">Employee Status</th>
                 <th className="px-4 py-2 text-left text-gray-600 font-medium">Status</th>
-                {/* <th className="px-4 py-2 text-left text-gray-600 font-medium">Actions</th> */}
               </tr>
             </thead>
             <tbody>
@@ -172,7 +184,7 @@ export default function EmployeeManagement() {
                 <tr
                   key={employee.id}
                   className="border-t cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleEditEmployee(employee)} // Make row clickable
+                  onClick={() => handleEditEmployee(employee)}
                 >
                   <td className="px-4 py-2">{employee.ashima_id}</td>
                   <td className="px-4 py-2">{employee.name}</td>
@@ -180,17 +192,6 @@ export default function EmployeeManagement() {
                   <td className="px-4 py-2">{employee.position}</td>
                   <td className="px-4 py-2">{employee.emp_stat}</td>
                   <td className="px-4 py-2">{employee.status}</td>
-                  {/* <td className="px-4 py-2 flex gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent row click
-                        handleDeleteEmployee(employee);
-                      }}
-                      className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </td> */}
                 </tr>
               ))}
             </tbody>

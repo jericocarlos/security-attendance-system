@@ -26,7 +26,7 @@ export async function PUT(req, context) {
   try {
     const { id } = await context.params;
     const body = await req.json();
-    const { ashima_id, name, department, position, rfid_tag, photo, emp_stat, status } = body;
+    const { ashima_id, name, department_id, position_id, rfid_tag, photo, emp_stat, status } = body;
 
     console.log("Updating employee ID:", id);
     console.log("Photo provided:", photo ? `${photo.substring(0, 30)}... (length: ${photo.length})` : "None");
@@ -47,14 +47,14 @@ export async function PUT(req, context) {
     const updateFields = [
       "ashima_id = ?",
       "name = ?",
-      "department = ?",
-      "position = ?",
+      "department_id = ?",
+      "position_id = ?",
       "rfid_tag = ?",
       "photo = ?",
       "emp_stat = ?",
-      "status = ?",
+      "status = ?"
     ];
-    const values = [ashima_id, name, department, position, rfid_tag, binaryPhoto, emp_stat, status];
+    const values = [ashima_id, name, department_id, position_id, rfid_tag, binaryPhoto, emp_stat, status];
 
     values.push(id); // Add ID to the query values
 
@@ -67,7 +67,7 @@ export async function PUT(req, context) {
     // Log the query and first few values (without the full photo)
     console.log("Update query:", updateQuery);
     console.log("Update values (partial):", [
-      ashima_id, name, department, position, rfid_tag, 
+      ashima_id, name, department_id, position_id, rfid_tag, 
       binaryPhoto ? `[Binary data: ${binaryPhoto.length} bytes]` : null,
       emp_stat, status, id
     ]);

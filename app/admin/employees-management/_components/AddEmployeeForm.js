@@ -6,13 +6,12 @@ import PhotoCapture from "./PhotoCapture";
 import usePhotoCapture from "@/hooks/usePhotoCapture";
 import FormActions from "@/components/FormActions";
 
-
 export default function AddEmployeeForm({ onSave, onClose }) {
   const [formData, setFormData] = useState({
     ashima_id: "",
     name: "",
-    department: "",
-    position: "",
+    department_id: "",
+    position_id: "",
     rfid_tag: "",
     photo: "",
     emp_stat: "Regular",
@@ -55,6 +54,12 @@ export default function AddEmployeeForm({ onSave, onClose }) {
       return;
     }
 
+    const submissionData = {
+      ...formData,
+      department_id: formData.department_id || null,
+      position_id: formData.position_id || null,
+    };
+
     setLoading(true);
     try {
       const response = await fetch(`/api/admin/employees`, {
@@ -62,7 +67,7 @@ export default function AddEmployeeForm({ onSave, onClose }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submissionData),
       });
 
       if (response.ok) {

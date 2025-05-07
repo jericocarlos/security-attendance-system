@@ -20,19 +20,26 @@ export async function GET(req) {
     // Dynamic WHERE clause for search and filters
     const whereClause = `
       WHERE 
-        (ashima_id LIKE ? OR name LIKE ?)
-        ${department ? `AND department = ?` : ""}
-        ${status ? `AND status = ?` : ""}
+        (e.ashima_id LIKE ? OR e.name LIKE ?)
+        ${department ? `AND d.id = ?` : ""}
+        ${status ? `AND e.status = ?` : ""}
     `;
 
     const query = `
       SELECT 
-        id, ashima_id, name, department, position, rfid_tag, photo, emp_stat, status
+        e.id, e.ashima_id, e.name, 
+        d.name AS department, p.name AS position, 
+        e.rfid_tag, e.photo, e.emp_stat, e.status,
+        e.department_id, e.position_id
       FROM 
-        employees
+        employees e
+      LEFT JOIN 
+        departments d ON e.department_id = d.id
+      LEFT JOIN 
+        positions p ON e.position_id = p.id
       ${whereClause}
       ORDER BY 
-        id DESC
+        e.id DESC
       LIMIT ? OFFSET ?
     `;
 
@@ -49,13 +56,14 @@ export async function GET(req) {
     const formattedEmployees = employees.map((employee) => ({
       ...employee,
       photo: employee.photo
-        ? `data:image/jpeg;base64,${employee.photo}`
+        ? `data:image/jpeg;base64,${Buffer.from(employee.photo).toString('base64')}`
         : null,
     }));
 
     const countQuery = `
       SELECT COUNT(*) AS total 
-      FROM employees 
+      FROM employees e
+      LEFT JOIN departments d ON e.department_id = d.id
       ${whereClause}
     `;
 
@@ -69,7 +77,7 @@ export async function GET(req) {
     const totalResult = await executeQuery({ query: countQuery, values: countValues });
 
     return NextResponse.json({
-      data: employees,
+      data: formattedEmployees,
       total: totalResult[0]?.total || 0,
       page,
       limit,
@@ -87,17 +95,17 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { ashima_id, name, department, position, rfid_tag, photo, emp_stat, status } = body;
+    const { ashima_id, name, department_id, position_id, rfid_tag, photo, emp_stat, status } = body;
 
     // Decode Base64 photo to binary
     const binaryPhoto = photo ? decodeBase64ToBinary(photo) : null;
 
     const query = `
-      INSERT INTO employees (ashima_id, name, department, position, rfid_tag, photo, emp_stat, status)
+      INSERT INTO employees (ashima_id, name, department_id, position_id, rfid_tag, photo, emp_stat, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    const values = [ashima_id, name, department, position, rfid_tag, binaryPhoto, emp_stat, status || "active"];
+    const values = [ashima_id, name, department_id, position_id, rfid_tag, binaryPhoto, emp_stat, status || "active"];
 
     const result = await executeQuery({ query, values });
 
