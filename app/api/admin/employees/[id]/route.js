@@ -29,34 +29,60 @@ export async function PUT(req, context) {
     const { ashima_id, name, department_id, position_id, rfid_tag, photo, emp_stat, status } = body;
 
     console.log("Updating employee ID:", id);
-    console.log("Photo provided:", photo ? `${photo.substring(0, 30)}... (length: ${photo.length})` : "None");
+    console.log("Status:", status);
+    console.log("Photo provided:", photo ? "Yes (photo data present)" : "No photo data");
+    console.log("RFID tag:", rfid_tag || "None");
     
-    // Validate required fields
-    if (!ashima_id || !name || !rfid_tag) {
+    // Validate required fields - only ashima_id and name are always required
+    if (!ashima_id || !name) {
       return NextResponse.json(
-        { message: "Ashima ID, Name, and RFID Tag are required" },
+        { message: "Ashima ID and Name are required" },
+        { status: 400 }
+      );
+    }
+    
+    // Check if RFID tag is required (only for active employees)
+    if (status !== "resigned" && !rfid_tag) {
+      return NextResponse.json(
+        { message: "RFID Tag is required for active employees" },
         { status: 400 }
       );
     }
 
     // Decode Base64 photo to binary, if provided
     const binaryPhoto = photo ? decodeBase64ToBinary(photo) : null;
-    console.log("Binary photo processed:", binaryPhoto ? `(${binaryPhoto.length} bytes)` : "None");
 
-    // Build the update query dynamically
-    const updateFields = [
-      "ashima_id = ?",
-      "name = ?",
-      "department_id = ?",
-      "position_id = ?",
-      "rfid_tag = ?",
-      "photo = ?",
-      "emp_stat = ?",
-      "status = ?"
-    ];
-    const values = [ashima_id, name, department_id, position_id, rfid_tag, binaryPhoto, emp_stat, status];
+    // Build the update query dynamically with proper handling of NULL values
+    const updateFields = [];
+    const values = [];
 
-    values.push(id); // Add ID to the query values
+    // Add fields to update
+    updateFields.push("ashima_id = ?");
+    values.push(ashima_id);
+
+    updateFields.push("name = ?");
+    values.push(name);
+
+    updateFields.push("department_id = ?");
+    values.push(department_id);
+
+    updateFields.push("position_id = ?");
+    values.push(position_id);
+
+    updateFields.push("rfid_tag = ?");
+    values.push(rfid_tag); // Will be null for resigned employees
+
+    updateFields.push("photo = ?");
+    values.push(binaryPhoto); // Will be null for resigned employees
+
+    updateFields.push("emp_stat = ?");
+    values.push(emp_stat);
+
+    updateFields.push("status = ?");
+    values.push(status);
+
+    // Add ID for WHERE clause
+    values.push(id);
 
     const updateQuery = `
       UPDATE employees 
@@ -64,20 +90,28 @@ export async function PUT(req, context) {
       WHERE id = ?
     `;
 
-    // Log the query and first few values (without the full photo)
+    // Log the query and values (without photo data)
     console.log("Update query:", updateQuery);
     console.log("Update values (partial):", [
       ashima_id, name, department_id, position_id, rfid_tag, 
-      binaryPhoto ? `[Binary data: ${binaryPhoto.length} bytes]` : null,
+      binaryPhoto ? "[Binary photo data]" : null,
       emp_stat, status, id
     ]);
 
     const result = await executeQuery({ query: updateQuery, values });
     console.log("Database update result:", result);
 
+    if (!result || result.affectedRows === 0) {
+      return NextResponse.json(
+        { message: "No employee was updated. The employee may not exist." },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json({ 
       message: "Employee updated successfully",
-      employeeId: id
+      employeeId: id,
+      status: status
     });
   } catch (err) {
     console.error("Failed to update employee:", err);

@@ -15,7 +15,6 @@ export default function AddEmployeeForm({ onSave, onClose }) {
     rfid_tag: "",
     photo: "",
     emp_stat: "Regular",
-    status: "active",
   });
   
   const [loading, setLoading] = useState(false);
@@ -58,6 +57,7 @@ export default function AddEmployeeForm({ onSave, onClose }) {
       ...formData,
       department_id: formData.department_id || null,
       position_id: formData.position_id || null,
+      status: "active", // Always set to active for new employees
     };
 
     setLoading(true);

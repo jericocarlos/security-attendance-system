@@ -31,14 +31,18 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
     rfid_tag: employee?.rfid_tag || "",
     photo: typeof employee?.photo === "string" ? employee.photo : "", // Ensure photo is a string
     emp_stat: employee?.emp_stat || "Regular",
-    status: employee?.status || "active",
+    isResigned: employee?.status === "resigned", // New field instead of status
   });
 
+  // Store original values to show in UI until form submit
+  const [displayPhoto, setDisplayPhoto] = useState(formData.photo);
+  const [displayRfid, setDisplayRfid] = useState(formData.rfid_tag);
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [capturing, setCapturing] = useState(false);
   const [webcamPermission, setWebcamPermission] = useState({
-    status: "not-asked", // "not-asked", "granted", "denied", "error"
+    status: "not-asked",
     message: null
   });
   const videoRef = useRef(null);
@@ -51,12 +55,25 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
 
   // Handle form field changes
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
 
-    setFormData((prev) => {
-      if (prev[name] === value) return prev; // Prevent unnecessary updates
-      return { ...prev, [name]: value };
-    });
+    if (name === "isResigned") {
+      // If marking as resigned, we'll clear photo and RFID tag in submission
+      // but keep displaying them until form is submitted
+      setFormData(prev => ({
+        ...prev,
+        isResigned: checked,
+      }));
+    } else {
+      setFormData((prev) => {
+        if (type === "checkbox") {
+          return { ...prev, [name]: checked };
+        } else if (prev[name] === value) {
+          return prev; // Prevent unnecessary updates
+        }
+        return { ...prev, [name]: value };
+      });
+    }
   };
 
   // Add this helper function to your component
@@ -154,8 +171,8 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
 
   // Validate form fields
   const validateForm = () => {
-    if (!formData.ashima_id || !formData.name || !formData.rfid_tag) {
-      setError("Ashima ID, Name, and RFID Tag are required.");
+    if (!formData.ashima_id || !formData.name) {
+      setError("Ashima ID and Name are required.");
       return false;
     }
     return true;
@@ -168,14 +185,26 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
 
     if (!validateForm()) return;
 
+    // Prepare submission data
     const submissionData = {
       ...formData,
       department_id: formData.department_id || null,
       position_id: formData.position_id || null,
-      photo: formData.photo || null, // Use null if photo is empty
+      status: formData.isResigned ? "resigned" : "active",
     };
 
-    console.log("Submitting employee update:", submissionData);
+    // If employee is resigned, clear photo and RFID tag
+    if (formData.isResigned) {
+      submissionData.photo = null;
+      submissionData.rfid_tag = null;
+    } else {
+      submissionData.photo = formData.photo || null;
+    }
+
+    console.log("Submitting employee update:", {
+      ...submissionData,
+      photo: submissionData.photo ? "Photo data present" : "No photo",
+    });
 
     setLoading(true);
     try {
@@ -185,13 +214,27 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
         body: JSON.stringify(submissionData),
       });
 
-      const responseData = await response.json();
+      // Log the HTTP status for debugging
+      console.log(`API response status: ${response.status} ${response.statusText}`);
+      
+      let responseData;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        responseData = await response.json();
+        console.log("API response data:", responseData);
+      } else {
+        const textResponse = await response.text();
+        console.log("API response (text):", textResponse);
+        responseData = { error: "Invalid response format" };
+      }
+
       if (response.ok) {
         onSave(responseData);
         onClose();
       } else {
-        setError(`Failed to update employee: ${responseData.message || "Unknown error"}`);
-        console.error("API Error Response:", responseData);
+        // More specific error message that includes the status code
+        const errorMsg = responseData.message || responseData.error || `Server error (${response.status})`;
+        setError(`Failed to update employee: ${errorMsg}`);
       }
     } catch (err) {
       setError(`An unexpected error occurred: ${err.message}`);
@@ -204,6 +247,7 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
   // Remove photo
   const handleRemovePhoto = () => {
     setFormData((prev) => ({ ...prev, photo: "" }));
+    setDisplayPhoto("");
   };
 
   // Show webcam permission message in UI
@@ -237,6 +281,20 @@ export default function EditEmployeeForm({ employee, onSave, onClose }) {
               handleChange={handleChange}
               disabled={true} // Disable Ashima ID field
             />
+            
+            {/* Resigned Checkbox */}
+            <div className="mt-4 border-t pt-4">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="isResigned"
+                  checked={formData.isResigned}
+                  onChange={handleChange}
+                  className="form-checkbox h-5 w-5 text-red-600"
+                />
+                <span className="text-gray-700 font-medium">Mark as Resigned</span>
+              </label>
+            </div>
           </div>
 
           {/* Right side - Photo Capture */}

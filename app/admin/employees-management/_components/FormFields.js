@@ -91,6 +91,7 @@ export default function FormFields({ formData, handleChange, disabled }) {
             value={formData.department_id || ""}
             onChange={handleChange}
             className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none"
+
           >
             <option value="">Select Department</option>
             {departments.map((dept) => (
@@ -132,7 +133,6 @@ export default function FormFields({ formData, handleChange, disabled }) {
           name="rfid_tag"
           value={formData.rfid_tag}
           onChange={handleChange}
-          required
           className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none ${
             disabled ? "bg-gray-100 text-gray-500 cursor-not-allowed" : ""
           }`}
@@ -152,21 +152,6 @@ export default function FormFields({ formData, handleChange, disabled }) {
           <option value="Regular">Regular</option>
           <option value="Probationary">Probationary</option>
           <option value="Consultant">Consultant</option>
-        </select>
-      </div>
-
-      {/* Status */}
-      <div className="col-span-1">
-        <label className="block text-gray-700 mb-2 font-medium">Status</label>
-        <select
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-          className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-300 focus:border-blue-500 outline-none"
-        >
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="resigned">Resigned</option>
         </select>
       </div>
     </div>
