@@ -60,7 +60,32 @@ export async function POST(request) {
     `;
     await executeQuery({ query: insertLogQuery, values: [employee.ashima_id, nextLogType] });
 
-    // Step 5: Fetch the latest "Time In" and "Time Out" logs
+    // Step 5: Update the last_active column
+    if (!employee) {
+      return NextResponse.json(
+        { error: 'Employee not found for the provided RFID tag.' },
+        { status: 404 }
+      );
+    }
+
+    if (employee.status === 'inactive') {
+      const updateStatusQuery = `
+        UPDATE employees
+        SET status = 'active', last_active = NOW()
+        WHERE ashima_id = ?
+      `;
+      await executeQuery({ query: updateStatusQuery, values: [employee.ashima_id] });
+    } else {
+      // Update last_active for active users
+      const updateLastActiveQuery = `
+        UPDATE employees
+        SET last_active = NOW()
+        WHERE ashima_id = ?
+      `;
+      await executeQuery({ query: updateLastActiveQuery, values: [employee.ashima_id] });
+    }
+
+    // Step 6: Fetch the latest "Time In" and "Time Out" logs
     const timeLogsQuery = `
       SELECT 
         MAX(CASE WHEN log_type = 'IN' THEN timestamp END) AS timeIn,
@@ -70,7 +95,7 @@ export async function POST(request) {
     `;
     const [timeLogs] = await executeQuery({ query: timeLogsQuery, values: [employee.ashima_id] });
 
-    // Step 6: Return the employee data and the updated time logs
+    // Step 7: Return the employee data and the updated time logs
     return NextResponse.json({
       employee: {
         ...employee,
