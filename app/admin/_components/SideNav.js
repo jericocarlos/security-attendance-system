@@ -9,7 +9,6 @@ import {
   FiChevronLeft, 
   FiChevronRight,
   FiSettings,
-  FiHome,
   FiMenu
 } from "react-icons/fi";
 import { cn } from "@/lib/utils"; // shadcn/ui utility
