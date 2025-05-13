@@ -22,18 +22,13 @@ export default function SideNav() {
 
   const navItems = [
     {
-      name: 'Dashboard',
-      href: '/admin/dashboard',
-      icon: <FiHome className="h-[18px] w-[18px]" />,
-    },
-    {
       name: 'Attendance Logs',
       href: '/admin/attendance-logs',
       icon: <FiCalendar className="h-[18px] w-[18px]" />,
     },
     {
       name: 'Employee Management',
-      href: '/admin/employee-management',
+      href: '/admin/employees-management',
       icon: <FiUsers className="h-[18px] w-[18px]" />,
     },
     {
@@ -49,15 +44,18 @@ export default function SideNav() {
       collapsed ? "w-16" : "w-64"
     )}>
       {/* SideNav Header */}
-      <div className="p-5 flex items-center justify-between border-b border-slate-800 mb-4 justify-center ">
+      <div className="p-5 flex items-center justify-between border-b border-slate-800 mb-4">
         {!collapsed && (
+          <div className="flex items-center justify-start">
             <Image
               src="/logo.png"
               alt="Logo"
-              className='flex items-center justify-start h-12 rounded-lg hover:bg-slate-800 transition-colors' 
-              width={125} // Adjust width as needed
-              height={50} // Adjust height as needed
+              className="h-auto w-auto max-h-12 rounded-lg hover:bg-slate-800 transition-colors"
+              width={125}
+              height={50} 
+              priority
             />
+          </div>
         )}
         <Button
           variant="ghost"

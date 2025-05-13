@@ -9,19 +9,20 @@ export async function GET(req) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const offset = (page - 1) * limit;
 
-    // Query to fetch attendance logs with employee details
+  // Query to fetch attendance logs with employee details
     const query = `
-      SELECT 
-        attendance_logs.id,
-        attendance_logs.ashima_id,
-        employees.name,
-        employees.department,
-        attendance_logs.log_type,
-        attendance_logs.timestamp
-      FROM attendance_logs
-      LEFT JOIN employees ON attendance_logs.ashima_id = employees.ashima_id
-      ORDER BY attendance_logs.timestamp DESC
-      LIMIT ? OFFSET ?
+      SELECT
+        a.id, a.ashima_id, e.name,e.department_id,
+        d.name AS department, a.log_type,
+        a.timestamp
+      FROM
+        attendance_logs a
+      LEFT JOIN
+        employees e ON e.ashima_id = a.ashima_id
+      LEFT JOIN
+        departments d ON e.department_id = d.id
+      ORDER BY a.timestamp DESC
+      LIMIT ? OFFSET ?  
     `;
 
     const rows = await executeQuery({

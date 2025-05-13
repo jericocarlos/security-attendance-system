@@ -52,12 +52,16 @@ export default function EmployeeTable({
         <Avatar>
           {row.original.photo ? (
             <AvatarImage 
-              src={row.original.photo}
+              src={row.original.photo} 
               alt={`${row.original.name}'s photo`}
             />
           ) : (
-            <AvatarFallback>{row.original.name.charAt(0)}</AvatarFallback>
+            <AvatarImage 
+              src="/placeholder.png" 
+              alt="Placeholder image"
+            />
           )}
+          <AvatarFallback>{row.original.name.charAt(0)}</AvatarFallback>
         </Avatar>
       ),
     },

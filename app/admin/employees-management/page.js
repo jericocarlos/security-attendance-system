@@ -2,42 +2,40 @@
 
 import React, { useEffect, useState } from "react";
 import { useSnackbar } from 'notistack';
-import { FiPlus, FiRefreshCw } from "react-icons/fi";
+import { FiPlus, FiFilter, FiRefreshCw } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import EmployeeTable from "./_components/EmployeeTable";
-import EmployeeFormDialog from "./_components/EmployeeFormDialog.js";
+import EmployeeFormDialog from "./_components/EmployeeFormDialog";
 import DeleteConfirmationDialog from "./_components/DeleteConfirmationDialog";
 import { Badge } from "@/components/ui/badge";
+import FilterDialog from "./_components/FilterDialog";
 
 export default function EmployeesManagementPage() {
-  // State variables
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState({ department: "", position: "", status: "" });
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [totalEmployees, setTotalEmployees] = useState(0);
   const [departments, setDepartments] = useState([]);
   const [positions, setPositions] = useState([]);
   const [loadingMetadata, setLoadingMetadata] = useState(false);
-  
-  // Dialog states
+
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentEmployee, setCurrentEmployee] = useState(null);
 
-  // Snackbar notifications
   const { enqueueSnackbar } = useSnackbar();
 
-  // Stats summary
   const [stats, setStats] = useState({
     active: 0,
     inactive: 0,
-    resigned: 0
+    resigned: 0,
   });
 
-  // Fetch employees data
   const fetchEmployees = async () => {
     setLoading(true);
     try {
@@ -45,26 +43,27 @@ export default function EmployeesManagementPage() {
         search: searchQuery,
         page: pagination.pageIndex + 1,
         limit: pagination.pageSize,
+        department: filters.department || "",
+        position: filters.position || "",
+        status: filters.status || "",
       });
 
       const response = await fetch(`/api/admin/employees?${searchParams}`);
-      if (!response.ok) throw new Error('Failed to fetch employees');
+      if (!response.ok) throw new Error("Failed to fetch employees");
       
       const data = await response.json();
       setEmployees(data.data);
       setTotalEmployees(data.total);
-      
-      // Calculate stats
-      const activeCount = data.data.filter(e => e.status === 'active').length;
-      const inactiveCount = data.data.filter(e => e.status === 'inactive').length;
-      const resignedCount = data.data.filter(e => e.status === 'resigned').length;
-      
+
+      const activeCount = data.data.filter((e) => e.status === "active").length;
+      const inactiveCount = data.data.filter((e) => e.status === "inactive").length;
+      const resignedCount = data.data.filter((e) => e.status === "resigned").length;
+
       setStats({
         active: activeCount,
         inactive: inactiveCount,
-        resigned: resignedCount
+        resigned: resignedCount,
       });
-      
     } catch (error) {
       console.error("Error fetching employees:", error);
       enqueueSnackbar("Failed to load employees", { variant: "error" });
@@ -73,28 +72,19 @@ export default function EmployeesManagementPage() {
     }
   };
 
-  // Fetch departments and positions from actual API endpoints
   const fetchDepartmentsAndPositions = async () => {
     setLoadingMetadata(true);
     try {
-      // Fetch departments
       const deptResponse = await fetch('/api/admin/departments');
-      if (!deptResponse.ok) throw new Error('Failed to fetch departments');
+      if (!deptResponse.ok) throw new Error("Failed to fetch departments");
       const deptData = await deptResponse.json();
-      
-      // Fetch positions
+
       const posResponse = await fetch('/api/admin/positions');
-      if (!posResponse.ok) throw new Error('Failed to fetch positions');
+      if (!posResponse.ok) throw new Error("Failed to fetch positions");
       const posData = await posResponse.json();
 
-      console.log("Departments API Response:", deptData);
-      console.log("Positions API Response:", posData);
-      
-      // Update state with fetched data - using the correct property names
-      // Your APIs return { departments: [...] } and { positions: [...] }
       setDepartments(deptData.departments || []);
       setPositions(posData.positions || []);
-      
     } catch (error) {
       console.error("Error fetching departments/positions:", error);
       enqueueSnackbar("Failed to load form data", { variant: "warning" });
@@ -103,34 +93,6 @@ export default function EmployeesManagementPage() {
     }
   };
 
-  // The rest of the component remains the same
-  // ...
-
-  // Handle employee deletion
-  const handleDeleteEmployee = async () => {
-    try {
-      const response = await fetch(`/api/admin/employees?id=${currentEmployee.id}`, {
-        method: "DELETE",
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        enqueueSnackbar("Employee deleted successfully", { variant: "success" });
-        setIsDeleteDialogOpen(false);
-        fetchEmployees();
-      } else {
-        throw new Error(result.message);
-      }
-    } catch (error) {
-      console.error("Error deleting employee:", error);
-      enqueueSnackbar(error.message || "Failed to delete employee", { 
-        variant: "error" 
-      });
-    }
-  };
-
-  // Add/Edit form submission handler
   const handleEmployeeFormSubmit = async (formData, imagePreview) => {
     try {
       const employeeData = {
@@ -174,22 +136,45 @@ export default function EmployeesManagementPage() {
     }
   };
 
-  // Fetch data when dependencies change
+  const handleDeleteEmployee = async () => {
+    try {
+      const response = await fetch(`/api/admin/employees?id=${currentEmployee.id}`, {
+        method: "DELETE",
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        enqueueSnackbar("Employee deleted successfully", { variant: "success" });
+        setIsDeleteDialogOpen(false);
+        fetchEmployees();
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error) {
+      console.error("Error deleting employee:", error);
+      enqueueSnackbar(error.message || "Failed to delete employee", { 
+        variant: "error" 
+      });
+    }
+  };
+
   useEffect(() => {
     fetchEmployees();
-  }, [pagination.pageIndex, pagination.pageSize, searchQuery]);
+  }, [pagination.pageIndex, pagination.pageSize, searchQuery, filters]);
 
-  // Fetch departments and positions on initial load
   useEffect(() => {
     fetchDepartmentsAndPositions();
   }, []);
 
-  // Refetch departments and positions when opening the form
   const handleOpenForm = (employee = null) => {
     setCurrentEmployee(employee);
-    // Refresh departments and positions data when opening form
     fetchDepartmentsAndPositions();
     setIsFormDialogOpen(true);
+  };
+
+  const handleOpenFilter = () => {
+    setIsFilterDialogOpen(true);
   };
 
   return (
@@ -197,10 +182,8 @@ export default function EmployeesManagementPage() {
       {/* Dashboard Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active Employees
-            </CardTitle>
+          <CardHeader>
+            <CardTitle>Active Employees</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -211,10 +194,8 @@ export default function EmployeesManagementPage() {
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Inactive Employees
-            </CardTitle>
+          <CardHeader>
+            <CardTitle>Inactive Employees</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -225,10 +206,8 @@ export default function EmployeesManagementPage() {
         </Card>
         
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Resigned Employees
-            </CardTitle>
+          <CardHeader>
+            <CardTitle>Resigned Employees</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -242,7 +221,7 @@ export default function EmployeesManagementPage() {
       {/* Main Employee Management Card */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-2xl">Employee Management</CardTitle>
+          <CardTitle>Employee Management</CardTitle>
           <div className="flex items-center gap-4">
             <div className="relative">
               <Input
@@ -251,21 +230,10 @@ export default function EmployeesManagementPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8 w-[250px]"
               />
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
             </div>
+            <Button onClick={handleOpenFilter}>
+              <FiFilter className="mr-2 h-4 w-4" /> Filter
+            </Button>
             <Button onClick={() => handleOpenForm()}>
               <FiPlus className="mr-2 h-4 w-4" /> Add Employee
             </Button>
@@ -302,6 +270,16 @@ export default function EmployeesManagementPage() {
         positions={positions}
         onSubmit={handleEmployeeFormSubmit}
         isLoadingOptions={loadingMetadata}
+      />
+
+      {/* Filter Dialog */}
+      <FilterDialog
+        open={isFilterDialogOpen}
+        onOpenChange={setIsFilterDialogOpen}
+        departments={departments}
+        positions={positions}
+        filters={filters}
+        setFilters={setFilters}
       />
 
       {/* Delete Confirmation Dialog */}
