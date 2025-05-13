@@ -9,7 +9,6 @@ import {
   FiChevronLeft, 
   FiChevronRight,
   FiSettings,
-  FiHome,
   FiMenu
 } from "react-icons/fi";
 import { cn } from "@/lib/utils"; // shadcn/ui utility
@@ -53,8 +52,8 @@ export default function SideNav() {
               src="/logo.png"
               alt="Logo"
               className="rounded-lg hover:bg-slate-800 transition-colors"
-              width={collapsed ? 60 : 128} // Adjusted width for collapsed and expanded views
-              height={collapsed ? 60 : 60} // Adjusted height
+              width={collapsed ? 60 : 128} 
+              height={collapsed ? 60 : 60}
               priority
             />
           </div>
