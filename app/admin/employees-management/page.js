@@ -230,7 +230,7 @@ export default function EmployeesManagementPage() {
         setFilters={setFilters}
       />
 
-      {/* Delete Confirmation Dialog */}
+      Delete Confirmation Dialog
       <DeleteConfirmationDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
