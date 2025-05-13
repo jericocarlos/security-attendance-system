@@ -48,6 +48,7 @@ export default function EmployeeFormDialog({
   useEffect(() => {
     if (open) {
       if (employee) {
+        // Edit mode: populate fields with employee data
         setValue("ashima_id", employee.ashima_id);
         setValue("name", employee.name);
         setValue("department_id", employee.department_id?.toString());
@@ -57,6 +58,7 @@ export default function EmployeeFormDialog({
         setValue("status", employee.status);
         setImagePreview(employee.photo);
       } else {
+        // Add mode: reset fields with default values
         reset({
           ashima_id: "",
           name: "",
@@ -64,7 +66,7 @@ export default function EmployeeFormDialog({
           position_id: "",
           rfid_tag: "",
           emp_stat: "regular",
-          status: "active",
+          status: "active", // Default status for Add mode
         });
         setImagePreview(null);
       }
@@ -235,6 +237,7 @@ export default function EmployeeFormDialog({
                       <Select
                         onValueChange={field.onChange}
                         value={field.value || "active"}
+                        disabled={!employee} // Disable the field in Add mode
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select status" />

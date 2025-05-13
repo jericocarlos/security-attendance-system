@@ -9,8 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import EmployeeTable from "./_components/EmployeeTable";
 import EmployeeFormDialog from "./_components/EmployeeFormDialog";
 import DeleteConfirmationDialog from "./_components/DeleteConfirmationDialog";
-import { Badge } from "@/components/ui/badge";
 import FilterDialog from "./_components/FilterDialog";
+import DashboardStats from "./_components/DashboardStats";
 
 export default function EmployeesManagementPage() {
   const [employees, setEmployees] = useState([]);
@@ -30,12 +30,6 @@ export default function EmployeesManagementPage() {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const [stats, setStats] = useState({
-    active: 0,
-    inactive: 0,
-    resigned: 0,
-  });
-
   const fetchEmployees = async () => {
     setLoading(true);
     try {
@@ -54,16 +48,6 @@ export default function EmployeesManagementPage() {
       const data = await response.json();
       setEmployees(data.data);
       setTotalEmployees(data.total);
-
-      const activeCount = data.data.filter((e) => e.status === "active").length;
-      const inactiveCount = data.data.filter((e) => e.status === "inactive").length;
-      const resignedCount = data.data.filter((e) => e.status === "resigned").length;
-
-      setStats({
-        active: activeCount,
-        inactive: inactiveCount,
-        resigned: resignedCount,
-      });
     } catch (error) {
       console.error("Error fetching employees:", error);
       enqueueSnackbar("Failed to load employees", { variant: "error" });
@@ -180,43 +164,7 @@ export default function EmployeesManagementPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Dashboard Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Employees</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">{stats.active}</div>
-              <Badge variant="default" className="bg-green-500">Active</Badge>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Inactive Employees</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">{stats.inactive}</div>
-              <Badge variant="outline" className="text-yellow-500 border-yellow-500">Inactive</Badge>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Resigned Employees</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">{stats.resigned}</div>
-              <Badge variant="outline" className="text-red-500 border-red-500">Resigned</Badge>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <DashboardStats />
 
       {/* Main Employee Management Card */}
       <Card>
