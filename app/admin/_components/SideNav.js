@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils"; // shadcn/ui utility
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import Image from 'next/image';
 
 export default function SideNav() {
   const [collapsed, setCollapsed] = useState(false);
@@ -23,22 +24,22 @@ export default function SideNav() {
     {
       name: 'Dashboard',
       href: '/admin/dashboard',
-      icon: <FiHome className="h-[21px] w-[21px]" />,
+      icon: <FiHome className="h-[18px] w-[18px]" />,
     },
     {
       name: 'Attendance Logs',
       href: '/admin/attendance-logs',
-      icon: <FiCalendar className="h-[21px] w-[21px]" />,
+      icon: <FiCalendar className="h-[18px] w-[18px]" />,
     },
     {
       name: 'Employee Management',
-      href: '/admin/employees-management',
-      icon: <FiUsers className="h-[21px] w-[21px]" />,
+      href: '/admin/employee-management',
+      icon: <FiUsers className="h-[18px] w-[18px]" />,
     },
     {
       name: 'Settings',
       href: '/admin/settings',
-      icon: <FiSettings className="h-[21px] w-[21px]" />,
+      icon: <FiSettings className="h-[18px] w-[18px]" />,
     },
   ];
 
@@ -48,9 +49,15 @@ export default function SideNav() {
       collapsed ? "w-16" : "w-64"
     )}>
       {/* SideNav Header */}
-      <div className="p-5 flex items-center justify-between border-b border-slate-800">
+      <div className="p-5 flex items-center justify-between border-b border-slate-800 mb-4 justify-center ">
         {!collapsed && (
-          <h2 className="text-xl font-bold text-slate-100">EastWest BPO</h2>
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              className='flex items-center justify-start h-12 rounded-lg hover:bg-slate-800 transition-colors' 
+              width={125} // Adjust width as needed
+              height={50} // Adjust height as needed
+            />
         )}
         <Button
           variant="ghost"
@@ -65,7 +72,7 @@ export default function SideNav() {
       {/* Navigation Items - Centered vertically */}
       <div className="flex-grow flex items-center justify-center">
         <nav className="w-full py-4">
-          <ul className="space-y-5 px-3">
+          <ul className="space-y-3 px-3">
             {navItems.map((item) => (
               <li key={item.name}>
                 <TooltipProvider delayDuration={0} disableHoverableContent={!collapsed}>
@@ -74,7 +81,7 @@ export default function SideNav() {
                       <Link
                         href={item.href}
                         className={cn(
-                          "flex items-center justify-start h-15 rounded-lg hover:bg-slate-800 transition-colors",
+                          "flex items-center justify-start h-12 rounded-lg hover:bg-slate-800 transition-colors",
                           collapsed ? "px-3 justify-center" : "px-4",
                           pathname.startsWith(item.href) ? 'bg-blue-700 hover:bg-blue-700/90' : ''
                         )}
@@ -101,7 +108,7 @@ export default function SideNav() {
       {/* Footer */}
       {!collapsed && (
         <div className="p-4 text-center text-sm text-slate-400 border-t border-slate-800">
-          &copy; {new Date().getFullYear()} EastWest BPO
+          &copy; {new Date().getFullYear()} EastWest BPO MCI
         </div>
       )}
     </div>

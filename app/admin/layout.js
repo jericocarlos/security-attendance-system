@@ -1,8 +1,8 @@
 "use client";
-
+ 
 import { SnackbarProvider } from 'notistack';
 import SideNav from './_components/SideNav';
-
+ 
 export default function AdminLayout({ children }) {
   return (
     <SnackbarProvider maxSnack={3} autoHideDuration={3000}>
