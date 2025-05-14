@@ -106,7 +106,7 @@ export default function EmployeeFormDialog({
           <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="details">Employee Details</TabsTrigger>
-              <TabsTrigger value="settings">Status & Photo</TabsTrigger>
+              <TabsTrigger value="settings">Rfid & Photo</TabsTrigger>
             </TabsList>
 
             <TabsContent value="details" className="space-y-4 py-4">
@@ -193,16 +193,7 @@ export default function EmployeeFormDialog({
                   />
                 </div>
               </div>
-
-              {/* RFID Tag Field */}
-              <div className="space-y-2">
-                <Label htmlFor="rfid_tag">RFID Tag</Label>
-                <Input id="rfid_tag" {...register("rfid_tag")} />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="settings" className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
+                                  <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="emp_stat">Employment Status</Label>
                   <Controller
@@ -253,6 +244,11 @@ export default function EmployeeFormDialog({
                 </div>
               </div>
 
+
+            </TabsContent>
+
+            <TabsContent value="settings" className="space-y-4 py-4">
+
               {/* Photo Upload */}
               <div className="space-y-2">
                 <Label htmlFor="photo">Employee Photo</Label>
@@ -288,6 +284,12 @@ export default function EmployeeFormDialog({
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* RFID Tag Field */}
+              <div className="space-y-2">
+                <Label htmlFor="rfid_tag">RFID Tag</Label>
+                <Input id="rfid_tag" {...register("rfid_tag")} />
               </div>
             </TabsContent>
           </Tabs>
