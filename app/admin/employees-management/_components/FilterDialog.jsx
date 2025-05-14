@@ -82,7 +82,7 @@ export default function FilterDialog({
               />
             </div>
 
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label htmlFor="position">Position</Label>
               <Controller
                 name="position"
@@ -105,7 +105,7 @@ export default function FilterDialog({
                   </Select>
                 )}
               />
-            </div>
+            </div> */}
 
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>

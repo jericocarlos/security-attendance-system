@@ -48,14 +48,25 @@ export default function SideNav() {
         {/* SideNav Header */}
         <div className="p-5 flex items-center justify-center border-b border-slate-800 mb-4">
           <div className="flex items-center justify-center">
-            <Image
-              src="/logo.png"
-              alt="Logo"
-              className="rounded-lg hover:bg-slate-800 transition-colors"
-              width={collapsed ? 60 : 128} 
-              height={collapsed ? 60 : 60}
-              priority
-            />
+            {collapsed ? (
+              <Image
+                src="/ewbpo.png"
+                alt="EWBPO Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+                priority
+              />
+            ) : (
+              <Image
+                src="/ewbpo.png"
+                alt="EWBPO Logo"
+                width={200}
+                height={80}
+                className="object-contain"
+                priority
+              />
+            )}
           </div>
           {!collapsed && (
             <Button
