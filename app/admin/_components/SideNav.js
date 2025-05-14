@@ -21,21 +21,21 @@ export default function SideNav() {
   const pathname = usePathname();
 
   const navItems = [
-    {
-      name: 'Attendance Logs',
-      href: '/admin/attendance-logs',
-      icon: <FiCalendar className="h-[18px] w-[18px]" />,
-    },
+    // {
+    //   name: 'Attendance Logs',
+    //   href: '/admin/attendance-logs',
+    //   icon: <FiCalendar className="h-[18px] w-[18px]" />,
+    // },
     {
       name: 'Employee Management',
       href: '/admin/employees-management',
       icon: <FiUsers className="h-[18px] w-[18px]" />,
     },
-    {
-      name: 'Settings',
-      href: '/admin/settings',
-      icon: <FiSettings className="h-[18px] w-[18px]" />,
-    },
+    // {
+    //   name: 'Settings',
+    //   href: '/admin/settings',
+    //   icon: <FiSettings className="h-[18px] w-[18px]" />,
+    // },
   ];
 
   return (
