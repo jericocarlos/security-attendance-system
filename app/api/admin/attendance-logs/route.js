@@ -9,7 +9,7 @@ export async function GET(req) {
     // Parse query parameters
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
-    const search = searchParams.get('search') || ''; // For searching by ashima_id
+    const search = searchParams.get('search') || ''; // For searching by name or ashima_id
     const logType = searchParams.get('log_type') || ''; // For filtering by log_type
     const startDate = searchParams.get('start_date'); // Start date for date range filter
     const endDate = searchParams.get('end_date'); // End date for date range filter
@@ -40,7 +40,7 @@ export async function GET(req) {
 
     const offset = (page - 1) * limit;
 
-    // Base query for fetching attendance logs
+    // Base query for fetching attendance logs - updated to search by both name and ashima_id
     let query = `
       SELECT
         a.id, a.ashima_id, e.name, e.department_id,
@@ -53,7 +53,7 @@ export async function GET(req) {
       LEFT JOIN
         departments d ON e.department_id = d.id
       WHERE
-        a.ashima_id LIKE ?
+        (a.ashima_id LIKE ? OR e.name LIKE ?)
         ${logType && logType !== 'all' ? 'AND a.log_type = ?' : ''}
         ${startDate ? 'AND a.timestamp >= ?' : ''}
         ${endDate ? 'AND a.timestamp < ?' : ''}
@@ -61,8 +61,8 @@ export async function GET(req) {
       LIMIT ? OFFSET ?
     `;
 
-    // Build query values
-    const queryValues = [`%${search}%`];
+    // Build query values - now includes search term twice for ashima_id and name
+    const queryValues = [`%${search}%`, `%${search}%`];
     if (logType && logType !== 'all') queryValues.push(logType);
     if (startDate) queryValues.push(startDate);
     if (endDate) queryValues.push(adjustedEndDate);
@@ -74,19 +74,19 @@ export async function GET(req) {
       values: queryValues,
     });
 
-    // Count query for total records with applied filters
+    // Count query for total records with applied filters - updated for name search
     let countQuery = `
       SELECT COUNT(*) AS total
       FROM attendance_logs a
       LEFT JOIN employees e ON e.ashima_id = a.ashima_id
-      WHERE a.ashima_id LIKE ?
+      WHERE (a.ashima_id LIKE ? OR e.name LIKE ?)
       ${logType && logType !== 'all' ? 'AND a.log_type = ?' : ''}
       ${startDate ? 'AND a.timestamp >= ?' : ''}
       ${endDate ? 'AND a.timestamp < ?' : ''}
     `;
 
-    // Build count query values
-    const countValues = [`%${search}%`];
+    // Build count query values - also includes search term twice
+    const countValues = [`%${search}%`, `%${search}%`];
     if (logType && logType !== 'all') countValues.push(logType);
     if (startDate) countValues.push(startDate);
     if (endDate) countValues.push(adjustedEndDate);

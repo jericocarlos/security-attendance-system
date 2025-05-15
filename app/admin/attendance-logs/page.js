@@ -1,13 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { FiFilter, FiDownload } from "react-icons/fi";
+import { useEffect, useState, useCallback } from "react";
+import { FiFilter, FiDownload, FiSearch } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-import DashboardStats from "./_components/DashboardStats";
+import { Input } from "@/components/ui/input";
 import AttendanceTable from "./_components/AttendanceTable";
 import FilterDialog from "./_components/FilterDialog";
+import DashboardStats from "./_components/DashboardStats";
+
+// Debounce utility function
+function debounce(func, timeout = 300) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => func.apply(this, args), timeout);
+  };
+}
 
 export default function AttendanceLogsPage() {
   const [logs, setLogs] = useState([]);
@@ -19,6 +28,7 @@ export default function AttendanceLogsPage() {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [totalLogs, setTotalLogs] = useState(0);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -26,6 +36,7 @@ export default function AttendanceLogsPage() {
       const searchParams = new URLSearchParams({
         page: pagination.pageIndex + 1,
         limit: pagination.pageSize,
+        search: searchQuery,
         log_type: filters.logType || "",
         start_date: filters.dateRange.from
           ? filters.dateRange.from.toISOString().split("T")[0]
@@ -48,11 +59,25 @@ export default function AttendanceLogsPage() {
     }
   };
 
+  // Create debounced search handler
+  const debouncedSearch = useCallback(
+    debounce((value) => {
+      setSearchQuery(value);
+      setPagination(prev => ({ ...prev, pageIndex: 0 })); // Reset to first page when searching
+    }, 500),
+    []
+  );
+
+  const handleSearchChange = (e) => {
+    debouncedSearch(e.target.value);
+  };
+
   const handleExportLogs = async () => {
     try {
       const searchParams = new URLSearchParams({
         page: 1,
         limit: 10000,
+        search: searchQuery,
         log_type: filters.logType || "",
         start_date: filters.dateRange.from
           ? filters.dateRange.from.toISOString().split("T")[0]
@@ -82,30 +107,45 @@ export default function AttendanceLogsPage() {
 
   useEffect(() => {
     fetchLogs();
-  }, [pagination.pageIndex, pagination.pageSize, filters]);
+  }, [pagination.pageIndex, pagination.pageSize, filters, searchQuery]);
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Dashboard Stats
-      <DashboardStats /> */}
+      {/* Dashboard Stats */}
+      <DashboardStats />
 
       {/* Main Attendance Logs Card */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Attendance Logs</CardTitle>
+                    {/* Search Input */}
+          <div className="mb-4 relative">
+            <div className="relative">
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search by name or ASHIMA ID..."
+                className="pl-10"
+                onChange={handleSearchChange}
+              />
+            </div>
+          </div>
           <div className="flex items-center gap-4">
             <Button
               variant="outline"
               onClick={() => setIsFilterDialogOpen(true)}
             >
+              
               <FiFilter className="mr-2 h-4 w-4" /> Filter
             </Button>
+            
             <Button variant="outline" onClick={handleExportLogs}>
               <FiDownload className="mr-2 h-4 w-4" /> Export CSV
             </Button>
           </div>
         </CardHeader>
         <CardContent>
+
+          
           <AttendanceTable
             logs={logs}
             totalLogs={totalLogs}
