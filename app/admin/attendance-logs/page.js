@@ -118,34 +118,27 @@ export default function AttendanceLogsPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Attendance Logs</CardTitle>
-                    {/* Search Input */}
-          <div className="mb-4 relative">
+          <div className="flex items-center gap-4">
             <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by name or ASHIMA ID..."
-                className="pl-10"
+                className="pl-10 w-64"
                 onChange={handleSearchChange}
               />
             </div>
-          </div>
-          <div className="flex items-center gap-4">
             <Button
               variant="outline"
               onClick={() => setIsFilterDialogOpen(true)}
             >
-              
               <FiFilter className="mr-2 h-4 w-4" /> Filter
             </Button>
-            
             <Button variant="outline" onClick={handleExportLogs}>
               <FiDownload className="mr-2 h-4 w-4" /> Export CSV
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-
-          
           <AttendanceTable
             logs={logs}
             totalLogs={totalLogs}
