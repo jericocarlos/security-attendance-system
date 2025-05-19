@@ -38,13 +38,13 @@ export default function SideNav() {
 
   return (
     <>
-      {/* SideNav */}
+      {/* SideNav - Using flex layout to position footer at bottom */}
       <div className={cn(
-        "bg-slate-900 text-white h-screen flex flex-col fixed top-0 left-0 z-40 transition-all duration-300",
+        "bg-slate-900 text-white h-screen sticky top-0 left-0 z-40 transition-all duration-300 flex flex-col",
         collapsed ? "w-16" : "w-64",
       )}>
         {/* SideNav Header */}
-        <div className="p-5 flex items-center justify-center border-b border-slate-800 mb-4">
+        <div className="p-5 flex items-center justify-center border-b border-slate-800">
           <div className="flex items-center justify-center">
             {collapsed ? (
               <Image
@@ -88,46 +88,49 @@ export default function SideNav() {
           )}
         </div>
         
-        {/* Navigation Items */}
-        <div className="flex-grow flex justify-center">
-          <nav className="w-full py-4">
-            <ul className="space-y-3 px-3">
-              {navItems.map((item) => (
-                <li key={item.name}>
-                  <TooltipProvider delayDuration={0} disableHoverableContent={!collapsed}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Link
-                          href={item.href}
-                          className={cn(
-                            "flex items-center justify-start h-12 rounded-lg hover:bg-slate-800 transition-colors",
-                            collapsed ? "px-3 justify-center" : "px-4",
-                            pathname.startsWith(item.href) ? 'bg-blue-700 hover:bg-blue-700/90' : ''
-                          )}
-                        >
-                          <span className={cn("flex-shrink-0", collapsed ? "" : "mr-4")}>
-                            {item.icon}
-                          </span>
-                          {!collapsed && <span className="text-[15px] font-medium">{item.name}</span>}
-                        </Link>
-                      </TooltipTrigger>
-                      {collapsed && (
-                        <TooltipContent side="right" className="bg-slate-800 text-white border-slate-700">
-                          {item.name}
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
-                  </TooltipProvider>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </div>
+        {/* Navigation Items - simplified structure with flex-1 */}
+        <nav className="flex-1 py-4 overflow-y-auto">
+          <ul className="space-y-3 px-3">
+            {navItems.map((item) => (
+              <li key={item.name}>
+                <TooltipProvider delayDuration={0} disableHoverableContent={!collapsed}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          "flex items-center justify-start h-12 rounded-lg hover:bg-slate-800 transition-colors",
+                          collapsed ? "px-3 justify-center" : "px-4",
+                          pathname.startsWith(item.href) ? 'bg-blue-700 hover:bg-blue-700/90' : ''
+                        )}
+                      >
+                        <span className={cn("flex-shrink-0", collapsed ? "" : "mr-4")}>
+                          {item.icon}
+                        </span>
+                        {!collapsed && <span className="text-[15px] font-medium">{item.name}</span>}
+                      </Link>
+                    </TooltipTrigger>
+                    {collapsed && (
+                      <TooltipContent side="right" className="bg-slate-800 text-white border-slate-700">
+                        {item.name}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+              </li>
+            ))}
+          </ul>
+        </nav>
         
-        {/* Footer */}
+        {/* Footer - show in both collapsed and expanded states */}
         {!collapsed && (
           <div className="p-4 text-center text-sm text-slate-400 border-t border-slate-800">
             &copy; {new Date().getFullYear()} EastWest BPO MCI
+          </div>
+        )}
+        {collapsed && (
+          <div className="p-4 text-center text-sm text-slate-400 border-t border-slate-800">
+            &copy;
           </div>
         )}
       </div>

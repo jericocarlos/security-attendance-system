@@ -79,44 +79,77 @@ export default function EmployeesManagementPage() {
 
   const handleEmployeeFormSubmit = async (formData, imagePreview) => {
     try {
-      const employeeData = {
-        ...formData,
-        photo: imagePreview || (currentEmployee?.photo || null),
-      };
-
-      let url = "/api/admin/employees";
-      let method = "POST";
-
-      if (currentEmployee) {
-        url = `/api/admin/employees/${currentEmployee.id}`;
-        method = "PUT";
+      // Validate RFID tag for active employees before submission
+      if (formData.status !== "resigned" && !formData.rfid_tag?.trim()) {
+        throw new Error("RFID Tag is required for active employees");
       }
-
+      
+      // Create the payload object
+      const payload = {
+        ashima_id: formData.ashima_id,
+        name: formData.name,
+        department_id: formData.department_id || null,
+        position_id: formData.position_id || null,
+        rfid_tag: formData.status === "resigned" ? "" : (formData.rfid_tag || ""),
+        emp_stat: formData.emp_stat || "regular",
+        status: formData.status || "active",
+        removePhoto: formData.removePhoto || formData.status === "resigned"
+      };
+      
+      // Only include photo if it exists and employee isn't resigned
+      if (imagePreview && formData.status !== "resigned") {
+        payload.photo = imagePreview;
+      }
+      
+      // Get the correct ID to use in the URL
+      const employeeId = currentEmployee?.id || currentEmployee?.ashima_id;
+      
+      if (!employeeId && currentEmployee) {
+        throw new Error("Employee ID not found");
+      }
+      
+      // Send request to the appropriate endpoint
+      const url = currentEmployee 
+        ? `/api/admin/employees/${employeeId}` 
+        : "/api/admin/employees";
+        
+      const method = currentEmployee ? "PUT" : "POST";
+      
+      console.log("Submitting to:", url);
+      console.log("Method:", method);
+      console.log("Payload:", {
+        ...payload,
+        photo: payload.photo ? "[Photo data present]" : null
+      });
+      
       const response = await fetch(url, {
         method,
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(employeeData),
+        body: JSON.stringify(payload),
       });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        enqueueSnackbar(
-          `Employee ${currentEmployee ? "updated" : "added"} successfully!`,
-          { variant: "success" }
-        );
-        setIsFormDialogOpen(false);
-        fetchEmployees();
-        return true;
-      } else {
-        throw new Error(result.message);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to save employee");
       }
+      
+      enqueueSnackbar(
+        currentEmployee ? "Employee updated successfully" : "Employee added successfully",
+        { variant: "success" }
+      );
+      
+      // Refresh employee list
+      fetchEmployees();
+      
+      return true;
     } catch (error) {
-      console.error("Error submitting form:", error);
-      enqueueSnackbar(error.message || "An error occurred", { variant: "error" });
+      console.error("Error saving employee:", error);
+      enqueueSnackbar(error.message, { variant: "error" });
       return false;
+    } finally {
+      setIsFormDialogOpen(false);
     }
   };
 

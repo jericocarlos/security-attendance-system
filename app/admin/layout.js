@@ -65,9 +65,9 @@ export default function AdminLayout({ children }) {
           variantInfo: 'bg-blue-500',
         }}
       >
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-slate-50 flex">
           <SideNav />
-          <main className="ml-16 lg:ml-64 transition-all duration-300 min-h-screen pt-4 md:pt-6">
+          <main className="flex-1 transition-all duration-300 min-h-screen pt-4 md:pt-6 px-4 md:px-6">
             {children}
           </main>
         </div>
