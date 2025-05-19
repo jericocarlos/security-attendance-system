@@ -77,81 +77,60 @@ export default function EmployeesManagementPage() {
     }
   }, [enqueueSnackbar]);
 
-  const handleEmployeeFormSubmit = async (formData, imagePreview) => {
-    try {
-      // Validate RFID tag for active employees before submission
-      if (formData.status !== "resigned" && !formData.rfid_tag?.trim()) {
-        throw new Error("RFID Tag is required for active employees");
-      }
-      
-      // Create the payload object
-      const payload = {
-        ashima_id: formData.ashima_id,
-        name: formData.name,
-        department_id: formData.department_id || null,
-        position_id: formData.position_id || null,
-        rfid_tag: formData.status === "resigned" ? "" : (formData.rfid_tag || ""),
-        emp_stat: formData.emp_stat || "regular",
-        status: formData.status || "active",
-        removePhoto: formData.removePhoto || formData.status === "resigned"
-      };
-      
-      // Only include photo if it exists and employee isn't resigned
-      if (imagePreview && formData.status !== "resigned") {
-        payload.photo = imagePreview;
-      }
-      
-      // Get the correct ID to use in the URL
-      const employeeId = currentEmployee?.id || currentEmployee?.ashima_id;
-      
-      if (!employeeId && currentEmployee) {
-        throw new Error("Employee ID not found");
-      }
-      
-      // Send request to the appropriate endpoint
-      const url = currentEmployee 
-        ? `/api/admin/employees/${employeeId}` 
-        : "/api/admin/employees";
-        
-      const method = currentEmployee ? "PUT" : "POST";
-      
-      console.log("Submitting to:", url);
-      console.log("Method:", method);
-      console.log("Payload:", {
-        ...payload,
-        photo: payload.photo ? "[Photo data present]" : null
-      });
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to save employee");
-      }
-      
-      enqueueSnackbar(
-        currentEmployee ? "Employee updated successfully" : "Employee added successfully",
-        { variant: "success" }
-      );
-      
-      // Refresh employee list
-      fetchEmployees();
-      
-      return true;
-    } catch (error) {
-      console.error("Error saving employee:", error);
-      enqueueSnackbar(error.message, { variant: "error" });
-      return false;
-    } finally {
-      setIsFormDialogOpen(false);
+const handleEmployeeFormSubmit = async (formData, imagePreview) => {
+  try {
+    setIsFormDialogOpen(false);
+    
+    // Create a new FormData object
+    const form = new FormData();
+    
+    // Add all fields from formData to the form
+    Object.keys(formData).forEach(key => {
+      form.append(key, formData[key]);
+    });
+    
+    // Handle image upload or removal
+    if (formData.removePhoto) {
+      // Special flag to remove photo from database
+      form.append("removePhoto", "true");
+    } else if (imagePreview && imagePreview.startsWith('data:image')) {
+      // Convert base64 to blob and append
+      const response = await fetch(imagePreview);
+      const blob = await response.blob();
+      form.append("photo", blob);
     }
-  };
+    
+    // Send request to the appropriate endpoint
+    const url = currentEmployee 
+      ? `/api/employees/${currentEmployee.ashima_id}` 
+      : "/api/employees";
+      
+    const method = currentEmployee ? "PUT" : "POST";
+    
+    const response = await fetch(url, {
+      method,
+      body: form,
+    });
+    
+    if (!response.ok) {
+      throw new Error("Failed to save employee");
+    }
+    
+    enqueueSnackbar(
+      currentEmployee ? "Employee updated successfully" : "Employee added successfully",
+      { variant: "success" }
+    );
+    
+    // Refresh employee list
+    fetchEmployees();
+    
+    return true;
+  } catch (error) {
+    console.error("Error saving employee:", error);
+    enqueueSnackbar(error.message, { variant: "error" });
+    return false;
+  }
+};
 
   const handleDeleteEmployee = async () => {
     try {
