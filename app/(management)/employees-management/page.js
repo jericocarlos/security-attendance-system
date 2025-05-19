@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useSnackbar } from 'notistack';
 import { FiPlus, FiFilter, FiRefreshCw } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,7 @@ export default function EmployeesManagementPage() {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = useCallback(async () => {
     setLoading(true);
     try {
       const searchParams = new URLSearchParams({
@@ -54,9 +54,9 @@ export default function EmployeesManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.pageIndex, pagination.pageSize, filters, searchQuery]);
 
-  const fetchDepartmentsAndPositions = async () => {
+  const fetchDepartmentsAndPositions = useCallback(async () => {
     setLoadingMetadata(true);
     try {
       const deptResponse = await fetch('/api/admin/departments');
@@ -75,7 +75,7 @@ export default function EmployeesManagementPage() {
     } finally {
       setLoadingMetadata(false);
     }
-  };
+  }, []);
 
   const handleEmployeeFormSubmit = async (formData, imagePreview) => {
     try {
@@ -178,11 +178,11 @@ export default function EmployeesManagementPage() {
 
   useEffect(() => {
     fetchEmployees();
-  }, [pagination.pageIndex, pagination.pageSize, searchQuery, filters]);
+  }, [fetchEmployees]);
 
   useEffect(() => {
     fetchDepartmentsAndPositions();
-  }, []);
+  }, [fetchDepartmentsAndPositions]);
 
   const handleOpenForm = (employee = null) => {
     setCurrentEmployee(employee);

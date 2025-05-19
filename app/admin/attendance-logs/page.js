@@ -9,15 +9,6 @@ import AttendanceTable from "./_components/AttendanceTable";
 import FilterDialog from "./_components/FilterDialog";
 import DashboardStats from "./_components/DashboardStats";
 
-// Debounce utility function
-function debounce(func, timeout = 300) {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => func.apply(this, args), timeout);
-  };
-}
-
 export default function AttendanceLogsPage() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +21,17 @@ export default function AttendanceLogsPage() {
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchLogs = async () => {
+  // Debounce utility function inside component
+  const debounce = useCallback((func, timeout = 300) => {
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => func.apply(this, args), timeout);
+    };
+  }, []);
+
+  // Memoize the fetchLogs function
+  const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
       const searchParams = new URLSearchParams({
@@ -57,15 +58,19 @@ export default function AttendanceLogsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.pageIndex, pagination.pageSize, filters, searchQuery]);
 
-  // Create debounced search handler
+  // Create debounced search handler with proper dependencies
   const debouncedSearch = useCallback(
-    debounce((value) => {
-      setSearchQuery(value);
-      setPagination(prev => ({ ...prev, pageIndex: 0 })); // Reset to first page when searching
-    }, 500),
-    []
+    (value) => {
+      const handleSearch = () => {
+        setSearchQuery(value);
+        setPagination((prev) => ({ ...prev, pageIndex: 0 })); // Reset to first page when searching
+      };
+
+      debounce(handleSearch, 500)();
+    },
+    [debounce, setPagination]
   );
 
   const handleSearchChange = (e) => {
@@ -105,9 +110,10 @@ export default function AttendanceLogsPage() {
     }
   };
 
+  // Update useEffect with fetchLogs dependency
   useEffect(() => {
     fetchLogs();
-  }, [pagination.pageIndex, pagination.pageSize, filters, searchQuery]);
+  }, [fetchLogs]);
 
   return (
     <div className="container mx-auto px-4 py-8">
