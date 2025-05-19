@@ -113,9 +113,9 @@ export default function EmployeeFormDialog({
         return false;
       }
       
-      // If status is resigned, ensure RFID tag is cleared
+      // If status is resigned, ensure RFID tag is cleared (NULL)
       if (data.status === "resigned") {
-        data.rfid_tag = "";
+        data.rfid_tag = null; // Use null instead of empty string
         data.removePhoto = true;
       }
       

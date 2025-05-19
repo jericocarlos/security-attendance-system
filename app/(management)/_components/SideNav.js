@@ -26,7 +26,7 @@ export default function SideNav() {
     // },
     {
       name: 'Employee Management',
-      href: '/admin/employees-management',
+      href: '/employees-management',
       icon: <FiUsers className="h-[18px] w-[18px]" />,
     },
     // {

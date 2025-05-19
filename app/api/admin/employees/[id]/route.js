@@ -95,8 +95,10 @@ export async function PUT(req, context) {
     updateFields.push("position_id = ?");
     values.push(position_id);
 
+    // IMPORTANT FIX: Use NULL instead of empty string for RFID tags
     updateFields.push("rfid_tag = ?");
-    values.push(rfid_tag); // Will be empty for resigned employees
+    // For resigned employees or empty RFID, use NULL instead of empty string
+    values.push(status === "resigned" || !rfid_tag ? null : rfid_tag);
 
     // Only include photo field if it's changing
     if (status === "resigned" || removePhoto || photo) {
