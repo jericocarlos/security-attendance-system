@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import Image from "next/image";
 import { FiX, FiLoader } from "react-icons/fi";
 import {
@@ -43,7 +43,12 @@ export default function EmployeeFormDialog({
     control,
     setValue,
     formState: { errors, isSubmitting },
+    watch,
+    setError
   } = useForm();
+
+  // Watch the status field to detect changes
+  const status = watch("status");
 
   useEffect(() => {
     if (open) {
@@ -73,6 +78,18 @@ export default function EmployeeFormDialog({
     }
   }, [employee, open, reset, setValue]);
 
+  // Add an effect to clear RFID tag and photo when status is changed to resigned
+  useEffect(() => {
+    // Only apply this in edit mode (when employee exists)
+    if (employee && status === "resigned") {
+      setValue("rfid_tag", ""); // Clear RFID tag
+      setImagePreview(null); // Remove photo
+      
+      // Switch to the settings tab to make it clear to the user that these fields were cleared
+      setActiveTab("settings");
+    }
+  }, [status, employee, setValue]);
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -83,10 +100,34 @@ export default function EmployeeFormDialog({
   };
 
   const handleFormSubmit = async (data) => {
-    const success = await onSubmit(data, imagePreview);
-    if (success) {
-      reset();
-      setImagePreview(null);
+    try {
+      // Check if employee is active but missing RFID tag
+      if (data.status !== "resigned" && !data.rfid_tag.trim()) {
+        // Show an error message
+        setError("rfid_tag", { 
+          type: "manual", 
+          message: "RFID Tag is required for active employees" 
+        });
+        // Switch to the RFID & Photo tab to show the error
+        setActiveTab("settings");
+        return false;
+      }
+      
+      // If status is resigned, ensure RFID tag is cleared
+      if (data.status === "resigned") {
+        data.rfid_tag = "";
+        data.removePhoto = true;
+      }
+      
+      const success = await onSubmit(data, data.status === "resigned" ? null : imagePreview);
+      if (success) {
+        reset();
+        setImagePreview(null);
+      }
+      return success;
+    } catch (error) {
+      console.error("Error in form submission:", error);
+      return false;
     }
   };
 
@@ -100,6 +141,11 @@ export default function EmployeeFormDialog({
           <DialogDescription>
             Fill in the employee details below. Click save when you're done.
           </DialogDescription>
+          {status === "resigned" && employee && (
+            <p className="mt-2 text-amber-600 text-sm">
+              Note: When an employee is marked as resigned, their RFID tag and photo will be automatically removed.
+            </p>
+          )}
         </DialogHeader>
 
         <form onSubmit={handleSubmit(handleFormSubmit)}>
@@ -110,8 +156,8 @@ export default function EmployeeFormDialog({
             </TabsList>
 
             <TabsContent value="details" className="space-y-4 py-4">
+              {/* Employee ID and Name Fields */}
               <div className="grid grid-cols-2 gap-4">
-                {/* Employee ID Field */}
                 <div className="space-y-2">
                   <Label htmlFor="ashima_id">
                     Employee ID <span className="text-red-500">*</span>
@@ -126,7 +172,6 @@ export default function EmployeeFormDialog({
                   )}
                 </div>
 
-                {/* Employee Name Field */}
                 <div className="space-y-2">
                   <Label htmlFor="name">
                     Full Name <span className="text-red-500">*</span>
@@ -193,7 +238,8 @@ export default function EmployeeFormDialog({
                   />
                 </div>
               </div>
-                                  <div className="grid grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="emp_stat">Employment Status</Label>
                   <Controller
@@ -243,15 +289,17 @@ export default function EmployeeFormDialog({
                   />
                 </div>
               </div>
-
-
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-4 py-4">
-
               {/* Photo Upload */}
               <div className="space-y-2">
-                <Label htmlFor="photo">Employee Photo</Label>
+                <Label htmlFor="photo">
+                  Employee Photo
+                  {status === "resigned" && (
+                    <span className="ml-2 text-amber-600">(Removed for resigned employees)</span>
+                  )}
+                </Label>
                 <div className="flex items-start space-x-4">
                   <div className="flex-1">
                     <Input
@@ -260,6 +308,7 @@ export default function EmployeeFormDialog({
                       accept="image/*"
                       onChange={handleImageChange}
                       className="cursor-pointer"
+                      disabled={status === "resigned"}
                     />
                   </div>
                   {imagePreview && (
@@ -288,8 +337,22 @@ export default function EmployeeFormDialog({
 
               {/* RFID Tag Field */}
               <div className="space-y-2">
-                <Label htmlFor="rfid_tag">RFID Tag</Label>
-                <Input id="rfid_tag" {...register("rfid_tag")} />
+                <Label htmlFor="rfid_tag">
+                  RFID Tag {status !== "resigned" && <span className="text-red-500">*</span>}
+                  {status === "resigned" && (
+                    <span className="ml-2 text-amber-600">(Removed for resigned employees)</span>
+                  )}
+                </Label>
+                <Input 
+                  id="rfid_tag" 
+                  {...register("rfid_tag", { 
+                    required: status !== "resigned" ? "RFID Tag is required for active employees" : false 
+                  })} 
+                  disabled={status === "resigned"}
+                />
+                {errors.rfid_tag && (
+                  <p className="text-sm text-red-500">{errors.rfid_tag.message}</p>
+                )}
               </div>
             </TabsContent>
           </Tabs>
