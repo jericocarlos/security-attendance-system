@@ -15,6 +15,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
+  PaginationEllipsis,
 } from "@/components/ui/pagination";
 
 export default function AttendanceTable({
@@ -25,6 +26,105 @@ export default function AttendanceTable({
   loading,
 }) {
   const totalPages = Math.ceil(totalLogs / pagination.pageSize);
+
+  // Function to generate limited pagination items
+  const getPaginationItems = () => {
+    // Always show at most 7 page buttons (including ellipses)
+    const showMax = 7;
+    // Show 1 page on either side of current page if possible
+    const siblingsCount = 1;
+
+    const items = [];
+
+    // If we have 7 or fewer pages, show all of them
+    if (totalPages <= showMax) {
+      for (let i = 0; i < totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              isActive={pagination.pageIndex === i}
+              onClick={() => setPagination((prev) => ({ ...prev, pageIndex: i }))}
+            >
+              {i + 1}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+      return items;
+    }
+
+    // Always add first page
+    items.push(
+      <PaginationItem key={0}>
+        <PaginationLink
+          isActive={pagination.pageIndex === 0}
+          onClick={() => setPagination((prev) => ({ ...prev, pageIndex: 0 }))}
+        >
+          1
+        </PaginationLink>
+      </PaginationItem>
+    );
+
+    // Calculate range around current page
+    const leftSiblingIndex = Math.max(pagination.pageIndex - siblingsCount, 1);
+    const rightSiblingIndex = Math.min(
+      pagination.pageIndex + siblingsCount,
+      totalPages - 2
+    );
+
+    // Should show left ellipsis?
+    const shouldShowLeftEllipsis = leftSiblingIndex > 1;
+    // Should show right ellipsis?
+    const shouldShowRightEllipsis = rightSiblingIndex < totalPages - 2;
+
+    // Add left ellipsis if needed
+    if (shouldShowLeftEllipsis) {
+      items.push(
+        <PaginationItem key="left-ellipsis">
+          <PaginationEllipsis />
+        </PaginationItem>
+      );
+    }
+
+    // Add page numbers around current page
+    for (let i = leftSiblingIndex; i <= rightSiblingIndex; i++) {
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationLink
+            isActive={pagination.pageIndex === i}
+            onClick={() => setPagination((prev) => ({ ...prev, pageIndex: i }))}
+          >
+            {i + 1}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+
+    // Add right ellipsis if needed
+    if (shouldShowRightEllipsis) {
+      items.push(
+        <PaginationItem key="right-ellipsis">
+          <PaginationEllipsis />
+        </PaginationItem>
+      );
+    }
+
+    // Always add last page
+    items.push(
+      <PaginationItem key={totalPages - 1}>
+        <PaginationLink
+          isActive={pagination.pageIndex === totalPages - 1}
+          onClick={() =>
+            setPagination((prev) => ({ ...prev, pageIndex: totalPages - 1 }))
+          }
+        >
+          {totalPages}
+        </PaginationLink>
+      </PaginationItem>
+    );
+
+    return items;
+  };
 
   return (
     <>
@@ -71,12 +171,18 @@ export default function AttendanceTable({
 
       <div className="mt-4 flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          Showing {pagination.pageIndex * pagination.pageSize + 1} to{" "}
-          {Math.min(
-            (pagination.pageIndex + 1) * pagination.pageSize,
-            totalLogs
-          )}{" "}
-          of {totalLogs} logs
+          {totalLogs > 0 ? (
+            <>
+              Showing {pagination.pageIndex * pagination.pageSize + 1} to{" "}
+              {Math.min(
+                (pagination.pageIndex + 1) * pagination.pageSize,
+                totalLogs
+              )}{" "}
+              of {totalLogs} logs
+            </>
+          ) : (
+            "No logs found"
+          )}
         </div>
         <Pagination>
           <PaginationContent>
@@ -91,18 +197,10 @@ export default function AttendanceTable({
                 disabled={pagination.pageIndex === 0}
               />
             </PaginationItem>
-            {[...Array(totalPages)].map((_, i) => (
-              <PaginationItem key={i}>
-                <PaginationLink
-                  isActive={pagination.pageIndex === i}
-                  onClick={() =>
-                    setPagination((prev) => ({ ...prev, pageIndex: i }))
-                  }
-                >
-                  {i + 1}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
+
+            {/* Dynamic pagination items */}
+            {totalPages > 0 && getPaginationItems()}
+
             <PaginationItem>
               <PaginationNext
                 onClick={() =>
@@ -111,7 +209,9 @@ export default function AttendanceTable({
                     pageIndex: Math.min(prev.pageIndex + 1, totalPages - 1),
                   }))
                 }
-                disabled={pagination.pageIndex === totalPages - 1}
+                disabled={
+                  pagination.pageIndex === totalPages - 1 || totalPages === 0
+                }
               />
             </PaginationItem>
           </PaginationContent>

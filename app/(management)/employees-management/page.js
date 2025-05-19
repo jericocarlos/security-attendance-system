@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useSnackbar } from 'notistack';
 import { FiPlus, FiFilter, FiRefreshCw } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
@@ -30,9 +30,9 @@ export default function EmployeesManagementPage() {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const fetchEmployees = async () => {
-    setLoading(true);
+  const fetchEmployees = useCallback(async () => {
     try {
+      setLoading(true);
       const searchParams = new URLSearchParams({
         search: searchQuery,
         page: pagination.pageIndex + 1,
@@ -50,15 +50,15 @@ export default function EmployeesManagementPage() {
       setTotalEmployees(data.total);
     } catch (error) {
       console.error("Error fetching employees:", error);
-      enqueueSnackbar("Failed to load employees", { variant: "error" });
+      enqueueSnackbar("Failed to fetch employees", { variant: "error" });
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.pageIndex, pagination.pageSize, filters, searchQuery, enqueueSnackbar]);
 
-  const fetchDepartmentsAndPositions = async () => {
-    setLoadingMetadata(true);
+  const fetchDepartmentsAndPositions = useCallback(async () => {
     try {
+      setLoadingMetadata(true);
       const deptResponse = await fetch('/api/admin/departments');
       if (!deptResponse.ok) throw new Error("Failed to fetch departments");
       const deptData = await deptResponse.json();
@@ -70,12 +70,12 @@ export default function EmployeesManagementPage() {
       setDepartments(deptData.departments || []);
       setPositions(posData.positions || []);
     } catch (error) {
-      console.error("Error fetching departments/positions:", error);
-      enqueueSnackbar("Failed to load form data", { variant: "warning" });
+      console.error("Error fetching metadata:", error);
+      enqueueSnackbar("Failed to fetch departments and positions", { variant: "error" });
     } finally {
       setLoadingMetadata(false);
     }
-  };
+  }, [enqueueSnackbar]);
 
   const handleEmployeeFormSubmit = async (formData, imagePreview) => {
     try {
@@ -178,11 +178,11 @@ export default function EmployeesManagementPage() {
 
   useEffect(() => {
     fetchEmployees();
-  }, [pagination.pageIndex, pagination.pageSize, searchQuery, filters]);
+  }, [fetchEmployees]);
 
   useEffect(() => {
     fetchDepartmentsAndPositions();
-  }, []);
+  }, [fetchDepartmentsAndPositions]);
 
   const handleOpenForm = (employee = null) => {
     setCurrentEmployee(employee);
