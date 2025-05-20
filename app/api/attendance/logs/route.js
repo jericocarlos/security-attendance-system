@@ -3,7 +3,7 @@ import { executeQuery } from '@/lib/db';
 
 export async function GET() {
   try {
-    // SQL query to fetch the latest attendance logs
+    // SQL query to fetch the latest attendance logs from the new attendance_logs table
     const query = `
       SELECT 
         al.id, 
@@ -12,7 +12,8 @@ export async function GET() {
         d.name AS department, 
         p.name AS position, 
         al.log_type, 
-        al.timestamp 
+        al.in_time, 
+        al.out_time
       FROM attendance_logs al
       JOIN employees e 
         ON al.ashima_id = e.ashima_id
@@ -20,7 +21,7 @@ export async function GET() {
         ON e.department_id = d.id
       LEFT JOIN positions p
         ON e.position_id = p.id
-      ORDER BY al.timestamp DESC
+      ORDER BY al.in_time DESC
       LIMIT 20
     `;
 

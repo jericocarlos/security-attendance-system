@@ -12,7 +12,7 @@ export async function POST(request) {
       );
     }
 
-    // Step 1: Fetch employee information by RFID tag, including department and position names
+    // Fetch employee info
     const employeeQuery = `
       SELECT 
         e.id AS employee_id, 
@@ -37,37 +37,50 @@ export async function POST(request) {
       );
     }
 
-    // Step 2: Convert photo blob to Base64 (if photo exists)
     if (employee.photo) {
       employee.photo = `data:image/png;base64,${Buffer.from(employee.photo).toString('base64')}`;
     }
 
-    // Step 3: Determine the log type (IN or OUT) based on the latest log
+    // Step 1: Get latest attendance log for this user
     const latestLogQuery = `
-      SELECT log_type
+      SELECT id, log_type, in_time, out_time
       FROM attendance_logs
       WHERE ashima_id = ?
-      ORDER BY timestamp DESC
+      ORDER BY in_time DESC
       LIMIT 1
     `;
     const [latestLog] = await executeQuery({ query: latestLogQuery, values: [employee.ashima_id] });
-    const nextLogType = latestLog?.log_type === 'IN' ? 'OUT' : 'IN';
 
-    // Step 4: Insert the new attendance log
-    const insertLogQuery = `
-      INSERT INTO attendance_logs (ashima_id, log_type, timestamp)
-      VALUES (?, ?, NOW())
-    `;
-    await executeQuery({ query: insertLogQuery, values: [employee.ashima_id, nextLogType] });
+    let nextLogType = "IN";
+    let insertLogQuery = "";
+    let insertLogValues = [];
 
-    // Step 5: Update the last_active column
-    if (!employee) {
-      return NextResponse.json(
-        { error: 'Employee not found for the provided RFID tag.' },
-        { status: 404 }
-      );
+    if (!latestLog || latestLog.log_type === "OUT" || (latestLog.log_type === "IN" && latestLog.out_time)) {
+      // No log, or last log is OUT, or last IN already paired: this should be a new IN
+      nextLogType = "IN";
+      insertLogQuery = `
+        INSERT INTO attendance_logs (ashima_id, log_type, in_time, out_time)
+        VALUES (?, 'IN', NOW(), NULL)
+      `;
+      insertLogValues = [employee.ashima_id];
+    } else if (latestLog.log_type === "IN" && !latestLog.out_time) {
+      // Last log is IN and has no out_time: this should be OUT and update the previous IN
+      nextLogType = "OUT";
+      // Update the previous IN with out_time and log_type OUT
+      const updateQuery = `
+        UPDATE attendance_logs
+        SET log_type = 'OUT', out_time = NOW()
+        WHERE id = ?
+      `;
+      await executeQuery({ query: updateQuery, values: [latestLog.id] });
     }
 
+    // Only do insert if this is a new IN
+    if (insertLogQuery) {
+      await executeQuery({ query: insertLogQuery, values: insertLogValues });
+    }
+
+    // Update status/last_active as before
     if (employee.status === 'inactive') {
       const updateStatusQuery = `
         UPDATE employees
@@ -76,7 +89,6 @@ export async function POST(request) {
       `;
       await executeQuery({ query: updateStatusQuery, values: [employee.ashima_id] });
     } else {
-      // Update last_active for active users
       const updateLastActiveQuery = `
         UPDATE employees
         SET last_active = NOW()
@@ -85,24 +97,20 @@ export async function POST(request) {
       await executeQuery({ query: updateLastActiveQuery, values: [employee.ashima_id] });
     }
 
-    // Step 6: Fetch the latest "Time In" and "Time Out" logs
-    const timeLogsQuery = `
-      SELECT 
-        MAX(CASE WHEN log_type = 'IN' THEN timestamp END) AS timeIn,
-        MAX(CASE WHEN log_type = 'OUT' THEN timestamp END) AS timeOut
+    // Return the latest attendance entry for this user
+    const mergedLogsQuery = `
+      SELECT *
       FROM attendance_logs
       WHERE ashima_id = ?
+      ORDER BY in_time DESC
+      LIMIT 1
     `;
-    const [timeLogs] = await executeQuery({ query: timeLogsQuery, values: [employee.ashima_id] });
+    const [attendanceLog] = await executeQuery({ query: mergedLogsQuery, values: [employee.ashima_id] });
 
-    // Step 7: Return the employee data and the updated time logs
     return NextResponse.json({
-      employee: {
-        ...employee,
-        timeIn: timeLogs.timeIn,
-        timeOut: timeLogs.timeOut,
-      },
-      logType: nextLogType, // Return the current log type (IN or OUT)
+      employee,
+      attendanceLog,
+      logType: nextLogType
     });
   } catch (error) {
     console.error('Error processing attendance log:', error);

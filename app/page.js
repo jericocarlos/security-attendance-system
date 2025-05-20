@@ -6,35 +6,10 @@ import Clock from '@/components/Clock';
 import Image from 'next/image';
 
 export default function Home() {
-  const [logs, setLogs] = useState([]); // Attendance logs
   const [employeeInfo, setEmployeeInfo] = useState(null); // Employee information
+  const [attendanceLog, setAttendanceLog] = useState(null); // Latest attendance log
   const [employeeStatus, setEmployeeStatus] = useState(null); // Employee status
   const [error, setError] = useState(null); // Error message
-  const [isLoading, setIsLoading] = useState(false); // Loading state
-
-  // Improved fetchLogs with AbortController support
-  const fetchLogs = useCallback(async (signal) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/attendance/logs', { signal });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch attendance logs: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setLogs(data.logs || []);
-    } catch (err) {
-      if (err.name !== 'AbortError') {
-        console.error('Error fetching logs:', err);
-        setError('Failed to load attendance logs. Please try again later.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
 
   // Handle RFID tag scan
   const handleTagRead = async (tag) => {
@@ -61,14 +36,16 @@ export default function Home() {
     }
   };
 
-  // Update employee info and logs
+  // Update employee info and logs with new API response format
   const updateEmployeeInfo = (result) => {
-    setLogs((prevLogs) => [result, ...prevLogs]); // Prepend the new log
-    setEmployeeInfo(result.employee); // Update employee info
-    setError(null); // Clear errors
+    const { employee, attendanceLog, logType } = result;
+    
+    setEmployeeInfo(employee);
+    setAttendanceLog(attendanceLog);
+    setError(null);
 
-    // Determine employee status
-    const status = result.logType === 'IN' ? 'Clocked In' : 'Clocked Out';
+    // Determine employee status based on logType from API
+    const status = logType === 'IN' ? 'Clocked In' : 'Clocked Out';
     setEmployeeStatus(status);
   };
 
@@ -89,16 +66,9 @@ export default function Home() {
   // Clear employee info and status
   const clearEmployeeInfo = () => {
     setEmployeeInfo(null);
+    setAttendanceLog(null);
     setEmployeeStatus(null);
   };
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetchLogs(controller.signal);
-
-    // Cleanup function to abort fetch if component unmounts
-    return () => controller.abort();
-  }, [fetchLogs]);
 
   return (
     <div className="max-w-7xl mx-auto px-10 py-12">
@@ -111,6 +81,7 @@ export default function Home() {
         {/* Employee Info Card */}
         <EmployeeInfoCard
           employeeInfo={employeeInfo}
+          attendanceLog={attendanceLog}
           employeeStatus={employeeStatus}
           error={error}
         />
@@ -129,7 +100,7 @@ export default function Home() {
 }
 
 // Employee Info Card Component
-function EmployeeInfoCard({ employeeInfo, employeeStatus, error }) {
+function EmployeeInfoCard({ employeeInfo, attendanceLog, employeeStatus, error }) {
   return (
     <div className="bg-white shadow-2xl rounded-3xl p-10 space-y-6 transform transition-all duration-300 hover:scale-105">
       {employeeInfo ? (
@@ -150,19 +121,23 @@ function EmployeeInfoCard({ employeeInfo, employeeStatus, error }) {
 
           <div className="mt-6 border-t border-gray-300 pt-6">
             <h3 className="text-xl font-semibold text-gray-800">Time Logs</h3>
-            <p className="text-[30px]">
-              <strong className="text-gray-700">Time In:</strong>{' '}
-              <span className="font-bold text-[40px]">
-                {employeeInfo?.timeIn ? new Date(employeeInfo.timeIn).toLocaleTimeString() : 'N/A'}
-              </span>
-            </p>
-            {employeeStatus === 'Clocked Out' && employeeInfo?.timeOut && (
-              <p className="text-[30px]">
-                <strong className="text-gray-700">Time Out:</strong>{' '}
-                <span className="font-bold text-[40px]">
-                  {new Date(employeeInfo.timeOut).toLocaleTimeString()}
-                </span>
-              </p>
+            {attendanceLog && (
+              <>
+                <p className="text-[30px]">
+                  <strong className="text-gray-700">Time In:</strong>{' '}
+                  <span className="font-bold text-[40px]">
+                    {attendanceLog.in_time ? new Date(attendanceLog.in_time).toLocaleTimeString() : 'N/A'}
+                  </span>
+                </p>
+                {attendanceLog.out_time && (
+                  <p className="text-[30px]">
+                    <strong className="text-gray-700">Time Out:</strong>{' '}
+                    <span className="font-bold text-[40px]">
+                      {new Date(attendanceLog.out_time).toLocaleTimeString()}
+                    </span>
+                  </p>
+                )}
+              </>
             )}
           </div>
         </>
@@ -180,13 +155,23 @@ function EmployeeImageAndStatus({ employeeInfo, employeeStatus }) {
   return (
     <div className="flex flex-col items-center space-y-6">
       <div className="w-120 h-120 rounded-3xl overflow-hidden shadow-lg transform transition-all duration-300 hover:scale-105">
-        <Image
-          src={employeeInfo ? `/api/employees/photo?ashima_id=${employeeInfo.ashima_id}&t=${new Date().getTime()}` : '/placeholder.png'}
-          alt={employeeInfo?.name || 'Placeholder'}
-          className="w-full h-full object-cover"
-          width={250} // Add width and height for next/image
-          height={250}
-        />
+        {employeeInfo?.photo ? (
+          <img
+            src={employeeInfo.photo}
+            alt={employeeInfo.name}
+            className="w-full h-full object-cover"
+            width={250}
+            height={250}
+          />
+        ) : (
+          <Image
+            src="/placeholder.png"
+            alt="Placeholder"
+            className="w-full h-full object-cover"
+            width={250}
+            height={250}
+          />
+        )}
       </div>
       {employeeStatus && (
         <div
