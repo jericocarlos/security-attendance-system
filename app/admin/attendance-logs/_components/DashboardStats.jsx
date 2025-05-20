@@ -54,33 +54,6 @@ export default function DashboardStats() {
             </CardContent>
           </Card>
           
-          <Card>
-            <CardHeader>
-              <CardTitle>IN Logs</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{stats.total_in}</div>
-                <Badge variant="default" className="bg-green-500">
-                  IN
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>OUT Logs</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">{stats.total_out}</div>
-                <Badge variant="default" className="bg-orange-500">
-                  OUT
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
         </>
       )}
     </div>

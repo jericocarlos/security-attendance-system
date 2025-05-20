@@ -77,11 +77,14 @@ export default function AttendanceLogsPage() {
     debouncedSearch(e.target.value);
   };
 
+  // Update the handleExportLogs function for better error handling
   const handleExportLogs = async () => {
     try {
+      setLoading(true); // Show loading indicator while exporting
+      
       const searchParams = new URLSearchParams({
         page: 1,
-        limit: 10000,
+        limit: 10000, // Export all matching logs
         search: searchQuery,
         log_type: filters.logType || "",
         start_date: filters.dateRange.from
@@ -95,18 +98,30 @@ export default function AttendanceLogsPage() {
       const response = await fetch(
         `/api/admin/attendance-logs/export?${searchParams}`
       );
-      if (!response.ok) throw new Error("Failed to export logs");
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to export logs");
+      }
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "attendance_logs.csv";
+      
+      // Add timestamp to filename for better organization
+      const date = new Date().toISOString().split('T')[0];
+      link.download = `attendance_logs_${date}.csv`;
+      
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url); // Clean up the URL object
     } catch (error) {
       console.error("Error exporting logs:", error);
+      // You could add a toast notification here if you have a UI component for that
+    } finally {
+      setLoading(false);
     }
   };
 

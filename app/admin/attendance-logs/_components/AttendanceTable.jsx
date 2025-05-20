@@ -27,103 +27,27 @@ export default function AttendanceTable({
 }) {
   const totalPages = Math.ceil(totalLogs / pagination.pageSize);
 
-  // Function to generate limited pagination items
-  const getPaginationItems = () => {
-    // Always show at most 7 page buttons (including ellipses)
-    const showMax = 7;
-    // Show 1 page on either side of current page if possible
-    const siblingsCount = 1;
+  // Format date time
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleString("en-US", {
+      timeZone: "Asia/Manila",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+  };
 
-    const items = [];
-
-    // If we have 7 or fewer pages, show all of them
-    if (totalPages <= showMax) {
-      for (let i = 0; i < totalPages; i++) {
-        items.push(
-          <PaginationItem key={i}>
-            <PaginationLink
-              isActive={pagination.pageIndex === i}
-              onClick={() => setPagination((prev) => ({ ...prev, pageIndex: i }))}
-            >
-              {i + 1}
-            </PaginationLink>
-          </PaginationItem>
-        );
-      }
-      return items;
-    }
-
-    // Always add first page
-    items.push(
-      <PaginationItem key={0}>
-        <PaginationLink
-          isActive={pagination.pageIndex === 0}
-          onClick={() => setPagination((prev) => ({ ...prev, pageIndex: 0 }))}
-        >
-          1
-        </PaginationLink>
-      </PaginationItem>
-    );
-
-    // Calculate range around current page
-    const leftSiblingIndex = Math.max(pagination.pageIndex - siblingsCount, 1);
-    const rightSiblingIndex = Math.min(
-      pagination.pageIndex + siblingsCount,
-      totalPages - 2
-    );
-
-    // Should show left ellipsis?
-    const shouldShowLeftEllipsis = leftSiblingIndex > 1;
-    // Should show right ellipsis?
-    const shouldShowRightEllipsis = rightSiblingIndex < totalPages - 2;
-
-    // Add left ellipsis if needed
-    if (shouldShowLeftEllipsis) {
-      items.push(
-        <PaginationItem key="left-ellipsis">
-          <PaginationEllipsis />
-        </PaginationItem>
-      );
-    }
-
-    // Add page numbers around current page
-    for (let i = leftSiblingIndex; i <= rightSiblingIndex; i++) {
-      items.push(
-        <PaginationItem key={i}>
-          <PaginationLink
-            isActive={pagination.pageIndex === i}
-            onClick={() => setPagination((prev) => ({ ...prev, pageIndex: i }))}
-          >
-            {i + 1}
-          </PaginationLink>
-        </PaginationItem>
-      );
-    }
-
-    // Add right ellipsis if needed
-    if (shouldShowRightEllipsis) {
-      items.push(
-        <PaginationItem key="right-ellipsis">
-          <PaginationEllipsis />
-        </PaginationItem>
-      );
-    }
-
-    // Always add last page
-    items.push(
-      <PaginationItem key={totalPages - 1}>
-        <PaginationLink
-          isActive={pagination.pageIndex === totalPages - 1}
-          onClick={() =>
-            setPagination((prev) => ({ ...prev, pageIndex: totalPages - 1 }))
-          }
-        >
-          {totalPages}
-        </PaginationLink>
-      </PaginationItem>
-    );
-
-    return items;
+  // Format date only
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      timeZone: "Asia/Manila",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
   };
 
   return (
@@ -135,14 +59,15 @@ export default function AttendanceTable({
               <TableHead>Ashima ID</TableHead>
               <TableHead>Employee Name</TableHead>
               <TableHead>Department</TableHead>
-              <TableHead>Log Type</TableHead>
-              <TableHead>Timestamp</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Time In</TableHead>
+              <TableHead>Time Out</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   Loading...
                 </TableCell>
               </TableRow>
@@ -152,15 +77,18 @@ export default function AttendanceTable({
                   <TableCell>{log.ashima_id}</TableCell>
                   <TableCell>{log.name || "N/A"}</TableCell>
                   <TableCell>{log.department || "N/A"}</TableCell>
-                  <TableCell>{log.log_type}</TableCell>
-                  <TableCell>
-                    {new Date(log.timestamp).toLocaleString()}
+                  <TableCell>{formatDate(log.in_time)}</TableCell>
+                  <TableCell className="text-green-600 font-medium">
+                    {formatDateTime(log.in_time)}
+                  </TableCell>
+                  <TableCell className="text-red-600 font-medium">
+                    {formatDateTime(log.out_time)}
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   No attendance logs found.
                 </TableCell>
               </TableRow>
@@ -169,6 +97,7 @@ export default function AttendanceTable({
         </Table>
       </div>
 
+      {/* Pagination component remains the same */}
       <div className="mt-4 flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
           {totalLogs > 0 ? (
@@ -198,9 +127,7 @@ export default function AttendanceTable({
               />
             </PaginationItem>
 
-            {/* Dynamic pagination items */}
-            {totalPages > 0 && getPaginationItems()}
-
+            {/* Pagination items */}
             <PaginationItem>
               <PaginationNext
                 onClick={() =>

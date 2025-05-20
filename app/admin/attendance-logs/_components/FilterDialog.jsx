@@ -34,7 +34,7 @@ export default function FilterDialog({
 }) {
   const { control, handleSubmit, reset } = useForm({
     defaultValues: {
-      logType: filters?.logType ?? null,
+      logType: filters?.logType ?? "ALL",
       dateRange: filters?.dateRange ?? { from: null, to: null },
     },
   });
@@ -51,8 +51,8 @@ export default function FilterDialog({
   };
 
   const handleClearFilters = () => {
-    reset({ logType: null, dateRange: { from: null, to: null } });
-    setFilters({ logType: null, dateRange: { from: null, to: null } });
+    reset({ logType: "ALL", dateRange: { from: null, to: null } });
+    setFilters({ logType: "ALL", dateRange: { from: null, to: null } });
     onOpenChange(false);
   };
 
@@ -69,22 +69,22 @@ export default function FilterDialog({
           <div className="space-y-4">
             {/* Log Type Filter */}
             <div className="space-y-2">
-              <Label htmlFor="logType">Log Type</Label>
+              <Label htmlFor="logType">Log Status</Label>
               <Controller
                 name="logType"
                 control={control}
                 render={({ field }) => (
                   <Select
                     onValueChange={field.onChange}
-                    value={field.value ?? null}
+                    value={field.value ?? "ALL"}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select log type" />
+                      <SelectValue placeholder="Select log status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="IN">IN</SelectItem>
-                      <SelectItem value="OUT">OUT</SelectItem>
+                      <SelectItem value="ALL">All Logs</SelectItem>
+                      <SelectItem value="IN">Time In Only</SelectItem>
+                      <SelectItem value="OUT">Complete (In & Out)</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -108,7 +108,7 @@ export default function FilterDialog({
                       startDate={field.value?.from ?? null}
                       endDate={field.value?.to ?? null}
                       placeholderText="Start Date"
-                      className="border rounded-md p-2"
+                      className="border rounded-md p-2 w-full"
                     />
                     <DatePicker
                       selected={field.value?.to ?? null}
@@ -120,7 +120,7 @@ export default function FilterDialog({
                       endDate={field.value?.to ?? null}
                       minDate={field.value?.from ?? null}
                       placeholderText="End Date"
-                      className="border rounded-md p-2"
+                      className="border rounded-md p-2 w-full"
                     />
                   </div>
                 )}
