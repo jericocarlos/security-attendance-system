@@ -95,21 +95,36 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { ashima_id, name, department_id, position_id, rfid_tag, photo, emp_stat, status } = body;
+    const { ashima_id, name, department_id, position_id, rfid_tag, photo, emp_stat } = body;
 
     // Decode Base64 photo to binary
     const binaryPhoto = photo ? decodeBase64ToBinary(photo) : null;
 
-    const query = `
+    // Insert employee record
+    const insertQuery = `
       INSERT INTO employees (ashima_id, name, department_id, position_id, rfid_tag, photo, emp_stat, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    const values = [ashima_id, name, department_id, position_id, rfid_tag, binaryPhoto, emp_stat, status || "active"];
+    const result = await executeQuery({
+      query: insertQuery,
+      values: [ashima_id, name, department_id || null, position_id || null, rfid_tag || null, binaryPhoto, emp_stat || "regular", "active"]
+    });
 
-    const result = await executeQuery({ query, values });
+    // Get the newly inserted ID
+    const insertedId = result.insertId;
 
-    return NextResponse.json({ id: result.insertId, message: "Employee added successfully" }, { status: 201 });
+    // Fetch the complete employee record with the new ID
+    const newEmployee = await executeQuery({
+      query: "SELECT * FROM employees WHERE id = ?",
+      values: [insertedId]
+    });
+
+    return NextResponse.json({ 
+      message: "Employee added successfully",
+      employee: newEmployee[0], // Return the complete employee object
+      id: insertedId // Explicitly include the ID
+    });
   } catch (err) {
     console.error("Failed to add employee:", err);
     return NextResponse.json(

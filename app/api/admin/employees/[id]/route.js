@@ -24,7 +24,8 @@ function decodeBase64ToBinary(base64String) {
 // PUT: Update an Existing Employee
 export async function PUT(req, context) {
   try {
-    const { id } = await context.params;
+    const { id } = context.params;
+    console.log("Route parameter ID:", id);
     const body = await req.json();
     const { ashima_id, name, department_id, position_id, rfid_tag, photo, emp_stat, status, removePhoto } = body;
 
@@ -95,9 +96,9 @@ export async function PUT(req, context) {
     updateFields.push("position_id = ?");
     values.push(position_id);
 
-    // IMPORTANT FIX: Use NULL instead of empty string for RFID tags
+
     updateFields.push("rfid_tag = ?");
-    // For resigned employees or empty RFID, use NULL instead of empty string
+
     values.push(status === "resigned" || !rfid_tag ? null : rfid_tag);
 
     // Only include photo field if it's changing

@@ -77,60 +77,70 @@ export default function EmployeesManagementPage() {
     }
   }, [enqueueSnackbar]);
 
-const handleEmployeeFormSubmit = async (formData, imagePreview) => {
-  try {
-    setIsFormDialogOpen(false);
-    
-    // Create a new FormData object
-    const form = new FormData();
-    
-    // Add all fields from formData to the form
-    Object.keys(formData).forEach(key => {
-      form.append(key, formData[key]);
-    });
-    
-    // Handle image upload or removal
-    if (formData.removePhoto) {
-      // Special flag to remove photo from database
-      form.append("removePhoto", "true");
-    } else if (imagePreview && imagePreview.startsWith('data:image')) {
-      // Convert base64 to blob and append
-      const response = await fetch(imagePreview);
-      const blob = await response.blob();
-      form.append("photo", blob);
-    }
-    
-    // Send request to the appropriate endpoint
-    const url = currentEmployee 
-      ? `/api/employees/${currentEmployee.ashima_id}` 
-      : "/api/employees";
+  const handleEmployeeFormSubmit = async (formData, imagePreview) => {
+    try {
+      // Create payload as JSON instead of FormData
+      const payload = {
+        ashima_id: formData.ashima_id,
+        name: formData.name,
+        department_id: formData.department_id || null,
+        position_id: formData.position_id || null,
+        rfid_tag: formData.status === "resigned" ? null : formData.rfid_tag,
+        emp_stat: formData.emp_stat || "regular",
+        status: formData.status || "active",
+        removePhoto: formData.removePhoto || formData.status === "resigned"
+      };
       
-    const method = currentEmployee ? "PUT" : "POST";
-    
-    const response = await fetch(url, {
-      method,
-      body: form,
-    });
-    
-    if (!response.ok) {
-      throw new Error("Failed to save employee");
+      // Add photo data if available and not resigned
+      if (imagePreview && formData.status !== "resigned" && !formData.removePhoto) {
+        payload.photo = imagePreview;
+      }
+      
+      // Send request to the appropriate endpoint
+      const url = currentEmployee 
+        ? `/api/admin/employees/${currentEmployee.id}` // Use ID, not ashima_id
+        : "/api/admin/employees";
+        
+      const method = currentEmployee ? "PUT" : "POST";
+      
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to save employee");
+      }
+      
+      // Get the response data with the new employee information
+      const responseData = await response.json();
+      console.log("New employee created with ID:", responseData.id);
+      
+      // You can optionally add the employee directly to the state 
+      // instead of refreshing the whole list
+      if (!currentEmployee && responseData.employee) {
+        setEmployees(prev => [responseData.employee, ...prev]);
+      }
+      
+      enqueueSnackbar(
+        currentEmployee ? "Employee updated successfully" : "Employee added successfully",
+        { variant: "success" }
+      );
+      
+      // Refresh employee list
+      fetchEmployees();
+      
+      return true;
+    } catch (error) {
+      console.error("Error saving employee:", error);
+      enqueueSnackbar(error.message, { variant: "error" });
+      return false;
     }
-    
-    enqueueSnackbar(
-      currentEmployee ? "Employee updated successfully" : "Employee added successfully",
-      { variant: "success" }
-    );
-    
-    // Refresh employee list
-    fetchEmployees();
-    
-    return true;
-  } catch (error) {
-    console.error("Error saving employee:", error);
-    enqueueSnackbar(error.message, { variant: "error" });
-    return false;
-  }
-};
+  };
 
   const handleDeleteEmployee = async () => {
     try {
@@ -167,6 +177,8 @@ const handleEmployeeFormSubmit = async (formData, imagePreview) => {
     setCurrentEmployee(employee);
     fetchDepartmentsAndPositions();
     setIsFormDialogOpen(true);
+    console.log("Opening form for employee:", employee ? 
+      `ID: ${employee.id}, ASHIMA ID: ${employee.ashima_id}` : "New employee");
   };
 
   const handleOpenFilter = () => {
