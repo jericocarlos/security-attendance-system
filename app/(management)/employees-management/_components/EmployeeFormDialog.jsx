@@ -30,6 +30,7 @@ export default function EmployeeFormDialog({
   employee, 
   departments = [], 
   positions = [], 
+  supervisors = [], // Add supervisors prop
   onSubmit,
   isLoadingOptions = false
 }) {
@@ -58,6 +59,7 @@ export default function EmployeeFormDialog({
         setValue("name", employee.name);
         setValue("department_id", employee.department_id?.toString());
         setValue("position_id", employee.position_id?.toString());
+        setValue("supervisor_id", employee.supervisor_id?.toString()); // Add supervisor_id
         setValue("rfid_tag", employee.rfid_tag);
         setValue("emp_stat", employee.emp_stat || "regular");
         setValue("status", employee.status);
@@ -69,6 +71,7 @@ export default function EmployeeFormDialog({
           name: "",
           department_id: "",
           position_id: "",
+          supervisor_id: "", // Add supervisor_id field
           rfid_tag: "",
           emp_stat: "regular",
           status: "active", // Default status for Add mode
@@ -100,6 +103,15 @@ export default function EmployeeFormDialog({
   };
 
   const handleFormSubmit = async (data) => {
+    // Convert the "none" string to null for the supervisor_id
+    if (data.supervisor_id === "none") {
+      data.supervisor_id = null;
+    }
+    
+    // Log the form data to verify supervisor_id is present
+    console.log("Form data being submitted:", data);
+    console.log("Supervisor ID value:", data.supervisor_id);
+    
     try {
       // Check if employee is active but missing RFID tag
       if (data.status !== "resigned" && !data.rfid_tag.trim()) {
@@ -237,6 +249,37 @@ export default function EmployeeFormDialog({
                     )}
                   />
                 </div>
+              </div>
+
+              {/* Add Supervisor Field */}
+              <div className="space-y-2">
+                <Label htmlFor="supervisor">Supervisor</Label>
+                <Controller
+                  name="supervisor_id"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      onValueChange={(value) => {
+                        console.log("Supervisor selected:", value);
+                        field.onChange(value);
+                      }}
+                      value={field.value}
+                      disabled={isLoadingOptions}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select supervisor (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {supervisors.map((sup) => (
+                          <SelectItem key={sup.id} value={sup.id.toString()}>
+                            {sup.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">

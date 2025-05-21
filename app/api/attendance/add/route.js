@@ -1,145 +1,121 @@
-import { NextResponse } from "next/server";
-import { executeQuery } from "@/lib/db";
+import { NextResponse } from 'next/server';
+import { executeQuery } from '@/lib/db';
 
 export async function POST(request) {
   try {
     const { rfid_tag } = await request.json();
 
     if (!rfid_tag) {
-      return NextResponse.json({ error: "RFID tag is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: 'RFID tag is required.' },
+        { status: 400 }
+      );
     }
 
     // Fetch employee info
     const employeeQuery = `
-      SELECT e.id, e.ashima_id, e.name, e.rfid_tag, e.photo, 
-             d.name as department, p.name as position
+      SELECT 
+        e.id AS employee_id, 
+        e.ashima_id, 
+        e.name, 
+        d.name AS department, 
+        p.name AS position, 
+        e.photo, 
+        e.emp_stat, 
+        e.status
       FROM employees e
       LEFT JOIN departments d ON e.department_id = d.id
       LEFT JOIN positions p ON e.position_id = p.id
-      WHERE e.rfid_tag = ? AND e.status = 'active'
+      WHERE e.rfid_tag = ?
     `;
+    const [employee] = await executeQuery({ query: employeeQuery, values: [rfid_tag] });
 
-    const employeeResults = await executeQuery({ 
-      query: employeeQuery, 
-      values: [rfid_tag] 
-    });
-
-    if (employeeResults.length === 0) {
+    if (!employee) {
       return NextResponse.json(
-        { error: "No active employee found with this RFID tag" }, 
+        { error: 'Employee not found for the provided RFID tag.' },
         { status: 404 }
       );
     }
 
-    const employee = {
-      id: employeeResults[0].id,
-      ashima_id: employeeResults[0].ashima_id,
-      name: employeeResults[0].name,
-      rfid_tag: employeeResults[0].rfid_tag,
-      department: employeeResults[0].department,
-      position: employeeResults[0].position,
-    };
-
-    // If photo exists, convert it to base64
-    if (employeeResults[0].photo) {
-      const base64Photo = Buffer.from(employeeResults[0].photo).toString('base64');
-      employee.photo = `data:image/jpeg;base64,${base64Photo}`;
+    if (employee.photo) {
+      employee.photo = `data:image/png;base64,${Buffer.from(employee.photo).toString('base64')}`;
     }
 
-    // Get the latest log for this employee - using timestamp, not in_time
+    // Step 1: Get latest attendance log for this user
     const latestLogQuery = `
-      SELECT id, log_type, timestamp
+      SELECT id, log_type, in_time, out_time
       FROM attendance_logs
       WHERE ashima_id = ?
-      ORDER BY timestamp DESC
+      ORDER BY in_time DESC
       LIMIT 1
     `;
+    const [latestLog] = await executeQuery({ query: latestLogQuery, values: [employee.ashima_id] });
 
-    const latestLogResults = await executeQuery({ 
-      query: latestLogQuery, 
-      values: [employee.ashima_id] 
-    });
+    let nextLogType = "IN";
+    let insertLogQuery = "";
+    let insertLogValues = [];
 
-    // Determine log type (IN or OUT)
-    let logType = "IN"; // Default to IN
-    if (latestLogResults.length > 0) {
-      // If latest log is IN, then this should be OUT, and vice versa
-      logType = latestLogResults[0].log_type === "IN" ? "OUT" : "IN";
-    }
-
-    // Insert new attendance log
-    const insertLogQuery = `
-      INSERT INTO attendance_logs (ashima_id, employee_name, department, log_type, timestamp)
-      VALUES (?, ?, ?, ?, NOW())
-    `;
-
-    const insertResult = await executeQuery({ 
-      query: insertLogQuery, 
-      values: [
-        employee.ashima_id, 
-        employee.name, 
-        employee.department || "N/A",
-        logType
-      ] 
-    });
-
-    // Get the newly created log
-    const newLogQuery = `
-      SELECT id, log_type, timestamp
-      FROM attendance_logs
-      WHERE id = ?
-    `;
-
-    const newLogResults = await executeQuery({ 
-      query: newLogQuery, 
-      values: [insertResult.insertId] 
-    });
-
-    // Create a response-friendly attendance log structure
-    let attendanceLog = {
-      id: newLogResults[0].id,
-      log_type: newLogResults[0].log_type,
-      timestamp: newLogResults[0].timestamp
-    };
-
-    // Format as in_time/out_time for the UI
-    if (logType === "IN") {
-      attendanceLog.in_time = newLogResults[0].timestamp;
-      attendanceLog.out_time = null;
-    } else {
-      // For OUT logs, find the corresponding IN log
-      const inLogQuery = `
-        SELECT timestamp
-        FROM attendance_logs
-        WHERE ashima_id = ? AND log_type = 'IN'
-        ORDER BY timestamp DESC
-        LIMIT 1
+    if (!latestLog || latestLog.log_type === "OUT" || (latestLog.log_type === "IN" && latestLog.out_time)) {
+      // No log, or last log is OUT, or last IN already paired: this should be a new IN
+      nextLogType = "IN";
+      insertLogQuery = `
+        INSERT INTO attendance_logs (ashima_id, log_type, in_time, out_time)
+        VALUES (?, 'IN', NOW(), NULL)
       `;
-      
-      const inLogResults = await executeQuery({
-        query: inLogQuery,
-        values: [employee.ashima_id]
-      });
-      
-      if (inLogResults.length > 0) {
-        attendanceLog.in_time = inLogResults[0].timestamp;
-        attendanceLog.out_time = newLogResults[0].timestamp;
-      } else {
-        attendanceLog.in_time = null;
-        attendanceLog.out_time = newLogResults[0].timestamp;
-      }
+      insertLogValues = [employee.ashima_id];
+    } else if (latestLog.log_type === "IN" && !latestLog.out_time) {
+      // Last log is IN and has no out_time: this should be OUT and update the previous IN
+      nextLogType = "OUT";
+      // Update the previous IN with out_time and log_type OUT
+      const updateQuery = `
+        UPDATE attendance_logs
+        SET log_type = 'OUT', out_time = NOW()
+        WHERE id = ?
+      `;
+      await executeQuery({ query: updateQuery, values: [latestLog.id] });
     }
+
+    // Only do insert if this is a new IN
+    if (insertLogQuery) {
+      await executeQuery({ query: insertLogQuery, values: insertLogValues });
+    }
+
+    // Update status/last_active as before
+    if (employee.status === 'inactive') {
+      const updateStatusQuery = `
+        UPDATE employees
+        SET status = 'active', last_active = NOW()
+        WHERE ashima_id = ?
+      `;
+      await executeQuery({ query: updateStatusQuery, values: [employee.ashima_id] });
+    } else {
+      const updateLastActiveQuery = `
+        UPDATE employees
+        SET last_active = NOW()
+        WHERE ashima_id = ?
+      `;
+      await executeQuery({ query: updateLastActiveQuery, values: [employee.ashima_id] });
+    }
+
+    // Return the latest attendance entry for this user
+    const mergedLogsQuery = `
+      SELECT *
+      FROM attendance_logs
+      WHERE ashima_id = ?
+      ORDER BY in_time DESC
+      LIMIT 1
+    `;
+    const [attendanceLog] = await executeQuery({ query: mergedLogsQuery, values: [employee.ashima_id] });
 
     return NextResponse.json({
-      message: `${employee.name} successfully logged ${logType}`,
       employee,
       attendanceLog,
-      logType
+      logType: nextLogType
     });
-  } catch (err) {
-    console.error("Error processing attendance log:", err);
+  } catch (error) {
+    console.error('Error processing attendance log:', error);
     return NextResponse.json(
-      { error: "Failed to process attendance log" },
+      { error: 'Failed to process attendance log.' },
       { status: 500 }
     );
   }

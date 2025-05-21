@@ -83,6 +83,11 @@ export default function EmployeeTable({
       accessorKey: "position",
     },
     {
+      header: "Supervisor",
+      accessorKey: "supervisor",
+      cell: ({ getValue }) => <span>{getValue() || "None"}</span>,
+    },
+    {
       header: "RFID Tag",
       accessorKey: "rfid_tag",
       cell: ({ getValue }) => <span>{getValue() || "Not Assigned"}</span>,

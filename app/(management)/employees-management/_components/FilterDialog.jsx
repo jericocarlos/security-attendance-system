@@ -24,6 +24,7 @@ export default function FilterDialog({
   onOpenChange, 
   departments, 
   positions, 
+  supervisors = [], // Add supervisors prop
   filters, 
   setFilters 
 }) {
@@ -31,18 +32,25 @@ export default function FilterDialog({
     defaultValues: {
       department: filters.department || "",
       position: filters.position || "",
+      supervisor: filters.supervisor || "", // Add supervisor default value
       status: filters.status || "",
     },
   });
 
   const handleApplyFilters = (data) => {
-    setFilters(data);
+    // Convert "all" to "" for the API filtering
+    const apiFilters = {
+      ...data,
+      supervisor: data.supervisor === "all" ? "" : data.supervisor
+    };
+    
+    setFilters(apiFilters);
     onOpenChange(false);
   };
 
   const handleClearFilters = () => {
-    reset({ department: "", position: "", status: "" });
-    setFilters({ department: "", position: "", status: "" });
+    reset({ department: "", position: "", supervisor: "", status: "" });
+    setFilters({ department: "", position: "", supervisor: "", status: "" });
     onOpenChange(false);
   };
 
@@ -82,7 +90,7 @@ export default function FilterDialog({
               />
             </div>
 
-            {/* <div className="space-y-2">
+            <div className="space-y-2">
               <Label htmlFor="position">Position</Label>
               <Controller
                 name="position"
@@ -105,7 +113,34 @@ export default function FilterDialog({
                   </Select>
                 )}
               />
-            </div> */}
+            </div>
+
+            {/* Add Supervisor Filter */}
+            <div className="space-y-2">
+              <Label htmlFor="supervisor">Supervisor</Label>
+              <Controller
+                name="supervisor"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value || ""}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select supervisor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All supervisors</SelectItem>
+                      {supervisors.map((supervisor) => (
+                        <SelectItem key={supervisor.id} value={supervisor.id.toString()}>
+                          {supervisor.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
