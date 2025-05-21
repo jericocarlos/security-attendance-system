@@ -72,8 +72,8 @@ export default function EmployeesManagementPage() {
       const posData = await posResponse.json();
       setPositions(posData.positions);
       
-      // Fetch supervisors
-      const supResponse = await fetch('/api/admin/supervisors');
+      // Fetch supervisors - add limit parameter to get all records
+      const supResponse = await fetch('/api/admin/supervisors?limit=1000');
       if (!supResponse.ok) throw new Error('Failed to fetch supervisors');
       const supData = await supResponse.json();
       setSupervisors(supData.supervisors);
