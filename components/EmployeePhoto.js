@@ -1,0 +1,51 @@
+'use client';
+
+import { motion } from 'framer-motion';
+
+export default function EmployeePhoto({ employeeInfo, employeeStatus }) {
+  return (
+    <div className="flex flex-col items-center">
+      {/* Large employee photo */}
+      <motion.div 
+        className="mb-10 relative"
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <motion.div 
+          className="w-[450px] h-[450px] rounded-3xl overflow-hidden border-8 border-white/20 shadow-2xl"
+          whileHover={{ scale: 1.03 }}
+          transition={{ type: "spring", stiffness: 400, damping: 10 }}
+        >
+          {employeeInfo?.photo ? (
+            <img
+              src={employeeInfo.photo}
+              alt={employeeInfo.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-800 to-purple-800">
+              <span className="text-9xl font-bold text-white/60">
+                {employeeInfo.name.split(' ').map(n => n[0]).join('')}
+              </span>
+            </div>
+          )}
+        </motion.div>
+        
+        {/* Status badge overlay */}
+        <motion.div 
+          className={`absolute -bottom-5 left-1/2 transform -translate-x-1/2 py-4 px-12 rounded-full ${
+            employeeStatus === 'Clocked In' 
+              ? 'bg-green-600 text-white' 
+              : 'bg-red-600 text-white'
+          }`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <span className="text-4xl font-bold">{employeeStatus}</span>
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+}
