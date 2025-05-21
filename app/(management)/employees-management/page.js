@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import EmployeeTable from "./_components/EmployeeTable";
 import EmployeeFormDialog from "./_components/EmployeeFormDialog";
-import DeleteConfirmationDialog from "./_components/DeleteConfirmationDialog";
 import FilterDialog from "./_components/FilterDialog";
 import DashboardStats from "./_components/DashboardStats";
 
@@ -16,11 +15,12 @@ export default function EmployeesManagementPage() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState({ department: "", position: "", status: "" });
+  const [filters, setFilters] = useState({ department: "", position: "", supervisor: "", status: "" });
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [totalEmployees, setTotalEmployees] = useState(0);
   const [departments, setDepartments] = useState([]);
   const [positions, setPositions] = useState([]);
+  const [supervisors, setSupervisors] = useState([]); // Add supervisors state
   const [loadingMetadata, setLoadingMetadata] = useState(false);
 
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
@@ -59,19 +59,28 @@ export default function EmployeesManagementPage() {
   const fetchDepartmentsAndPositions = useCallback(async () => {
     try {
       setLoadingMetadata(true);
+      
+      // Fetch departments
       const deptResponse = await fetch('/api/admin/departments');
-      if (!deptResponse.ok) throw new Error("Failed to fetch departments");
+      if (!deptResponse.ok) throw new Error('Failed to fetch departments');
       const deptData = await deptResponse.json();
-
+      setDepartments(deptData.departments);
+      
+      // Fetch positions
       const posResponse = await fetch('/api/admin/positions');
-      if (!posResponse.ok) throw new Error("Failed to fetch positions");
+      if (!posResponse.ok) throw new Error('Failed to fetch positions');
       const posData = await posResponse.json();
-
-      setDepartments(deptData.departments || []);
-      setPositions(posData.positions || []);
+      setPositions(posData.positions);
+      
+      // Fetch supervisors
+      const supResponse = await fetch('/api/admin/supervisors');
+      if (!supResponse.ok) throw new Error('Failed to fetch supervisors');
+      const supData = await supResponse.json();
+      setSupervisors(supData.supervisors);
+      
     } catch (error) {
-      console.error("Error fetching metadata:", error);
-      enqueueSnackbar("Failed to fetch departments and positions", { variant: "error" });
+      console.error('Error fetching metadata:', error);
+      enqueueSnackbar('Failed to load form options', { variant: 'error' });
     } finally {
       setLoadingMetadata(false);
     }
@@ -79,66 +88,50 @@ export default function EmployeesManagementPage() {
 
   const handleEmployeeFormSubmit = async (formData, imagePreview) => {
     try {
-      // Create payload as JSON instead of FormData
-      const payload = {
-        ashima_id: formData.ashima_id,
-        name: formData.name,
-        department_id: formData.department_id || null,
-        position_id: formData.position_id || null,
-        rfid_tag: formData.status === "resigned" ? null : formData.rfid_tag,
-        emp_stat: formData.emp_stat || "regular",
-        status: formData.status || "active",
-        removePhoto: formData.removePhoto || formData.status === "resigned"
-      };
+      setIsFormDialogOpen(false);
       
-      // Add photo data if available and not resigned
-      if (imagePreview && formData.status !== "resigned" && !formData.removePhoto) {
-        payload.photo = imagePreview;
-      }
+      console.log("Employee form data received:", formData);
       
-      // Send request to the appropriate endpoint
-      const url = currentEmployee 
-        ? `/api/admin/employees/${currentEmployee.id}` // Use ID, not ashima_id
-        : "/api/admin/employees";
-        
       const method = currentEmployee ? "PUT" : "POST";
-      
+      const url = currentEmployee 
+        ? `/api/admin/employees/${currentEmployee.id}`
+        : "/api/admin/employees";
+    
+      // Ensure supervisor_id is properly handled
+      const apiData = {
+        ...formData,
+        photo: imagePreview,
+        // No need to modify supervisor_id as it should already be null if it was "none"
+      };
+    
+      console.log("Data being sent to API:", {
+        ...apiData,
+        photo: apiData.photo ? "[photo data]" : null,
+        supervisor_id: apiData.supervisor_id
+      });
+    
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(apiData),
       });
-      
+    
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to save employee");
       }
-      
-      // Get the response data with the new employee information
-      const responseData = await response.json();
-      console.log("New employee created with ID:", responseData.id);
-      
-      // You can optionally add the employee directly to the state 
-      // instead of refreshing the whole list
-      if (!currentEmployee && responseData.employee) {
-        setEmployees(prev => [responseData.employee, ...prev]);
-      }
-      
+    
+      fetchEmployees();
       enqueueSnackbar(
-        currentEmployee ? "Employee updated successfully" : "Employee added successfully",
+        `Employee ${currentEmployee ? "updated" : "added"} successfully`, 
         { variant: "success" }
       );
-      
-      // Refresh employee list
-      fetchEmployees();
-      
-      return true;
+      setCurrentEmployee(null);
     } catch (error) {
-      console.error("Error saving employee:", error);
-      enqueueSnackbar(error.message, { variant: "error" });
-      return false;
+      console.error("Error submitting employee data:", error);
+      enqueueSnackbar(error.message || "Failed to save employee", { variant: "error" });
     }
   };
 
@@ -175,10 +168,7 @@ export default function EmployeesManagementPage() {
 
   const handleOpenForm = (employee = null) => {
     setCurrentEmployee(employee);
-    fetchDepartmentsAndPositions();
     setIsFormDialogOpen(true);
-    console.log("Opening form for employee:", employee ? 
-      `ID: ${employee.id}, ASHIMA ID: ${employee.ashima_id}` : "New employee");
   };
 
   const handleOpenFilter = () => {
@@ -240,6 +230,7 @@ export default function EmployeesManagementPage() {
         employee={currentEmployee}
         departments={departments}
         positions={positions}
+        supervisors={supervisors}
         onSubmit={handleEmployeeFormSubmit}
         isLoadingOptions={loadingMetadata}
       />
@@ -250,16 +241,9 @@ export default function EmployeesManagementPage() {
         onOpenChange={setIsFilterDialogOpen}
         departments={departments}
         positions={positions}
+        supervisors={supervisors}
         filters={filters}
         setFilters={setFilters}
-      />
-
-      {/* Delete Confirmation Dialog */}
-      <DeleteConfirmationDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        employee={currentEmployee}
-        onConfirmDelete={handleDeleteEmployee}
       />
     </div>
   );

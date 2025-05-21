@@ -25,15 +25,31 @@ function decodeBase64ToBinary(base64String) {
 export async function PUT(req, context) {
   try {
     const { id } = context.params;
-    console.log("Route parameter ID:", id);
     const body = await req.json();
-    const { ashima_id, name, department_id, position_id, rfid_tag, photo, emp_stat, status, removePhoto } = body;
+    
+    // Log the complete request body
+    console.log("Complete update request body:", JSON.stringify(body, (key, value) => {
+      // Don't log the full photo data
+      if (key === 'photo' && value) return '[photo data]';
+      return value;
+    }));
+    
+    const { 
+      ashima_id, 
+      name, 
+      department_id, 
+      position_id, 
+      supervisor_id, 
+      rfid_tag, 
+      photo, 
+      emp_stat, 
+      status, 
+      removePhoto 
+    } = body;
 
-    console.log("Updating employee ID:", id);
-    console.log("Status:", status);
-    console.log("Photo provided:", photo ? "Yes (photo data present)" : "No photo data");
-    console.log("RFID tag:", rfid_tag || "None");
-    console.log("Remove photo flag:", removePhoto ? "Yes" : "No");
+    console.log("Field values AFTER destructuring:");
+    console.log("- supervisor_id:", supervisor_id);
+    console.log("- supervisor_id type:", typeof supervisor_id);
     
     // Validate required fields - only ashima_id and name are always required
     if (!ashima_id || !name) {
@@ -42,17 +58,9 @@ export async function PUT(req, context) {
         { status: 400 }
       );
     }
-    
-    // Check if RFID tag is required (only for active employees)
-    if (status !== "resigned" && !rfid_tag) {
-      return NextResponse.json(
-        { message: "RFID Tag is required for active employees" },
-        { status: 400 }
-      );
-    }
 
     // Determine what to do with the photo
-    let binaryPhoto;
+    let binaryPhoto = null; // Initialize binaryPhoto variable
     
     // Always set photo to NULL for resigned employees or if removePhoto flag is true
     if (status === "resigned" || removePhoto) {
@@ -65,18 +73,7 @@ export async function PUT(req, context) {
     } else {
       // If no photo provided and not resigned, keep existing photo (don't update)
       console.log("No photo provided, existing photo will be preserved");
-      // Exclude photo field from the update
-      const existingPhoto = await executeQuery({ 
-        query: "SELECT photo FROM employees WHERE id = ?", 
-        values: [id] 
-      });
-      
-      // If query returned results, use the existing photo
-      if (existingPhoto && existingPhoto.length > 0) {
-        binaryPhoto = existingPhoto[0].photo;
-      } else {
-        binaryPhoto = null;
-      }
+      // Here we won't set binaryPhoto to any value, and we'll exclude the photo field from the update
     }
 
     // Build the update query dynamically with proper handling of NULL values
@@ -96,15 +93,16 @@ export async function PUT(req, context) {
     updateFields.push("position_id = ?");
     values.push(position_id);
 
+    updateFields.push("supervisor_id = ?");
+    values.push(supervisor_id);
 
     updateFields.push("rfid_tag = ?");
-
     values.push(status === "resigned" || !rfid_tag ? null : rfid_tag);
 
     // Only include photo field if it's changing
     if (status === "resigned" || removePhoto || photo) {
       updateFields.push("photo = ?");
-      values.push(binaryPhoto); // Will be null for resigned employees
+      values.push(binaryPhoto); // Now binaryPhoto is defined
     }
 
     updateFields.push("emp_stat = ?");
