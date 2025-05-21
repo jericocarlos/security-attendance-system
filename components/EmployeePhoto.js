@@ -5,15 +5,15 @@ import { motion } from 'framer-motion';
 export default function EmployeePhoto({ employeeInfo, employeeStatus }) {
   return (
     <div className="flex flex-col items-center">
-      {/* Large employee photo */}
+      {/* Large employee photo - adjusted size */}
       <motion.div 
-        className="mb-10 relative"
+        className="mb-6" // Reduced margin to accommodate badge below
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
         <motion.div 
-          className="w-[450px] h-[450px] rounded-3xl overflow-hidden border-8 border-white/20 shadow-2xl"
+          className="w-[600px] h-[550px] rounded-3xl overflow-hidden border-8 border-white/20 shadow-2xl" // Increased size
           whileHover={{ scale: 1.03 }}
           transition={{ type: "spring", stiffness: 400, damping: 10 }}
         >
@@ -31,20 +31,20 @@ export default function EmployeePhoto({ employeeInfo, employeeStatus }) {
             </div>
           )}
         </motion.div>
-        
-        {/* Status badge overlay */}
-        <motion.div 
-          className={`absolute -bottom-5 left-1/2 transform -translate-x-1/2 py-4 px-12 rounded-full ${
-            employeeStatus === 'Clocked In' 
-              ? 'bg-green-600 text-white' 
-              : 'bg-red-600 text-white'
-          }`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <span className="text-4xl font-bold">{employeeStatus}</span>
-        </motion.div>
+      </motion.div>
+      
+      {/* Status badge moved below photo */}
+      <motion.div 
+        className={`py-4 px-12 rounded-full ${
+          employeeStatus === 'Clocked In' 
+            ? 'bg-green-600 text-white' 
+            : 'bg-red-600 text-white'
+        }`}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        <span className="text-4xl font-bold">{employeeStatus}</span>
       </motion.div>
     </div>
   );

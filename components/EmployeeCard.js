@@ -9,13 +9,13 @@ export default function EmployeeCard({ employeeInfo, attendanceLog, employeeStat
     return dayjs(timeString).format('h:mm A');
   };
 
-  const getWelcomeMessage = () => {
-    if (employeeStatus === 'Clocked In') {
-      return `Welcome, ${employeeInfo.name.split(' ')[0]}!`;
-    } else {
-      return `Goodbye, ${employeeInfo.name.split(' ')[0]}!`;
-    }
-  };
+  // const getWelcomeMessage = () => {
+  //   if (employeeStatus === 'Clocked In') {
+  //     return `Welcome, ${employeeInfo.name.split(' ')[0]}!`;
+  //   } else {
+  //     return `Goodbye, ${employeeInfo.name.split(' ')[0]}!`;
+  //   }
+  // };
 
   return (
     <motion.div 
@@ -24,14 +24,14 @@ export default function EmployeeCard({ employeeInfo, attendanceLog, employeeStat
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4 }}
     >
-      <motion.h1 
+      {/* <motion.h1 
         className="text-5xl font-bold mb-8 text-cyan-300"
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
         {getWelcomeMessage()}
-      </motion.h1>
+      </motion.h1> */}
       
       <div className="space-y-6">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>

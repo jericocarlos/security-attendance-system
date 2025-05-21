@@ -1,7 +1,6 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import dayjs from 'dayjs';
 import HIDListener from '@/lib/HIDListeners';
 import Clock from '@/components/Clock';
 import EmployeeCard from '@/components/EmployeeCard';
@@ -9,7 +8,7 @@ import EmployeePhoto from '@/components/EmployeePhoto';
 import ErrorDisplay from '@/components/ErrorDisplay';
 import useAttendance from '@/hooks/useAttendance';
 import { ANIMATIONS } from '@/constants';
-import { getCurrentDateFormatted } from '@/utils/dateUtils';
+import Image from 'next/image';
 
 export default function Home() {
   const {
@@ -34,7 +33,7 @@ export default function Home() {
       </motion.div>
 
       {/* Conditional main content */}
-      <div className="container mx-auto px-8 pb-20">
+      <div className="container my-7 mx-auto px-8 pb-20">
         {/* Instructions or welcome message */}
         <AnimatePresence>
           {showInstructions && !error && (
@@ -89,11 +88,18 @@ export default function Home() {
       </div>
 
       {/* Company branding footer */}
-      <div className="fixed bottom-0 left-0 w-full bg-black/30 backdrop-blur py-4">
+      <div className="fixed bottom-0 left-0 w-full bg-black/30 backdrop-blur">
         <div className="container mx-auto flex justify-between items-center px-8">
-          <div className="text-2xl font-bold">Ashima Attendance System</div>
-          <div className="text-xl text-cyan-300">
-            {getCurrentDateFormatted()}
+          <div className="text-2xl font-bold">Security Attendance System</div>
+          <div>
+            <Image
+              src="/ewbpo.png" 
+              alt="EWBPO Logo" 
+              width={300}
+              height={53}
+              className="object-contain"
+              priority
+            />
           </div>
         </div>
       </div>
