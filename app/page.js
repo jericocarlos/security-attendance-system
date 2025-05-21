@@ -3,9 +3,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import HIDListener from '@/lib/HIDListeners';
 import Clock from '@/components/Clock';
-import EmployeeCard from '@/components/EmployeeCard';
-import EmployeePhoto from '@/components/EmployeePhoto';
-import ErrorDisplay from '@/components/ErrorDisplay';
+import EmployeeCard from '@/components/layout/home/EmployeeCard';
+import EmployeePhoto from '@/components/layout/home/EmployeePhoto';
+import ErrorDisplay from '@/components/layout/home/ErrorDisplay';
 import useAttendance from '@/hooks/useAttendance';
 import { ANIMATIONS } from '@/constants';
 import Image from 'next/image';

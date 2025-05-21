@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image'; // Add this import
 
 export default function EmployeePhoto({ employeeInfo, employeeStatus }) {
   return (
@@ -18,11 +19,16 @@ export default function EmployeePhoto({ employeeInfo, employeeStatus }) {
           transition={{ type: "spring", stiffness: 400, damping: 10 }}
         >
           {employeeInfo?.photo ? (
-            <img
-              src={employeeInfo.photo}
-              alt={employeeInfo.name}
-              className="w-full h-full object-cover"
-            />
+            <div className="relative w-full h-full">
+              <Image
+                src={employeeInfo.photo}
+                alt={employeeInfo.name}
+                fill
+                sizes="600px"
+                className="object-cover"
+                priority
+              />
+            </div>
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-r from-blue-800 to-purple-800">
               <span className="text-9xl font-bold text-white/60">
