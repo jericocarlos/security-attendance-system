@@ -99,7 +99,7 @@ export async function POST(request) {
 
     // Return the latest attendance entry for this user
     const mergedLogsQuery = `
-      SELECT *
+      SELECT id, log_type, in_time, out_time
       FROM attendance_logs
       WHERE ashima_id = ?
       ORDER BY in_time DESC

@@ -10,7 +10,7 @@ export default function useAttendance() {
   const [employeeStatus, setEmployeeStatus] = useState(null);
   const [error, setError] = useState(null);
   const [showInstructions, setShowInstructions] = useState(true);
-  const [loading, setLoading] = useState(false); // <-- Add this line
+  const [loading, setLoading] = useState(false); // <-- Add loading state
 
   const [playSuccess] = useSound('/sounds/success.mp3');
   const [playError] = useSound('/sounds/error.mp3');
@@ -29,10 +29,16 @@ export default function useAttendance() {
     setEmployeeInfo(null);
     setAttendanceLog(null);
     setEmployeeStatus(null);
+    setLoading(false); // <-- Reset loading on clear
   }, []);
 
   const handleTagRead = useCallback(async (tag) => {
-    setLoading(true); // <-- Start loading
+    setLoading(true); // <-- Set loading true at start
+    setEmployeeInfo({ name: 'Processing...', photo: null });
+    setAttendanceLog(null);
+    setEmployeeStatus('Processing...');
+    setError(null);
+
     try {
       const response = await fetch(API.ADD_ATTENDANCE, {
         method: 'POST',
@@ -57,7 +63,7 @@ export default function useAttendance() {
       clearEmployeeInfo();
       playError();
     } finally {
-      setLoading(false); // <-- End loading
+      setLoading(false); // <-- Always reset loading
     }
   }, [clearEmployeeInfo, playSuccess, playError]);
 
@@ -69,6 +75,6 @@ export default function useAttendance() {
     showInstructions,
     handleTagRead,
     clearEmployeeInfo,
-    loading // <-- Export loading
+    loading // <-- Return loading
   };
 }

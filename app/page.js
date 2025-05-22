@@ -101,25 +101,18 @@ export default function Home() {
 
       {/* Company branding footer */}
       <div className="fixed bottom-0 left-0 w-full bg-black/30 backdrop-blur">
-        <div className="container mx-auto flex justify-between items-center px-8">
+        <div className="container mx-auto relative flex justify-between items-center px-8">
+          {/* Title on the left */}
           <div className="text-2xl font-bold">Security Attendance System</div>
           
-          {/* Status badge */}
-          {employeeStatus && (
-            <motion.div 
-              className={`py-4 px-12 rounded-full ${
-                employeeStatus === 'Clocked In' 
-                  ? 'bg-green-600 text-white' 
-                  : 'bg-red-600 text-white'
-              }`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <span className="text-4xl font-bold">{employeeStatus}</span>
-            </motion.div>
+          {/* Spinner absolutely centered */}
+          {loading && (
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center z-10">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-4 border-b-4 border-cyan-500"></div>
+            </div>
           )}
-          
+
+          {/* Logo on the right */}
           <div>
             <Image
               src="/ewbpo.png" 
