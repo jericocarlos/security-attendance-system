@@ -17,7 +17,9 @@ export default function Home() {
     employeeStatus,
     error,
     showInstructions,
-    handleTagRead
+    handleTagRead,
+    clearEmployeeInfo,
+    loading // <-- Destructure loading
   } = useAttendance();
 
   return (
@@ -85,6 +87,14 @@ export default function Home() {
         <AnimatePresence>
           {error && <ErrorDisplay error={error} />}
         </AnimatePresence>
+
+        {/* Loading spinner */}
+        {loading && (
+          <div className="flex justify-center items-center mt-10">
+            <div className="animate-spin rounded-full h-24 w-24 border-t-4 border-b-4 border-cyan-500"></div>
+            <span className="ml-6 text-3xl text-cyan-500 font-bold">Processing...</span>
+          </div>
+        )}
       </div>
 
       {/* Company branding footer */}

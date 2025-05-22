@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import useSound from 'use-sound';
+import { API, STATUS, SETTINGS } from '@/constants';
 
 export default function useAttendance() {
   const [employeeInfo, setEmployeeInfo] = useState(null);
@@ -9,83 +10,56 @@ export default function useAttendance() {
   const [employeeStatus, setEmployeeStatus] = useState(null);
   const [error, setError] = useState(null);
   const [showInstructions, setShowInstructions] = useState(true);
-  
-  // Sound effects using use-sound
+  const [loading, setLoading] = useState(false); // <-- Add this line
+
   const [playSuccess] = useSound('/sounds/success.mp3');
   const [playError] = useSound('/sounds/error.mp3');
-  
-  // Auto-clear after 20 seconds
+
   useEffect(() => {
-    let timer;
-    if (employeeInfo) {
-      setShowInstructions(false);
-      timer = setTimeout(() => {
-        clearEmployeeInfo();
-        setShowInstructions(true);
-      }, 20000);
-    }
-    
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
+    if (!employeeInfo) return;
+    setShowInstructions(false);
+    const timer = setTimeout(() => {
+      clearEmployeeInfo();
+      setShowInstructions(true);
+    }, SETTINGS.AUTO_CLEAR_TIMEOUT);
+    return () => clearTimeout(timer);
   }, [employeeInfo]);
 
-  const handleTagRead = async (tag) => {
+  const clearEmployeeInfo = useCallback(() => {
+    setEmployeeInfo(null);
+    setAttendanceLog(null);
+    setEmployeeStatus(null);
+  }, []);
+
+  const handleTagRead = useCallback(async (tag) => {
+    setLoading(true); // <-- Start loading
     try {
-      const response = await fetch('/api/attendance/add', {
+      const response = await fetch(API.ADD_ATTENDANCE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rfid_tag: tag }),
       });
-
       const result = await response.json();
 
       if (response.ok) {
-        updateEmployeeInfo(result);
+        setEmployeeInfo(result.employee);
+        setAttendanceLog(result.attendanceLog);
+        setEmployeeStatus(result.logType === 'IN' ? STATUS.CLOCKED_IN : STATUS.CLOCKED_OUT);
+        setError(null);
         playSuccess();
-      } else if (response.status === 404) {
-        handleTagNotFound(result.error);
-        playError();
       } else {
-        handleTagError(result.error);
+        setError(result.error || 'An unexpected error occurred.');
+        clearEmployeeInfo();
         playError();
       }
     } catch (err) {
-      console.error('Error sending tag to server:', err);
       setError('An unexpected error occurred while processing the RFID tag.');
       clearEmployeeInfo();
       playError();
+    } finally {
+      setLoading(false); // <-- End loading
     }
-  };
-
-  const updateEmployeeInfo = (result) => {
-    const { employee, attendanceLog, logType } = result;
-    
-    setEmployeeInfo(employee);
-    setAttendanceLog(attendanceLog);
-    setError(null);
-
-    const status = logType === 'IN' ? 'Clocked In' : 'Clocked Out';
-    setEmployeeStatus(status);
-  };
-
-  const handleTagNotFound = (error) => {
-    console.error('RFID tag not found:', error);
-    setError('RFID tag not found. Please try again with a valid tag.');
-    clearEmployeeInfo();
-  };
-
-  const handleTagError = (error) => {
-    console.error('Error processing tag:', error);
-    setError(error || 'An unexpected error occurred.');
-    clearEmployeeInfo();
-  };
-
-  const clearEmployeeInfo = () => {
-    setEmployeeInfo(null);
-    setAttendanceLog(null);
-    setEmployeeStatus(null);
-  };
+  }, [clearEmployeeInfo, playSuccess, playError]);
 
   return {
     employeeInfo,
@@ -94,6 +68,7 @@ export default function useAttendance() {
     error,
     showInstructions,
     handleTagRead,
-    clearEmployeeInfo
+    clearEmployeeInfo,
+    loading // <-- Export loading
   };
 }
