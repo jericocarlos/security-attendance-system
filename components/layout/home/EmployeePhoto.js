@@ -14,7 +14,7 @@ export default function EmployeePhoto({ employeeInfo, employeeStatus }) {
         transition={{ duration: 0.6 }}
       >
         <motion.div 
-          className="w-[600px] h-[550px] rounded-3xl overflow-hidden border-8 border-white/20 shadow-2xl" // Increased size
+          className="w-[600px] h-[600px] rounded-3xl overflow-hidden border-8 border-white/20 shadow-2xl" // Increased size
           whileHover={{ scale: 1.03 }}
           transition={{ type: "spring", stiffness: 400, damping: 10 }}
         >
@@ -39,7 +39,7 @@ export default function EmployeePhoto({ employeeInfo, employeeStatus }) {
         </motion.div>
       </motion.div>
       
-      {/* Status badge moved below photo */}
+      {/* Status badge moved below photo
       <motion.div 
         className={`py-4 px-12 rounded-full ${
           employeeStatus === 'Clocked In' 
@@ -51,7 +51,7 @@ export default function EmployeePhoto({ employeeInfo, employeeStatus }) {
         transition={{ delay: 0.5 }}
       >
         <span className="text-4xl font-bold">{employeeStatus}</span>
-      </motion.div>
+      </motion.div> */}
     </div>
   );
 }
