@@ -35,7 +35,7 @@ export default function Home() {
       </motion.div>
 
       {/* Conditional main content */}
-      <div className="container my-7 mx-auto px-8 pb-20">
+      <div className="container my-5 mx-auto px-8 pb-20">
         {/* Instructions or welcome message */}
         <AnimatePresence>
           {showInstructions && !error && (
@@ -79,7 +79,9 @@ export default function Home() {
                 employeeInfo={employeeInfo}
                 employeeStatus={employeeStatus} 
               />
+              
             </motion.div>
+            
           )}
         </AnimatePresence>
 
@@ -101,6 +103,23 @@ export default function Home() {
       <div className="fixed bottom-0 left-0 w-full bg-black/30 backdrop-blur">
         <div className="container mx-auto flex justify-between items-center px-8">
           <div className="text-2xl font-bold">Security Attendance System</div>
+          
+          {/* Status badge */}
+          {employeeStatus && (
+            <motion.div 
+              className={`py-4 px-12 rounded-full ${
+                employeeStatus === 'Clocked In' 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-red-600 text-white'
+              }`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <span className="text-4xl font-bold">{employeeStatus}</span>
+            </motion.div>
+          )}
+          
           <div>
             <Image
               src="/ewbpo.png" 
