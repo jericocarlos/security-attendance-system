@@ -12,8 +12,8 @@ export default function useAttendance() {
   const [showInstructions, setShowInstructions] = useState(true);
   const [loading, setLoading] = useState(false); // <-- Add loading state
 
-  const [playSuccess] = useSound('/sounds/ml-voice.mp3');
-  const [playError] = useSound('/sounds/aray-ko.mp3');
+  const [playSuccess] = useSound('/sounds/success.mp3');
+  const [playError] = useSound('/sounds/error.mp3');
 
   useEffect(() => {
     if (!employeeInfo) return;
