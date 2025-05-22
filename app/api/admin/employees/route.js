@@ -15,7 +15,7 @@ export async function GET(req) {
     const search = searchParams.get("search") || "";
     const department = searchParams.get("department") || "";
     const position = searchParams.get("position") || "";
-    const supervisor = searchParams.get("supervisor") || "";
+    const supervisor_id = searchParams.get("supervisor_id") || "";
     const status = searchParams.get("status") || "";
     const offset = (page - 1) * limit;
 
@@ -25,7 +25,7 @@ export async function GET(req) {
         (e.ashima_id LIKE ? OR e.name LIKE ?)
         ${department ? `AND d.id = ?` : ""}
         ${position ? `AND p.id = ?` : ""}
-        ${supervisor ? `AND s.id = ?` : ""}
+        ${supervisor_id ? `AND s.id = ?` : ""}
         ${status ? `AND e.status = ?` : ""}
     `;
 
@@ -55,7 +55,7 @@ export async function GET(req) {
       `%${search}%`,
       ...(department ? [department] : []),
       ...(position ? [position] : []),
-      ...(supervisor ? [supervisor] : []),
+      ...(supervisor_id ? [supervisor_id] : []),
       ...(status ? [status] : []),
       limit,
       offset,
@@ -83,7 +83,7 @@ export async function GET(req) {
       `%${search}%`,
       ...(department ? [department] : []),
       ...(position ? [position] : []),
-      ...(supervisor ? [supervisor] : []),
+      ...(supervisor_id ? [supervisor_id] : []),
       ...(status ? [status] : []),
     ];
 

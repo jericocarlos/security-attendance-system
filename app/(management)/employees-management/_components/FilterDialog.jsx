@@ -32,7 +32,7 @@ export default function FilterDialog({
     defaultValues: {
       department: filters.department || "",
       position: filters.position || "",
-      supervisor: filters.supervisor || "", // Add supervisor default value
+      supervisor_id: filters.supervisor_id || "", // Use supervisor_id
       status: filters.status || "",
     },
   });
@@ -41,16 +41,15 @@ export default function FilterDialog({
     // Convert "all" to "" for the API filtering
     const apiFilters = {
       ...data,
-      supervisor: data.supervisor === "all" ? "" : data.supervisor
+      supervisor_id: data.supervisor_id === "all" ? "" : data.supervisor_id
     };
-    
     setFilters(apiFilters);
     onOpenChange(false);
   };
 
   const handleClearFilters = () => {
-    reset({ department: "", position: "", supervisor: "", status: "" });
-    setFilters({ department: "", position: "", supervisor: "", status: "" });
+    reset({ department: "", position: "", supervisor_id: "", status: "" });
+    setFilters({ department: "", position: "", supervisor_id: "", status: "" });
     onOpenChange(false);
   };
 
@@ -115,11 +114,11 @@ export default function FilterDialog({
               />
             </div>
 
-            {/* Add Supervisor Filter */}
+            {/* Supervisor Filter */}
             <div className="space-y-2">
-              <Label htmlFor="supervisor">Supervisor</Label>
+              <Label htmlFor="supervisor_id">Supervisor</Label>
               <Controller
-                name="supervisor"
+                name="supervisor_id"
                 control={control}
                 render={({ field }) => (
                   <Select

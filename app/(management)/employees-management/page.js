@@ -15,7 +15,7 @@ export default function EmployeesManagementPage() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState({ department: "", position: "", supervisor: "", status: "" });
+  const [filters, setFilters] = useState({ department: "", position: "", supervisor_id: "", status: "" });
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [totalEmployees, setTotalEmployees] = useState(0);
   const [departments, setDepartments] = useState([]);
@@ -40,6 +40,7 @@ export default function EmployeesManagementPage() {
         department: filters.department || "",
         position: filters.position || "",
         status: filters.status || "",
+        supervisor_id: filters.supervisor_id || "", // Use supervisor_id
       });
 
       const response = await fetch(`/api/admin/employees?${searchParams}`);
