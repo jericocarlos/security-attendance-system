@@ -39,7 +39,7 @@ export default function EmployeePhoto({ employeeInfo, employeeStatus }) {
         </motion.div>
       </motion.div>
       
-      {/* Status badge moved below photo
+      {/* Status badge moved below photo */}
       <motion.div 
         className={`py-4 px-12 rounded-full ${
           employeeStatus === 'Clocked In' 
@@ -51,7 +51,7 @@ export default function EmployeePhoto({ employeeInfo, employeeStatus }) {
         transition={{ delay: 0.5 }}
       >
         <span className="text-4xl font-bold">{employeeStatus}</span>
-      </motion.div> */}
+      </motion.div>
     </div>
   );
 }
