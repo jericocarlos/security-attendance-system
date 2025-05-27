@@ -253,21 +253,21 @@ export default function EmployeeFormDialog({
 
               {/* Add Supervisor Field */}
               <div className="space-y-2">
-                <Label htmlFor="supervisor">Supervisor</Label>
+                <Label htmlFor="supervisor">Leader</Label>
                 <Controller
                   name="supervisor_id"
                   control={control}
                   render={({ field }) => (
                     <Select
                       onValueChange={(value) => {
-                        console.log("Supervisor selected:", value);
+                        console.log("Leader selected:", value);
                         field.onChange(value);
                       }}
                       value={field.value}
                       disabled={isLoadingOptions}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select supervisor (optional)" />
+                        <SelectValue placeholder="Select leader (optional)" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">None</SelectItem>

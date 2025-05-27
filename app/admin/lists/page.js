@@ -13,7 +13,7 @@ export default function ListsPage() {
         <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="departments">Departments</TabsTrigger>
           <TabsTrigger value="positions">Positions</TabsTrigger>
-          <TabsTrigger value="supervisors">Supervisors</TabsTrigger>
+          <TabsTrigger value="supervisors">Leaders</TabsTrigger>
         </TabsList>
         <TabsContent value="departments">
           <Card>
@@ -44,9 +44,9 @@ export default function ListsPage() {
         <TabsContent value="supervisors">
           <Card>
             <CardHeader>
-              <CardTitle>Supervisors</CardTitle>
+              <CardTitle>Leaders</CardTitle>
               <CardDescription>
-                Manage supervisors in your organization.
+                Manage leaders in your organization.
               </CardDescription>
             </CardHeader>
             <CardContent>

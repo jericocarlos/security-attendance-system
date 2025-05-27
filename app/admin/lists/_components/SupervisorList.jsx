@@ -186,7 +186,7 @@ export default function SupervisorList() {
         onEdit={handleEditClick}
         onDelete={handleDelete}
         onAdd={handleOpenAddDialog}
-        itemName="Supervisor"
+        itemName="Leader"
         pagination={pagination}
         onPageChange={handlePageChange}
         isLoading={loading}
@@ -201,7 +201,7 @@ export default function SupervisorList() {
           if (!open) setItemToEdit(null);
         }}
         onSave={handleSave}
-        itemName="Supervisor" 
+        itemName="Leader" 
         editItem={itemToEdit}
       />
     </div>
