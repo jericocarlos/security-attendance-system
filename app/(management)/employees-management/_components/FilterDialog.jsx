@@ -24,7 +24,7 @@ export default function FilterDialog({
   onOpenChange, 
   departments, 
   positions, 
-  supervisors = [], // Add supervisors prop
+  leaders, // Changed from supervisors to leaders 
   filters, 
   setFilters 
 }) {
@@ -129,10 +129,10 @@ export default function FilterDialog({
                       <SelectValue placeholder="Select supervisor" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All supervisors</SelectItem>
-                      {supervisors.map((supervisor) => (
-                        <SelectItem key={supervisor.id} value={supervisor.id.toString()}>
-                          {supervisor.name}
+                      <SelectItem value="">All</SelectItem>
+                      {leaders.map((leader) => (
+                        <SelectItem key={leader.id} value={leader.id.toString()}>
+                          {leader.name}{leader.position_name ? ` (${leader.position_name})` : ''}
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -20,7 +20,7 @@ export default function EmployeesManagementPage() {
   const [totalEmployees, setTotalEmployees] = useState(0);
   const [departments, setDepartments] = useState([]);
   const [positions, setPositions] = useState([]);
-  const [supervisors, setSupervisors] = useState([]); // Add supervisors state
+  const [leaders, setLeaders] = useState([]); // Renamed from supervisors to leaders
   const [loadingMetadata, setLoadingMetadata] = useState(false);
 
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
@@ -40,7 +40,7 @@ export default function EmployeesManagementPage() {
         department: filters.department || "",
         position: filters.position || "",
         status: filters.status || "",
-        supervisor_id: filters.supervisor_id || "", // Use supervisor_id
+        supervisor_id: filters.supervisor_id || "",
       });
 
       const response = await fetch(`/api/admin/employees?${searchParams}`);
@@ -73,11 +73,11 @@ export default function EmployeesManagementPage() {
       const posData = await posResponse.json();
       setPositions(posData.positions);
       
-      // Fetch supervisors - add limit parameter to get all records
-      const supResponse = await fetch('/api/admin/supervisors?limit=1000');
-      if (!supResponse.ok) throw new Error('Failed to fetch supervisors');
-      const supData = await supResponse.json();
-      setSupervisors(supData.supervisors);
+      // Fetch leaders instead of supervisors
+      const leadersResponse = await fetch('/api/admin/leaders?limit=1000');
+      if (!leadersResponse.ok) throw new Error('Failed to fetch leaders');
+      const leadersData = await leadersResponse.json();
+      setLeaders(leadersData.leaders);
       
     } catch (error) {
       console.error('Error fetching metadata:', error);
@@ -224,25 +224,25 @@ export default function EmployeesManagementPage() {
         </CardContent>
       </Card>
 
-      {/* Employee Form Dialog */}
+      {/* Employee Form Dialog - Pass leaders instead of supervisors */}
       <EmployeeFormDialog
         open={isFormDialogOpen}
         onOpenChange={setIsFormDialogOpen}
         employee={currentEmployee}
         departments={departments}
         positions={positions}
-        supervisors={supervisors}
+        // Remove supervisors prop as we're fetching leaders directly in the dialog
         onSubmit={handleEmployeeFormSubmit}
         isLoadingOptions={loadingMetadata}
       />
 
-      {/* Filter Dialog */}
+      {/* Filter Dialog - Pass leaders instead of supervisors */}
       <FilterDialog
         open={isFilterDialogOpen}
         onOpenChange={setIsFilterDialogOpen}
         departments={departments}
         positions={positions}
-        supervisors={supervisors}
+        leaders={leaders} // Pass leaders instead of supervisors
         filters={filters}
         setFilters={setFilters}
       />

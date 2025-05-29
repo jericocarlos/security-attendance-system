@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm, Controller, useWatch } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import Image from "next/image";
-import { FiX, FiLoader } from "react-icons/fi";
+import { FiX } from "react-icons/fi";
 import {
   Dialog,
   DialogContent,
@@ -30,12 +30,13 @@ export default function EmployeeFormDialog({
   employee, 
   departments = [], 
   positions = [], 
-  supervisors = [], // Add supervisors prop
   onSubmit,
   isLoadingOptions = false
 }) {
   const [imagePreview, setImagePreview] = useState(null);
   const [activeTab, setActiveTab] = useState("details");
+  const [leaders, setLeaders] = useState([]);
+  const [isLoadingLeaders, setIsLoadingLeaders] = useState(false);
 
   const {
     register,
@@ -51,6 +52,32 @@ export default function EmployeeFormDialog({
   // Watch the status field to detect changes
   const status = watch("status");
 
+  // Fetch leaders when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchLeaders();
+    }
+  }, [open]);
+
+  // Function to fetch leaders from API
+  const fetchLeaders = async () => {
+    try {
+      setIsLoadingLeaders(true);
+      const response = await fetch('/api/admin/leaders');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch leaders');
+      }
+      
+      const data = await response.json();
+      setLeaders(data.leaders || []);
+    } catch (error) {
+      console.error('Error fetching leaders:', error);
+    } finally {
+      setIsLoadingLeaders(false);
+    }
+  };
+
   useEffect(() => {
     if (open) {
       if (employee) {
@@ -59,7 +86,7 @@ export default function EmployeeFormDialog({
         setValue("name", employee.name);
         setValue("department_id", employee.department_id?.toString());
         setValue("position_id", employee.position_id?.toString());
-        setValue("supervisor_id", employee.supervisor_id?.toString()); // Add supervisor_id
+        setValue("supervisor_id", employee.supervisor_id?.toString());
         setValue("rfid_tag", employee.rfid_tag);
         setValue("emp_stat", employee.emp_stat || "regular");
         setValue("status", employee.status);
@@ -71,10 +98,10 @@ export default function EmployeeFormDialog({
           name: "",
           department_id: "",
           position_id: "",
-          supervisor_id: "", // Add supervisor_id field
+          supervisor_id: "", 
           rfid_tag: "",
           emp_stat: "regular",
-          status: "active", // Default status for Add mode
+          status: "active",
         });
         setImagePreview(null);
       }
@@ -235,12 +262,17 @@ export default function EmployeeFormDialog({
                         onValueChange={field.onChange}
                         value={field.value || ""}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select position" />
+                        <SelectTrigger className="max-w-full overflow-hidden">
+                          <SelectValue placeholder="Select position" className="truncate w-full block" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="max-w-[300px]">
                           {positions.map((pos) => (
-                            <SelectItem key={pos.id} value={pos.id.toString()}>
+                            <SelectItem 
+                              key={pos.id} 
+                              value={pos.id.toString()}
+                              className="truncate" 
+                              title={pos.name}
+                            >
                               {pos.name}
                             </SelectItem>
                           ))}
@@ -251,7 +283,7 @@ export default function EmployeeFormDialog({
                 </div>
               </div>
 
-              {/* Add Supervisor Field */}
+              {/* Supervisor Field using the fetched leaders */}
               <div className="space-y-2">
                 <Label htmlFor="supervisor">Reporting to</Label>
                 <Controller
@@ -264,16 +296,16 @@ export default function EmployeeFormDialog({
                         field.onChange(value);
                       }}
                       value={field.value}
-                      disabled={isLoadingOptions}
+                      disabled={isLoadingLeaders || isLoadingOptions}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select leader (optional)" />
+                        <SelectValue placeholder={isLoadingLeaders ? "Loading leaders..." : "Select leader (optional)"} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">None</SelectItem>
-                        {supervisors.map((sup) => (
-                          <SelectItem key={sup.id} value={sup.id.toString()}>
-                            {sup.name}
+                        {leaders.map((leader) => (
+                          <SelectItem key={leader.id} value={leader.id.toString()}>
+                            {leader.name}{leader.position_name ? ` (${leader.position_name})` : ''}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -408,7 +440,7 @@ export default function EmployeeFormDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || isLoadingOptions}>
+            <Button type="submit" disabled={isSubmitting || isLoadingOptions || isLoadingLeaders}>
               {isSubmitting ? "Saving..." : "Save Employee"}
             </Button>
           </DialogFooter>

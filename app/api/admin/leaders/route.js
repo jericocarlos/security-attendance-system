@@ -9,34 +9,39 @@ export async function GET(request) {
     const search = searchParams.get('search') || '';
     const offset = (page - 1) * limit;
 
+    // Query to fetch employees whose positions are marked as leaders
     let query = `
       SELECT e.id, e.name, p.name AS position_name
       FROM employees e
       JOIN positions p ON e.position_id = p.id
-      WHERE p.is_leader = 1
+      WHERE p.is_leader = 1 AND e.status = 'active'
     `;
     let queryParams = [];
+    
     if (search) {
       query += " AND e.name LIKE ?";
       queryParams.push(`%${search}%`);
     }
+    
     query += " ORDER BY e.name ASC LIMIT ? OFFSET ?";
     queryParams.push(limit, offset);
 
     const leaders = await executeQuery({ query, values: queryParams });
 
-    // Get total count
+    // Get total count for pagination
     let countQuery = `
       SELECT COUNT(*) as total
       FROM employees e
       JOIN positions p ON e.position_id = p.id
-      WHERE p.is_leader = 1
+      WHERE p.is_leader = 1 AND e.status = 'active'
     `;
     let countParams = [];
+    
     if (search) {
       countQuery += " AND e.name LIKE ?";
       countParams.push(`%${search}%`);
     }
+    
     const countResult = await executeQuery({ query: countQuery, values: countParams });
     const total = countResult[0].total;
 
@@ -50,6 +55,7 @@ export async function GET(request) {
       }
     });
   } catch (error) {
+    console.error("Failed to fetch leaders:", error);
     return NextResponse.json(
       { error: "Failed to fetch leaders" },
       { status: 500 }
