@@ -15,7 +15,7 @@ export async function GET(req) {
     const search = searchParams.get("search") || "";
     const department = searchParams.get("department") || "";
     const position = searchParams.get("position") || "";
-    const supervisor_id = searchParams.get("supervisor_id") || "";
+    const leader = searchParams.get("leader") || "";
     const status = searchParams.get("status") || "";
     const offset = (page - 1) * limit;
 
@@ -25,7 +25,7 @@ export async function GET(req) {
         (e.ashima_id LIKE ? OR e.name LIKE ?)
         ${department ? `AND d.id = ?` : ""}
         ${position ? `AND p.id = ?` : ""}
-        ${supervisor_id ? `AND s.id = ?` : ""}
+        ${leader ? `AND l.id = ?` : ""}
         ${status ? `AND e.status = ?` : ""}
     `;
 
@@ -33,9 +33,9 @@ export async function GET(req) {
       SELECT 
         e.id, e.ashima_id, e.name, 
         d.name AS department, p.name AS position, 
-        s.name AS supervisor,
+        l.name AS leader_name,
         e.rfid_tag, e.photo, e.emp_stat, e.status,
-        e.department_id, e.position_id, e.supervisor_id
+        e.department_id, e.position_id, e.leader
       FROM 
         employees e
       LEFT JOIN 
@@ -43,7 +43,7 @@ export async function GET(req) {
       LEFT JOIN 
         positions p ON e.position_id = p.id
       LEFT JOIN
-        supervisors s ON e.supervisor_id = s.id
+        employees l ON e.leader = l.id 
       ${whereClause}
       ORDER BY 
         e.id DESC
@@ -55,7 +55,7 @@ export async function GET(req) {
       `%${search}%`,
       ...(department ? [department] : []),
       ...(position ? [position] : []),
-      ...(supervisor_id ? [supervisor_id] : []),
+      ...(leader ? [leader] : []),
       ...(status ? [status] : []),
       limit,
       offset,
@@ -74,7 +74,7 @@ export async function GET(req) {
       FROM employees e
       LEFT JOIN departments d ON e.department_id = d.id
       LEFT JOIN positions p ON e.position_id = p.id
-      LEFT JOIN supervisors s ON e.supervisor_id = s.id
+      LEFT JOIN employees l ON e.leader = l.id
       ${whereClause}
     `;
 
@@ -83,7 +83,7 @@ export async function GET(req) {
       `%${search}%`,
       ...(department ? [department] : []),
       ...(position ? [position] : []),
-      ...(supervisor_id ? [supervisor_id] : []),
+      ...(leader ? [leader] : []),
       ...(status ? [status] : []),
     ];
 
@@ -108,55 +108,29 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { ashima_id, name, department_id, position_id, supervisor_id, rfid_tag, photo, emp_stat } = body;
-    
-    // Debug log
-    console.log("Creating employee with data:", {
-      ashima_id, 
-      name, 
-      department_id, 
-      position_id, 
-      supervisor_id, // Log this specifically
-      rfid_tag,
-      photo: photo ? "Photo data present" : "No photo",
-      emp_stat
-    });
+    const { ashima_id, name, department_id, position_id, leader, rfid_tag, photo, emp_stat } = body;
 
     // Decode Base64 photo to binary
     const binaryPhoto = photo ? decodeBase64ToBinary(photo) : null;
 
-    // Make sure the SQL query parameters are in the correct order
     const insertQuery = `
-      INSERT INTO employees (ashima_id, name, department_id, position_id, supervisor_id, rfid_tag, photo, emp_stat, status)
+      INSERT INTO employees (ashima_id, name, department_id, position_id, leader, rfid_tag, photo, emp_stat, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    // Log the exact values being inserted
-    console.log("Insert values:", [
-      ashima_id, 
-      name, 
-      department_id || null, 
-      position_id || null, 
-      supervisor_id || null, // Explicitly log this
-      rfid_tag || null, 
-      "Binary photo data", 
-      emp_stat || "regular", 
-      "active"
-    ]);
-
-    const parsedSupervisorId = supervisor_id ? parseInt(supervisor_id, 10) : null;
+    const parsedLeaderId = leader ? parseInt(leader, 10) : null;
 
     const result = await executeQuery({
       query: insertQuery,
       values: [
-        ashima_id, 
-        name, 
-        department_id ? parseInt(department_id, 10) : null, 
-        position_id ? parseInt(position_id, 10) : null, 
-        parsedSupervisorId, // Use the parsed integer
-        rfid_tag || null, 
-        binaryPhoto, 
-        emp_stat || "regular", 
+        ashima_id,
+        name,
+        department_id ? parseInt(department_id, 10) : null,
+        position_id ? parseInt(position_id, 10) : null,
+        parsedLeaderId,
+        rfid_tag || null,
+        binaryPhoto,
+        emp_stat || "regular",
         "active"
       ]
     });
@@ -170,10 +144,10 @@ export async function POST(req) {
       values: [insertedId]
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: "Employee added successfully",
-      employee: newEmployee[0], // Return the complete employee object
-      id: insertedId // Explicitly include the ID
+      employee: newEmployee[0],
+      id: insertedId
     });
   } catch (err) {
     console.error("Failed to add employee:", err);

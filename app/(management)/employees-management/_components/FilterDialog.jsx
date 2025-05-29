@@ -32,24 +32,24 @@ export default function FilterDialog({
     defaultValues: {
       department: filters.department || "",
       position: filters.position || "",
-      supervisor_id: filters.supervisor_id || "", // Use supervisor_id
+      leader: filters.leader || "", // <-- use leader instead of supervisor_id
       status: filters.status || "",
     },
   });
 
-  const handleApplyFilters = (data) => {
-    // Convert "all" to "" for the API filtering
-    const apiFilters = {
-      ...data,
-      supervisor_id: data.supervisor_id === "all" ? "" : data.supervisor_id
-    };
-    setFilters(apiFilters);
-    onOpenChange(false);
+const handleApplyFilters = (data) => {
+  // Convert "all" to "" for the API filtering
+  const apiFilters = {
+    ...data,
+    leader: data.leader === "all" ? "" : data.leader
   };
+  setFilters(apiFilters);
+  onOpenChange(false);
+};
 
   const handleClearFilters = () => {
-    reset({ department: "", position: "", supervisor_id: "", status: "" });
-    setFilters({ department: "", position: "", supervisor_id: "", status: "" });
+    reset({ department: "", position: "", leader: "", status: "" }); // <-- use leader
+    setFilters({ department: "", position: "", leader: "", status: "" }); // <-- use leader
     onOpenChange(false);
   };
 
@@ -114,11 +114,11 @@ export default function FilterDialog({
               />
             </div>
 
-            {/* Supervisor Filter */}
+            {/* Leader Filter */}
             <div className="space-y-2">
-              <Label htmlFor="supervisor_id">Supervisor</Label>
+              <Label htmlFor="leader">Leader</Label>
               <Controller
-                name="supervisor_id"
+                name="leader"
                 control={control}
                 render={({ field }) => (
                   <Select
@@ -126,16 +126,16 @@ export default function FilterDialog({
                     value={field.value || ""}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select supervisor" />
+                      <SelectValue placeholder="Select leader" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">All</SelectItem>
-                      {leaders.map((leader) => (
-                        <SelectItem key={leader.id} value={leader.id.toString()}>
-                          {leader.name}{leader.position_name ? ` (${leader.position_name})` : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        {leaders.map((leader) => (
+                          <SelectItem key={leader.id} value={leader.id.toString()}>
+                            {leader.name}{leader.position_name ? ` (${leader.position_name})` : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
                   </Select>
                 )}
               />

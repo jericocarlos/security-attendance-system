@@ -15,12 +15,13 @@ export default function EmployeesManagementPage() {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState({ department: "", position: "", supervisor_id: "", status: "" });
+  // Update filters: use leader instead of supervisor_id
+  const [filters, setFilters] = useState({ department: "", position: "", leader: "", status: "" });
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [totalEmployees, setTotalEmployees] = useState(0);
   const [departments, setDepartments] = useState([]);
   const [positions, setPositions] = useState([]);
-  const [leaders, setLeaders] = useState([]); // Renamed from supervisors to leaders
+  const [leaders, setLeaders] = useState([]);
   const [loadingMetadata, setLoadingMetadata] = useState(false);
 
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
@@ -40,7 +41,7 @@ export default function EmployeesManagementPage() {
         department: filters.department || "",
         position: filters.position || "",
         status: filters.status || "",
-        supervisor_id: filters.supervisor_id || "",
+        leader: filters.leader || "", // Use leader instead of supervisor_id
       });
 
       const response = await fetch(`/api/admin/employees?${searchParams}`);
@@ -73,7 +74,7 @@ export default function EmployeesManagementPage() {
       const posData = await posResponse.json();
       setPositions(posData.positions);
       
-      // Fetch leaders instead of supervisors
+      // Fetch leaders
       const leadersResponse = await fetch('/api/admin/leaders?limit=1000');
       if (!leadersResponse.ok) throw new Error('Failed to fetch leaders');
       const leadersData = await leadersResponse.json();
@@ -90,27 +91,18 @@ export default function EmployeesManagementPage() {
   const handleEmployeeFormSubmit = async (formData, imagePreview) => {
     try {
       setIsFormDialogOpen(false);
-      
-      console.log("Employee form data received:", formData);
-      
+
       const method = currentEmployee ? "PUT" : "POST";
       const url = currentEmployee 
         ? `/api/admin/employees/${currentEmployee.id}`
         : "/api/admin/employees";
-    
-      // Ensure supervisor_id is properly handled
+
+      // Use leader instead of supervisor_id
       const apiData = {
         ...formData,
         photo: imagePreview,
-        // No need to modify supervisor_id as it should already be null if it was "none"
       };
-    
-      console.log("Data being sent to API:", {
-        ...apiData,
-        photo: apiData.photo ? "[photo data]" : null,
-        supervisor_id: apiData.supervisor_id
-      });
-    
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -118,12 +110,12 @@ export default function EmployeesManagementPage() {
         },
         body: JSON.stringify(apiData),
       });
-    
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to save employee");
       }
-    
+
       fetchEmployees();
       enqueueSnackbar(
         `Employee ${currentEmployee ? "updated" : "added"} successfully`, 
@@ -224,25 +216,24 @@ export default function EmployeesManagementPage() {
         </CardContent>
       </Card>
 
-      {/* Employee Form Dialog - Pass leaders instead of supervisors */}
+      {/* Employee Form Dialog */}
       <EmployeeFormDialog
         open={isFormDialogOpen}
         onOpenChange={setIsFormDialogOpen}
         employee={currentEmployee}
         departments={departments}
         positions={positions}
-        // Remove supervisors prop as we're fetching leaders directly in the dialog
         onSubmit={handleEmployeeFormSubmit}
         isLoadingOptions={loadingMetadata}
       />
 
-      {/* Filter Dialog - Pass leaders instead of supervisors */}
+      {/* Filter Dialog */}
       <FilterDialog
         open={isFilterDialogOpen}
         onOpenChange={setIsFilterDialogOpen}
         departments={departments}
         positions={positions}
-        leaders={leaders} // Pass leaders instead of supervisors
+        leaders={leaders}
         filters={filters}
         setFilters={setFilters}
       />

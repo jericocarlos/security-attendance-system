@@ -84,7 +84,7 @@ export default function EmployeeTable({
     },
     {
       header: "Reporting to",
-      accessorKey: "supervisor",
+      accessorKey: "leader_name", // <- Use the correct field name from your API
       cell: ({ getValue }) => <span>{getValue() || "None"}</span>,
     },
     {

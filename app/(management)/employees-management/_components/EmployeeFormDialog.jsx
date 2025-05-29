@@ -64,11 +64,9 @@ export default function EmployeeFormDialog({
     try {
       setIsLoadingLeaders(true);
       const response = await fetch('/api/admin/leaders');
-      
       if (!response.ok) {
         throw new Error('Failed to fetch leaders');
       }
-      
       const data = await response.json();
       setLeaders(data.leaders || []);
     } catch (error) {
@@ -86,7 +84,7 @@ export default function EmployeeFormDialog({
         setValue("name", employee.name);
         setValue("department_id", employee.department_id?.toString());
         setValue("position_id", employee.position_id?.toString());
-        setValue("supervisor_id", employee.supervisor_id?.toString());
+        setValue("leader", employee.leader?.toString() || ""); // <-- update here
         setValue("rfid_tag", employee.rfid_tag);
         setValue("emp_stat", employee.emp_stat || "regular");
         setValue("status", employee.status);
@@ -98,7 +96,7 @@ export default function EmployeeFormDialog({
           name: "",
           department_id: "",
           position_id: "",
-          supervisor_id: "", 
+          leader: "", // <-- update here
           rfid_tag: "",
           emp_stat: "regular",
           status: "active",
@@ -110,12 +108,9 @@ export default function EmployeeFormDialog({
 
   // Add an effect to clear RFID tag and photo when status is changed to resigned
   useEffect(() => {
-    // Only apply this in edit mode (when employee exists)
     if (employee && status === "resigned") {
-      setValue("rfid_tag", ""); // Clear RFID tag
-      setImagePreview(null); // Remove photo
-      
-      // Switch to the settings tab to make it clear to the user that these fields were cleared
+      setValue("rfid_tag", "");
+      setImagePreview(null);
       setActiveTab("settings");
     }
   }, [status, employee, setValue]);
@@ -130,34 +125,27 @@ export default function EmployeeFormDialog({
   };
 
   const handleFormSubmit = async (data) => {
-    // Convert the "none" string to null for the supervisor_id
-    if (data.supervisor_id === "none") {
-      data.supervisor_id = null;
+    // Convert the "none" string to null for the leader field
+    if (data.leader === "none") {
+      data.leader = null;
     }
-    
-    // Log the form data to verify supervisor_id is present
+    // Log the form data to verify leader is present
     console.log("Form data being submitted:", data);
-    console.log("Supervisor ID value:", data.supervisor_id);
-    
+    console.log("Leader value:", data.leader);
+
     try {
-      // Check if employee is active but missing RFID tag
       if (data.status !== "resigned" && !data.rfid_tag.trim()) {
-        // Show an error message
         setError("rfid_tag", { 
           type: "manual", 
           message: "RFID Tag is required for active employees" 
         });
-        // Switch to the RFID & Photo tab to show the error
         setActiveTab("settings");
         return false;
       }
-      
-      // If status is resigned, ensure RFID tag is cleared (NULL)
       if (data.status === "resigned") {
-        data.rfid_tag = null; // Use null instead of empty string
+        data.rfid_tag = null;
         data.removePhoto = true;
       }
-      
       const success = await onSubmit(data, data.status === "resigned" ? null : imagePreview);
       if (success) {
         reset();
@@ -283,16 +271,15 @@ export default function EmployeeFormDialog({
                 </div>
               </div>
 
-              {/* Supervisor Field using the fetched leaders */}
+              {/* Leader Field using the fetched leaders */}
               <div className="space-y-2">
-                <Label htmlFor="supervisor">Reporting to</Label>
+                <Label htmlFor="leader">Reporting to</Label>
                 <Controller
-                  name="supervisor_id"
+                  name="leader"
                   control={control}
                   render={({ field }) => (
                     <Select
                       onValueChange={(value) => {
-                        console.log("Reporting to selected:", value);
                         field.onChange(value);
                       }}
                       value={field.value}
