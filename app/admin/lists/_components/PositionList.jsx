@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2 } from "lucide-react";
 import { useSnackbar } from 'notistack';
 import ListTable from './ListTable';
 import AddEditDialog from './AddEditDialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 export default function PositionList() {
   const [positions, setPositions] = useState([]);
@@ -20,26 +21,32 @@ export default function PositionList() {
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [leaderFilter, setLeaderFilter] = useState("all"); // Add leader filter state
 
   // Debounce search to prevent too many API calls
   const debouncedSearch = useCallback(
     debounce((value) => {
       setPagination(prev => ({ ...prev, page: 1 })); // Reset to page 1 on search
-      fetchPositions(1, pagination.limit, value);
+      fetchPositions(1, pagination.limit, value, leaderFilter);
     }, 300),
-    [pagination.limit]
+    [pagination.limit, leaderFilter]
   );
 
   useEffect(() => {
-    fetchPositions(pagination.page, pagination.limit, searchQuery);
-  }, [pagination.page, pagination.limit]);
+    fetchPositions(pagination.page, pagination.limit, searchQuery, leaderFilter);
+  }, [pagination.page, pagination.limit, leaderFilter]); // Add leaderFilter to dependency array
   
   const handleSearchChange = (value) => {
     setSearchQuery(value);
     debouncedSearch(value);
   };
 
-  const fetchPositions = async (page, limit, search = "") => {
+  const handleLeaderFilterChange = (value) => {
+    setLeaderFilter(value);
+    setPagination(prev => ({ ...prev, page: 1 })); // Reset to page 1 on filter change
+  };
+
+  const fetchPositions = async (page, limit, search = "", leaderFilter = "all") => {
     try {
       setLoading(true);
       setError(null);
@@ -51,6 +58,11 @@ export default function PositionList() {
       
       if (search) {
         searchParams.append('search', search);
+      }
+      
+      // Add leader filter parameter
+      if (leaderFilter !== "all") {
+        searchParams.append('isLeader', leaderFilter === "leaders" ? "1" : "0");
       }
       
       const response = await fetch(`/api/admin/positions?${searchParams}`);
@@ -80,7 +92,10 @@ export default function PositionList() {
       const response = await fetch('/api/admin/positions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newPosition),
+        body: JSON.stringify({
+          ...newPosition,
+          is_leader: newPosition.is_leader ? 1 : 0, // Ensure it's 1 or 0
+        }),
       });
       
       if (!response.ok) {
@@ -102,7 +117,10 @@ export default function PositionList() {
       const response = await fetch(`/api/admin/positions/${updatedPosition.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedPosition),
+        body: JSON.stringify({
+          ...updatedPosition,
+          is_leader: updatedPosition.is_leader ? 1 : 0,
+        }),
       });
       
       if (!response.ok) {
@@ -179,6 +197,26 @@ export default function PositionList() {
     );
   }
 
+  // Create the filter component to pass to ListTable
+  const leaderFilterComponent = (
+    <div className="flex items-center space-x-2">
+      <Label htmlFor="leader-filter" className="text-sm whitespace-nowrap">Filter:</Label>
+      <Select 
+        value={leaderFilter} 
+        onValueChange={handleLeaderFilterChange}
+      >
+        <SelectTrigger id="leader-filter" className="w-[150px]">
+          <SelectValue placeholder="All Positions" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All</SelectItem>
+          <SelectItem value="leaders">Leaders</SelectItem>
+          <SelectItem value="non-leaders">Non-Leaders</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
   return (
     <div>
       <ListTable
@@ -192,6 +230,7 @@ export default function PositionList() {
         isLoading={loading}
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
+        filterComponent={leaderFilterComponent} // Pass the filter component
       />
       
       <AddEditDialog 

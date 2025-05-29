@@ -82,40 +82,43 @@ export async function GET(request) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '100');
     const search = searchParams.get('search') || '';
+    const isLeader = searchParams.get('isLeader'); // Add isLeader parameter
     
     // Calculate offset
     const offset = (page - 1) * limit;
     
-    // Build query based on whether search is provided
-    let query, queryParams, countQuery, countParams;
+    // Build query based on search and isLeader filter
+    let query = `SELECT id, name, is_leader FROM positions WHERE 1=1`;
+    let queryParams = [];
+    
+    // Add search condition if provided
+    if (search) {
+      query += ` AND name LIKE ?`;
+      queryParams.push(`%${search}%`);
+    }
+    
+    // Add isLeader condition if provided
+    if (isLeader !== null && isLeader !== undefined) {
+      query += ` AND is_leader = ?`;
+      queryParams.push(isLeader);
+    }
+    
+    // Add order, limit and offset
+    query += ` ORDER BY name ASC LIMIT ? OFFSET ?`;
+    queryParams.push(limit, offset);
+    
+    // Count query with the same conditions (except limit/offset)
+    let countQuery = `SELECT COUNT(*) as total FROM positions WHERE 1=1`;
+    let countParams = [];
     
     if (search) {
-      query = `
-        SELECT id, name 
-        FROM positions 
-        WHERE name LIKE ? 
-        ORDER BY name ASC
-        LIMIT ? OFFSET ?
-      `;
-      queryParams = [`%${search}%`, limit, offset];
-      
-      countQuery = `
-        SELECT COUNT(*) as total
-        FROM positions
-        WHERE name LIKE ?
-      `;
-      countParams = [`%${search}%`];
-    } else {
-      query = `
-        SELECT id, name 
-        FROM positions 
-        ORDER BY name ASC
-        LIMIT ? OFFSET ?
-      `;
-      queryParams = [limit, offset];
-      
-      countQuery = `SELECT COUNT(*) as total FROM positions`;
-      countParams = [];
+      countQuery += ` AND name LIKE ?`;
+      countParams.push(`%${search}%`);
+    }
+    
+    if (isLeader !== null && isLeader !== undefined) {
+      countQuery += ` AND is_leader = ?`;
+      countParams.push(isLeader);
     }
     
     // Execute queries
@@ -144,7 +147,7 @@ export async function GET(request) {
 // Add a new position with manual ID generation
 export async function POST(request) {
   try {
-    const { name } = await request.json();
+    const { name, is_leader } = await request.json();
     
     // Validate input
     if (!name || name.trim() === '') {
@@ -174,11 +177,11 @@ export async function POST(request) {
     const nextId = (maxIdResult[0].maxId || 0) + 1;
     
     // Insert new position with explicit ID
-    const insertQuery = `INSERT INTO positions (id, name) VALUES (?, ?)`;
-    await executeQuery({ query: insertQuery, values: [nextId, sanitizedName] });
+    const insertQuery = `INSERT INTO positions (id, name, is_leader) VALUES (?, ?, ?)`;
+    await executeQuery({ query: insertQuery, values: [nextId, sanitizedName, is_leader ? 1 : 0] });
     
     // Return the created position with its ID
-    const position = { id: nextId, name: sanitizedName };
+    const position = { id: nextId, name: sanitizedName, is_leader: is_leader ? 1 : 0 };
     
     return NextResponse.json({ 
       message: "Position created successfully",

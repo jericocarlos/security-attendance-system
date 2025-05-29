@@ -30,7 +30,7 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   try {
     const { id } = params;
-    const { name } = await request.json();
+    const { name, is_leader } = await request.json();
     
     // Validate input
     if (!name || name.trim() === '') {
@@ -58,12 +58,12 @@ export async function PUT(request, { params }) {
     }
     
     // Update position
-    const updateQuery = `UPDATE positions SET name = ? WHERE id = ?`;
-    await executeQuery({ query: updateQuery, values: [sanitizedName, id] });
+    const updateQuery = `UPDATE positions SET name = ?, is_leader = ? WHERE id = ?`;
+    await executeQuery({ query: updateQuery, values: [sanitizedName, is_leader ? 1 : 0, id] });
     
     return NextResponse.json({ 
       message: "Position updated successfully",
-      position: { id: Number(id), name: sanitizedName }
+      position: { id: Number(id), name: sanitizedName, is_leader: is_leader ? 1 : 0 }
     });
   } catch (error) {
     console.error("Failed to update position:", error);

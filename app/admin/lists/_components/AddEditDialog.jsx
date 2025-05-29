@@ -10,36 +10,49 @@ import { Label } from '@radix-ui/react-label';
 export default function AddEditDialog({ onSave, itemName, editItem = null, open, onOpenChange }) {
   const [name, setName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
-  
+  const [isLeader, setIsLeader] = useState(editItem?.is_leader ? true : false);
+
   useEffect(() => {
     if (editItem) {
       setName(editItem.name);
       setIsEditing(true);
+      setIsLeader(editItem.is_leader ? true : false);
     } else {
       setName('');
       setIsEditing(false);
+      setIsLeader(false);
     }
   }, [editItem, open]);
-  
+
   const handleOpenChange = (isOpen) => {
     if (onOpenChange) {
       onOpenChange(isOpen);
     }
-    
     if (!isOpen) {
       setName('');
       setIsEditing(false);
+      setIsLeader(false);
     }
   };
 
   const handleSave = () => {
     if (name.trim()) {
       if (isEditing && editItem) {
-        onSave({ id: editItem.id, name: name.trim() });
+        // Only include is_leader if this is the Position form
+        if (itemName.toLowerCase() === "position") {
+          onSave({ id: editItem.id, name: name.trim(), is_leader: isLeader ? 1 : 0 });
+        } else {
+          onSave({ id: editItem.id, name: name.trim() });
+        }
       } else {
-        onSave({ name: name.trim() });
+        if (itemName.toLowerCase() === "position") {
+          onSave({ name: name.trim(), is_leader: isLeader ? 1 : 0 });
+        } else {
+          onSave({ name: name.trim() });
+        }
       }
       setName('');
+      setIsLeader(false);
     }
   };
 
@@ -70,6 +83,24 @@ export default function AddEditDialog({ onSave, itemName, editItem = null, open,
               autoFocus
             />
           </div>
+          {/* Only show the checkbox if this is the Position form */}
+          {itemName.toLowerCase() === "position" && (
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="isLeader" className="text-right">
+                Leader
+              </Label>
+              <label className="flex items-center gap-2 col-span-3">
+                <input
+                  id="isLeader"
+                  type="checkbox"
+                  checked={isLeader}
+                  onChange={e => setIsLeader(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                <span className="text-sm">{isLeader ? 'Yes' : 'No'}</span>
+              </label>
+            </div>
+          )}
         </div>
         
         <DialogFooter>

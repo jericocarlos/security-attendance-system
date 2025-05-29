@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import DepartmentList from './_components/DepartmentList';
 import PositionList from './_components/PositionList';
-import SupervisorList from './_components/SupervisorList';
+import SupervisorList from './_components/LeaderList';
 
 export default function ListsPage() {
   return (
