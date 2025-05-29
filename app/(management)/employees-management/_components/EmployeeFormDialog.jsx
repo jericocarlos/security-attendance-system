@@ -253,14 +253,14 @@ export default function EmployeeFormDialog({
 
               {/* Add Supervisor Field */}
               <div className="space-y-2">
-                <Label htmlFor="supervisor">Leader</Label>
+                <Label htmlFor="supervisor">Reporting to</Label>
                 <Controller
                   name="supervisor_id"
                   control={control}
                   render={({ field }) => (
                     <Select
                       onValueChange={(value) => {
-                        console.log("Leader selected:", value);
+                        console.log("Reporting to selected:", value);
                         field.onChange(value);
                       }}
                       value={field.value}

@@ -83,7 +83,7 @@ export default function EmployeeTable({
       accessorKey: "position",
     },
     {
-      header: "Leader",
+      header: "Reporting to",
       accessorKey: "supervisor",
       cell: ({ getValue }) => <span>{getValue() || "None"}</span>,
     },
