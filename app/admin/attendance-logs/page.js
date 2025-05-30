@@ -14,12 +14,15 @@ export default function AttendanceLogsPage() {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     logType: "",
+    department: "", // Add department to filters
     dateRange: { from: null, to: null },
   });
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+  // Change pageSize to 100
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 100 });
   const [totalLogs, setTotalLogs] = useState(0);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [departments, setDepartments] = useState([]); // Add departments state
 
   // Debounce utility function inside component
   const debounce = useCallback((func, timeout = 300) => {
@@ -28,6 +31,18 @@ export default function AttendanceLogsPage() {
       clearTimeout(timer);
       timer = setTimeout(() => func.apply(this, args), timeout);
     };
+  }, []);
+
+  // Fetch departments
+  const fetchDepartments = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/departments');
+      if (!response.ok) throw new Error('Failed to fetch departments');
+      const data = await response.json();
+      setDepartments(data.departments || []);
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+    }
   }, []);
 
   // Memoize the fetchLogs function
@@ -39,6 +54,7 @@ export default function AttendanceLogsPage() {
         limit: pagination.pageSize,
         search: searchQuery,
         log_type: filters.logType || "",
+        department: filters.department || "", // Add department to API request
         start_date: filters.dateRange.from
           ? filters.dateRange.from.toISOString().split("T")[0]
           : "",
@@ -87,6 +103,7 @@ export default function AttendanceLogsPage() {
         limit: 10000, // Export all matching logs
         search: searchQuery,
         log_type: filters.logType || "",
+        department: filters.department || "", // Add department to export
         start_date: filters.dateRange.from
           ? filters.dateRange.from.toISOString().split("T")[0]
           : "",
@@ -124,6 +141,11 @@ export default function AttendanceLogsPage() {
       setLoading(false);
     }
   };
+
+  // Fetch departments when component mounts
+  useEffect(() => {
+    fetchDepartments();
+  }, [fetchDepartments]);
 
   // Update useEffect with fetchLogs dependency
   useEffect(() => {
@@ -170,12 +192,13 @@ export default function AttendanceLogsPage() {
         </CardContent>
       </Card>
 
-      {/* Filter Dialog */}
+      {/* Filter Dialog - Pass departments */}
       <FilterDialog
         open={isFilterDialogOpen}
         onOpenChange={setIsFilterDialogOpen}
         filters={filters}
         setFilters={setFilters}
+        departments={departments}
       />
     </div>
   );

@@ -30,11 +30,13 @@ export default function FilterDialog({
   open, 
   onOpenChange, 
   filters, 
-  setFilters 
+  setFilters,
+  departments = [] // Add departments prop
 }) {
   const { control, handleSubmit, reset } = useForm({
     defaultValues: {
       logType: filters?.logType ?? "ALL",
+      department: filters?.department ?? "all", // Add department default
       dateRange: filters?.dateRange ?? { from: null, to: null },
     },
   });
@@ -42,6 +44,7 @@ export default function FilterDialog({
   const handleApplyFilters = (data) => {
     setFilters({
       ...data,
+      department: data.department === "all" ? "" : data.department, // Convert "all" to empty string for API
       dateRange: {
         from: toUTCDate(data.dateRange.from),
         to: toUTCDate(data.dateRange.to),
@@ -51,8 +54,16 @@ export default function FilterDialog({
   };
 
   const handleClearFilters = () => {
-    reset({ logType: "ALL", dateRange: { from: null, to: null } });
-    setFilters({ logType: "ALL", dateRange: { from: null, to: null } });
+    reset({ 
+      logType: "ALL", 
+      department: "all", // Reset department too
+      dateRange: { from: null, to: null } 
+    });
+    setFilters({ 
+      logType: "ALL", 
+      department: "", 
+      dateRange: { from: null, to: null } 
+    });
     onOpenChange(false);
   };
 
@@ -85,6 +96,33 @@ export default function FilterDialog({
                       <SelectItem value="ALL">All Logs</SelectItem>
                       <SelectItem value="IN">Time In Only</SelectItem>
                       <SelectItem value="OUT">Complete (In & Out)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+
+            {/* Department Filter */}
+            <div className="space-y-2">
+              <Label htmlFor="department">Department</Label>
+              <Controller
+                name="department"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value ?? "all"}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Departments</SelectItem>
+                      {departments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id.toString()}>
+                          {dept.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}

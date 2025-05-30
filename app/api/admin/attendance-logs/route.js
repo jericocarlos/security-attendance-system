@@ -8,10 +8,11 @@ export async function GET(req) {
 
     // Parse query parameters
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const limit = parseInt(searchParams.get('limit') || '100'); // Change default to 100
     const offset = (page - 1) * limit;
     const search = searchParams.get('search') || '';
     const logType = searchParams.get('log_type') || 'ALL';
+    const department = searchParams.get('department') || ''; // Add department filter
     const startDate = searchParams.get('start_date') || '';
     const endDate = searchParams.get('end_date') || '';
 
@@ -31,7 +32,12 @@ export async function GET(req) {
     } else if (logType === 'OUT') {
       conditions.push("l.out_time IS NOT NULL");
     }
-    // For 'ALL', don't add any condition
+    
+    // Add department filter
+    if (department) {
+      conditions.push("e.department_id = ?");
+      values.push(department);
+    }
 
     // Add date range filters
     if (startDate) {
