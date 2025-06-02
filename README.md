@@ -14,6 +14,13 @@ pnpm dev
 # or
 bun dev
 ```
+```bash
+Add .ENV
+DB_HOST=
+DB_USER=
+DB_PASS=
+DB_NAME=
+```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
