@@ -43,5 +43,5 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 =======
-# rfid-attendance-system
+# security-attendance-system
 >>>>>>> 063e95b28e49db2fbdbf4257c28b871167945bac
