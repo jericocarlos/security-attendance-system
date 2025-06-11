@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { AUTH_CONSTANTS } from '@/constants/auth';
 import { 
   FiCalendar, 
   FiChevronLeft, 
@@ -157,11 +158,11 @@ export default function SideNav() {
         
         {/* Footer - mt-auto not needed with flex parent, border-top for visual separation */}
         <div className="p-4 text-center text-sm text-slate-400 border-slate-800">
-            Logged in as <span className="font-semibold">Supervisor</span> 
+            Logged in as <span className="font-semibold">Admin</span> 
           </div>
         {!collapsed && (
           <div className="p-4 text-center text-sm text-slate-400 border-t border-slate-800">
-            &copy; {new Date().getFullYear()} EastWest BPO MCI
+            &copy; {new Date().getFullYear()} {AUTH_CONSTANTS.COMPANY_NAME}
           </div>
         )}
         {collapsed && (
