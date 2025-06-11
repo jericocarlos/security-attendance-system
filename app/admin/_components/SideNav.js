@@ -9,6 +9,7 @@ import {
   FiChevronRight,
   FiClipboard,
   FiUsers,
+  FiLogOut,
 } from "react-icons/fi";
 import { cn } from "@/lib/utils"; // shadcn/ui utility
 import { Button } from "@/components/ui/button";
@@ -19,18 +20,54 @@ export default function SideNav() {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
 
-  const navItems = [
-    {
-      name: 'Attendance Logs',
-      href: '/admin/attendance-logs',
-      icon: <FiCalendar className="h-[18px] w-[18px]" />,
-    },
-    {
-      name: 'Lists',
-      href: '/admin/lists',
-      icon: <FiClipboard className="h-[18px] w-[18px]" />,
-    },
-  ];
+  // Example: get user role from props, context, or authentication
+  const role = "Admin"; // Change this as needed
+
+  let navItems;
+  if (role === "Admin") {
+    navItems = [
+      {
+        name: 'Employee Management',
+        href: '/admin/employees-management',
+        icon: <FiUsers className="h-[18px] w-[18px]" />,
+      },
+      {
+        name: 'Lists',
+        href: '/admin/lists',
+        icon: <FiClipboard className="h-[18px] w-[18px]" />,
+      },
+      {
+        name: 'Logout',
+        href: '/login',
+        icon: <FiLogOut className="h-[18px] w-[18px]" />,
+      },
+    ];
+  } else if (role === "Supervisor" || role === "Manager") {
+    navItems = [
+      {
+        name: 'Attendance Logs',
+        href: '/admin/attendance-logs',
+        icon: <FiCalendar className="h-[18px] w-[18px]" />,
+      },
+      {
+        name: 'Employee Management',
+        href: '/admin/employees-management',
+        icon: <FiUsers className="h-[18px] w-[18px]" />,
+      },
+      {
+        name: 'Lists',
+        href: '/admin/lists',
+        icon: <FiClipboard className="h-[18px] w-[18px]" />,
+      },
+      {
+        name: 'Logout',
+        href: '/login',
+        icon: <FiLogOut className="h-[18px] w-[18px]" />,
+      },
+    ];
+  } else {
+    navItems = [];
+  }
 
   return (
     <>
@@ -119,6 +156,9 @@ export default function SideNav() {
         </nav>
         
         {/* Footer - mt-auto not needed with flex parent, border-top for visual separation */}
+        <div className="p-4 text-center text-sm text-slate-400 border-slate-800">
+            Logged in as <span className="font-semibold">Supervisor</span> 
+          </div>
         {!collapsed && (
           <div className="p-4 text-center text-sm text-slate-400 border-t border-slate-800">
             &copy; {new Date().getFullYear()} EastWest BPO MCI
