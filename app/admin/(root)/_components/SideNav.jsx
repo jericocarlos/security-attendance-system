@@ -26,6 +26,11 @@ export default function SideNav() {
       icon: <FiCalendar className="h-[18px] w-[18px]" />,
     },
     {
+      name: 'Employee Management',
+      href: '/admin/employees-management',
+      icon: <FiUsers className="h-[18px] w-[18px]" />,
+    },
+    {
       name: 'Lists',
       href: '/admin/lists',
       icon: <FiClipboard className="h-[18px] w-[18px]" />,
