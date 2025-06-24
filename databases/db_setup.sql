@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
   username VARCHAR(100) NOT NULL UNIQUE,
   employee_id VARCHAR(50) NOT NULL UNIQUE COMMENT 'Ashima ID',
   password VARCHAR(255) NOT NULL,
-  role ENUM('admin', 'supervisor', 'manager') NOT NULL DEFAULT 'admin',
+  role ENUM('superadmin','admin', 'security', 'hr') NOT NULL DEFAULT 'admin',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

@@ -22,29 +22,29 @@ export async function middleware(req) {
   // Role-based access control
   const role = token.role;
 
-  // Only admin can access /admin/user-management
-  if (pathname.startsWith("/admin/user-management") && role !== "admin") {
+  // SUPERADMIN and ADMIN have access to everything
+  if (["superadmin", "admin"].includes(role)) {
+    return NextResponse.next();
+  }
+
+  // SECURITY and HR can only access the dashboard and attendance logs
+  if (["security", "hr"].includes(role)) {
+    // Allow access to dashboard
+    if (pathname === "/admin") {
+      return NextResponse.next();
+    }
+
+    // Allow access to attendance logs
+    if (pathname.startsWith("/admin/attendance-logs")) {
+      return NextResponse.next();
+    }
+
+    // Redirect to dashboard for all other paths
     return NextResponse.redirect(new URL("/admin", req.url));
   }
 
-  // Only admin, supervisor, or manager can access /admin/employees-management and /admin/lists
-  if (
-    (pathname.startsWith("/admin/employees-management") ||
-      pathname.startsWith("/admin/lists")) &&
-    !["admin", "supervisor", "manager"].includes(role)
-  ) {
-    return NextResponse.redirect(new URL("/admin", req.url));
-  }
-
-  // Only supervisor or manager can access /admin/attendance-logs
-  if (
-    pathname.startsWith("/admin/attendance-logs") &&
-    !["supervisor", "manager"].includes(role)
-  ) {
-    return NextResponse.redirect(new URL("/admin", req.url));
-  }
-
-  return NextResponse.next();
+  // If a user has an unknown role, redirect to login
+  return NextResponse.redirect(new URL("/admin/login", req.url));
 }
 
 export const config = {

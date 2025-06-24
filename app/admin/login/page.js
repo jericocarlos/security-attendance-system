@@ -33,12 +33,13 @@ export default function LoginPage() {
     setCurrentDateTime(AUTH_CONSTANTS.CURRENT_YEAR);
   }, []);
   
+  // Updated role-based redirect logic
   useEffect(() => {
     if (session?.user?.role) {
       const role = session.user.role;
-      if (role === 'admin') {
+      if (['superadmin', 'admin'].includes(role)) {
         router.replace('/admin/employees-management');
-      } else if (role === 'supervisor' || role === 'manager') {
+      } else if (['security', 'hr'].includes(role)) {
         router.replace('/admin/attendance-logs');
       } else {
         router.replace('/admin');
