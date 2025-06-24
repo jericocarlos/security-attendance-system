@@ -4,7 +4,7 @@ export function CompanyLogo() {
   return (
     <div className="flex justify-center mb-4">
       <Image
-        src="/company_logo.png"
+        src="/ew-logo-full.png"
         alt="Company Logo"
         width={240}
         height={72}

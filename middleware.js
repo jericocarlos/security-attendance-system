@@ -22,15 +22,24 @@ export async function middleware(req) {
   // Role-based access control
   const role = token.role;
 
-  // SUPERADMIN and ADMIN have access to everything
-  if (["superadmin", "admin"].includes(role)) {
+  // SUPERADMIN has access to everything
+  if (role === "superadmin") {
+    return NextResponse.next();
+  }
+
+  // ADMIN has access to everything except assigning module
+  if (role === "admin") {
+    // Prevent access to assigning module (assuming it's at /admin/assign or similar)
+    if (pathname.startsWith("/admin/assign")) {
+      return NextResponse.redirect(new URL("/admin", req.url));
+    }
     return NextResponse.next();
   }
 
   // SECURITY and HR can only access the dashboard and attendance logs
   if (["security", "hr"].includes(role)) {
     // Allow access to dashboard
-    if (pathname === "/admin") {
+    if (pathname === "/admin" || pathname === "/admin/dashboard") {
       return NextResponse.next();
     }
 
