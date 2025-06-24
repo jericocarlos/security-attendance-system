@@ -41,6 +41,7 @@ export const authOptions = {
             name: user.name,
             username: user.username,
             employeeId: user.employee_id,
+            role: user.role, // <-- ADD THIS LINE
           };
         } catch (error) {
           console.error("Authentication error:", error);
@@ -50,7 +51,7 @@ export const authOptions = {
     })
   ],
   pages: {
-    signIn: '/login',
+    signIn: '/admin/login',
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -59,6 +60,7 @@ export const authOptions = {
         token.id = user.id;
         token.username = user.username;
         token.employeeId = user.employeeId;
+        token.role = user.role; // <-- ADD THIS LINE
       }
       return token;
     },
@@ -68,6 +70,7 @@ export const authOptions = {
         session.user.id = token.id;
         session.user.username = token.username;
         session.user.employeeId = token.employeeId;
+        session.user.role = token.role; // <-- ADD THIS LINE
       }
       return session;
     },

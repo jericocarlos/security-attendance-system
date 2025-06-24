@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import { SnackbarProvider, closeSnackbar } from 'notistack';
 import { X } from 'lucide-react';
 import SideNav from './_components/SideNav';
+import Header from './_components/Header';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Button } from "@/components/ui/button";
-import AuthProvider from '@/providers/AuthProvider';
+import { SessionProvider } from 'next-auth/react';
 
 export default function AdminLayout({ children }) {
   const [mounted, setMounted] = useState(false);
+  const [sideNavCollapsed, setSideNavCollapsed] = useState(false);
 
   // Custom theme for notistack to match shadcn/ui design
   const theme = createTheme({
@@ -52,6 +54,10 @@ export default function AdminLayout({ children }) {
     </Button>
   );
 
+  const handleSideNavToggle = () => {
+    setSideNavCollapsed(!sideNavCollapsed);
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <SnackbarProvider 
@@ -67,12 +73,18 @@ export default function AdminLayout({ children }) {
         }}
       >
         <div className="min-h-screen bg-slate-50 flex">
-          <SideNav />
-          <main className="flex-1 transition-all duration-300 min-h-screen pt-4 md:pt-6 px-4 md:px-6">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
-          </main>
+          <SideNav 
+            collapsed={sideNavCollapsed}
+          />
+          <div className="flex-1 flex flex-col min-h-screen">
+            <Header 
+              onMenuToggle={handleSideNavToggle}
+              isCollapsed={sideNavCollapsed}
+            />
+            <main className="flex-1 transition-all duration-300 p-4 md:p-6">
+              {children}
+            </main>
+          </div>
         </div>
       </SnackbarProvider>
     </ThemeProvider>

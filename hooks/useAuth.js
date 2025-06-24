@@ -1,9 +1,6 @@
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 
 export function useAuth() {
-  const router = useRouter();
-  
   const login = async (credentials) => {
     try {
       const result = await signIn('credentials', {
@@ -11,12 +8,12 @@ export function useAuth() {
         password: credentials.password,
         redirect: false,
       });
-      
+
       if (result?.error) {
         return { success: false, error: result.error };
       }
-      
-      router.push('/admin/employees-management');
+
+      // No redirect here!
       return { success: true };
     } catch (error) {
       return { 
@@ -25,6 +22,6 @@ export function useAuth() {
       };
     }
   };
-  
+
   return { login };
 }

@@ -8,7 +8,8 @@ import { CompanyLogo } from '@/components/ui/LoadingSpinner';
 import { FooterInfo } from '@/components/auth/FooterInfo';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAnimation } from '@/hooks/useAnimation';
-
+import { useRouter } from 'next/navigation';
+import { useSession } from "next-auth/react";
 
 export default function LoginPage() {
   // =============
@@ -16,6 +17,8 @@ export default function LoginPage() {
   // =============
   const { login } = useAuth();
   const [shakeForm, triggerShake] = useAnimation('shake', 500);
+  const { data: session, status } = useSession();
+  const router = useRouter();
   
   // =============
   // State
@@ -30,21 +33,35 @@ export default function LoginPage() {
     setCurrentDateTime(AUTH_CONSTANTS.CURRENT_YEAR);
   }, []);
   
+  useEffect(() => {
+    if (session?.user?.role) {
+      const role = session.user.role;
+      if (role === 'admin') {
+        router.replace('/admin/employees-management');
+      } else if (role === 'supervisor' || role === 'manager') {
+        router.replace('/admin/attendance-logs');
+      } else {
+        router.replace('/admin');
+      }
+    }
+  }, [session, router]);
+  
   // =============
   // Event handlers
   // =============
   const handleSubmit = async (data) => {
     setIsLoading(true);
-    
+
     try {
       const result = await login(data);
-      
+
       if (!result.success) {
         triggerShake();
         setIsLoading(false);
         return { error: AUTH_CONSTANTS.ERROR_MESSAGES.INVALID_CREDENTIALS };
       }
-      
+
+      // No redirect here! useEffect will handle it
       return { success: true };
     } catch (error) {
       setIsLoading(false);
