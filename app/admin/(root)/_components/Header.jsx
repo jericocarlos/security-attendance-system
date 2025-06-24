@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,32 +22,26 @@ import {
   Calendar
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
-import { useCurrentUtcTime } from '@/hooks/useCurrentUtcTime';
+import { formatDate, formatTime, getCurrentDateFormatted, getFirstName } from '@/utils/dateUtils';
 import { useSession, signOut } from "next-auth/react";
-
-// Extend dayjs with plugins
-dayjs.extend(utc);
-dayjs.extend(timezone);
 
 export default function Header({ onMenuToggle, isCollapsed }) {
   const { data: session, status } = useSession();
   const isLoading = status === "loading";
-  const currentTime = useCurrentUtcTime();
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [notifications, setNotifications] = useState([]);
+
+  // Update time every second for the clock
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
 
   const handleSignOut = () => {
     signOut({ callbackUrl: '/admin/login' });
-  };
-
-  const formatDateTime = (time) => {
-    return time.format('YYYY-MM-DD HH:mm:ss');
-  };
-
-  const formatDateReadable = (time) => {
-    return time.format('dddd, MMMM D, YYYY');
   };
 
   // Loading state
@@ -86,7 +80,8 @@ export default function Header({ onMenuToggle, isCollapsed }) {
     email: session?.user?.email || "",
     image: session?.user?.image,
     initial: session?.user?.name?.[0]?.toUpperCase() || "U",
-    role: session?.user?.role || "user"
+    role: session?.user?.role || "user",
+    firstName: getFirstName(session?.user?.name || "Unknown")
   };
 
   return (
@@ -116,13 +111,13 @@ export default function Header({ onMenuToggle, isCollapsed }) {
             <div className="flex items-center space-x-2">
               <Clock className="h-4 w-4 text-blue-600" />
               <span className="text-lg font-semibold text-gray-900">
-                {currentTime.format('HH:mm:ss')}
+                {formatTime(currentTime)}
               </span>
             </div>
             <div className="flex items-center space-x-2">
               <Calendar className="h-3 w-3 text-gray-500" />
               <span className="text-sm text-gray-500">
-                {formatDateReadable(currentTime)}
+                {formatDate(currentTime)}
               </span>
             </div>
           </div>
@@ -146,7 +141,7 @@ export default function Header({ onMenuToggle, isCollapsed }) {
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    Current User's Login: {userInfo.name}
+                    Hello, {userInfo.firstName}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {userInfo.email}
@@ -181,11 +176,11 @@ export default function Header({ onMenuToggle, isCollapsed }) {
           <div className="flex items-center space-x-2">
             <Clock className="h-4 w-4 text-blue-600" />
             <span className="font-semibold text-gray-900 text-sm">
-              Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): {formatDateTime(currentTime)}
+              {currentTime.toISOString().slice(0, 19).replace('T', ' ')}
             </span>
           </div>
           <span className="text-xs text-gray-500 ml-6">
-            Current User's Login: {userInfo.name}
+            Hello, {userInfo.firstName}
           </span>
         </div>
       </div>
