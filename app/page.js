@@ -115,7 +115,7 @@ export default function Home() {
           {/* Logo on the right */}
           <div>
             <Image
-              src="/ewbpo.png" 
+              src="/ew-logo-full.png" 
               alt="EWBPO Logo" 
               width={300}
               height={53}
