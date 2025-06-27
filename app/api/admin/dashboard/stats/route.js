@@ -22,11 +22,11 @@ export async function GET(request) {
     const departmentsResult = await executeQuery({ query: departmentsQuery });
     const departments = departmentsResult[0].count;
 
-    // Get today's attendance count
+    // Get today's attendance count - count both check-ins and check-outs for today
     const todayQuery = `
       SELECT COUNT(*) as count 
       FROM attendance_logs 
-      WHERE DATE(timestamp) = CURDATE()
+      WHERE DATE(in_time) = CURDATE() OR DATE(out_time) = CURDATE()
     `;
     const todayResult = await executeQuery({ query: todayQuery });
     const todayAttendance = todayResult[0].count;
