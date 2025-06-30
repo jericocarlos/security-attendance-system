@@ -1,5 +1,6 @@
 "use client";
 
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -8,28 +9,65 @@ import {
   Clipboard,
   Users,
   UserCog,
-  Shield
+  Shield,
+  Database
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from 'framer-motion';
-import { NAV_ITEMS } from '@/constants/navItems';
 import { useSession } from "next-auth/react";
+import { useRolePermissions } from '@/hooks/useRolePermissions';
 import SideNavSkeleton from './SideNavSkeleton';
+
+// Module definitions with their corresponding routes and icons
+const MODULE_DEFINITIONS = {
+  employees_management: {
+    name: 'Employees Management',
+    href: '/admin/employees-management',
+    icon: <Users className="h-[18px] w-[18px]" />,
+  },
+  data_management: {
+    name: 'Data Management',
+    href: '/admin/lists',
+    icon: <Database className="h-[18px] w-[18px]" />,
+  },
+  account_logins: {
+    name: 'Account Logins',
+    href: '/admin/account-logins',
+    icon: <UserCog className="h-[18px] w-[18px]" />,
+  },
+  attendance_logs: {
+    name: 'Attendance Logs',
+    href: '/admin/attendance-logs',
+    icon: <Calendar className="h-[18px] w-[18px]" />,
+  },
+  role_permissions: {
+    name: 'Role Permissions',
+    href: '/admin/role-permissions',
+    icon: <Shield className="h-[18px] w-[18px]" />,
+  },
+};
 
 export default function SideNav({ collapsed }) {
   const pathname = usePathname();
   const { data: session, status } = useSession();
-  const isLoading = status === "loading";
+  const { permissions, loading: permissionsLoading } = useRolePermissions();
+  const isLoading = status === "loading" || permissionsLoading;
 
-  // Show skeleton loading state while session is loading
+  // Build navigation items based on permissions
+  const navItems = React.useMemo(() => {
+    if (!permissions || !session?.user?.role) return [];
+
+    // All roles (including superadmin) get modules based on their database permissions
+    return Object.entries(MODULE_DEFINITIONS)
+      .filter(([moduleKey]) => permissions[moduleKey]?.access)
+      .map(([, moduleInfo]) => moduleInfo);
+  }, [permissions, session?.user?.role]);
+
+  // Show skeleton loading state while session or permissions are loading
   if (isLoading) {
     return <SideNavSkeleton collapsed={collapsed} />;
   }
-
-  // Make sure your fallback matches what's in your constants
-  const role = session?.user?.role || 'admin'; // fallback role
-  const navItems = NAV_ITEMS[role] || NAV_ITEMS['admin']; // Use 'admin' as fallback to match line above
 
   return (
     <TooltipProvider delayDuration={0}>

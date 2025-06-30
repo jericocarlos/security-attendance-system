@@ -6,11 +6,12 @@ export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || session.user.role !== 'superadmin') {
+    if (!session) {
       return Response.json({ error: "Unauthorized access" }, { status: 403 });
     }
 
-    // Get all role permissions
+    // Get all role permissions - all authenticated users can view permissions
+    // for navigation and access control purposes
     const permissions = await executeQuery({
       query: `
         SELECT 

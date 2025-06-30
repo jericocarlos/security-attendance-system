@@ -2,9 +2,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import DepartmentList from './_components/DepartmentList';
-import PositionList from './_components/PositionList';
-import SupervisorList from './_components/LeaderList';
+import { DepartmentList, PositionList, LeaderList } from '@/components/admin/lists';
 
 export default function ListsPage() {
   return (
@@ -50,7 +48,7 @@ export default function ListsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <SupervisorList />
+              <LeaderList />
             </CardContent>
           </Card>
         </TabsContent>

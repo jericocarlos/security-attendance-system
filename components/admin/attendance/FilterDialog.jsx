@@ -31,7 +31,8 @@ export default function FilterDialog({
   onOpenChange, 
   filters, 
   setFilters,
-  departments = [] // Add departments prop
+  departments = [],
+  loadingDepartments = false
 }) {
   const { control, handleSubmit, reset } = useForm({
     defaultValues: {
@@ -112,9 +113,16 @@ export default function FilterDialog({
                   <Select
                     onValueChange={field.onChange}
                     value={field.value ?? "all"}
+                    disabled={loadingDepartments}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select department" />
+                      <SelectValue 
+                        placeholder={
+                          loadingDepartments 
+                            ? "Loading departments..." 
+                            : "Select department"
+                        } 
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Departments</SelectItem>

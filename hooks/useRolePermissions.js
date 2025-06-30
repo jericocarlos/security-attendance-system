@@ -75,7 +75,7 @@ export function useRolePermissions() {
   };
 
   const canAccess = (module) => {
-    return hasPermission(module, 'read');
+    return hasPermission(module, 'access');
   };
 
   const canEdit = (module) => {

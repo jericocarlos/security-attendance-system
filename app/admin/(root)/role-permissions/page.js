@@ -1,114 +1,63 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { 
-  Shield, 
-  Users, 
-  Database, 
-  Calendar, 
-  UserCog, 
-  Save,
-  RotateCcw,
-  Plus,
-  Trash2,
-  Eye,
-  Edit,
-  Download
-} from "lucide-react";
+import DeleteConfirmationDialog from "@/components/ui/DeleteConfirmationDialog";
+import { Shield, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import PermissionGuard from "@/components/auth/PermissionGuard";
+import { useSnackbar } from "notistack";
+import { useRolePermissionsManager } from "@/hooks/useRolePermissionsManager";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  PermissionsMatrix,
+  AddPermissionDialog,
+  RoleOverviewCards,
+  PermissionActions
+} from "@/components/admin/role-permissions";
 
-const ROLES = [
-  { value: 'superadmin', label: 'Super Admin', color: 'bg-red-500' },
-  { value: 'admin', label: 'Admin', color: 'bg-blue-500' },
-  { value: 'security', label: 'Security', color: 'bg-green-500' },
-  { value: 'hr', label: 'HR', color: 'bg-purple-500' }
-];
-
-const MODULES = [
-  { 
-    value: 'employees_management', 
-    label: 'Employees Management', 
-    icon: <Users className="h-4 w-4" />,
-    description: 'Manage employee records, profiles, and information'
-  },
-  { 
-    value: 'data_management', 
-    label: 'Data Management', 
-    icon: <Database className="h-4 w-4" />,
-    description: 'Manage departments, positions, and organizational data'
-  },
-  { 
-    value: 'account_logins', 
-    label: 'Account Logins', 
-    icon: <UserCog className="h-4 w-4" />,
-    description: 'Manage admin user accounts and authentication'
-  },
-  { 
-    value: 'attendance_logs', 
-    label: 'Attendance Logs', 
-    icon: <Calendar className="h-4 w-4" />,
-    description: 'View and manage employee attendance records'
-  },
-  { 
-    value: 'role_permissions', 
-    label: 'Role Permissions', 
-    icon: <Shield className="h-4 w-4" />,
-    description: 'Configure role-based access control (Superadmin only)'
-  }
-];
-
-const PERMISSIONS = [
-  { key: 'read', label: 'View', icon: <Eye className="h-4 w-4" /> },
-  { key: 'write', label: 'Edit', icon: <Edit className="h-4 w-4" /> },
-  { key: 'delete', label: 'Delete', icon: <Trash2 className="h-4 w-4" /> },
-  { key: 'export', label: 'Export', icon: <Download className="h-4 w-4" /> }
-];
-
+/**
+ * Role Permissions Management Page
+ * 
+ * This page allows superadmins to configure role-based access control (RBAC)
+ * for the system. It provides a comprehensive interface to:
+ * - View and edit permissions for all roles and modules
+ * - Add new permission configurations
+ * - Delete existing permissions (with protection for critical permissions)
+ * - Monitor role access overview
+ * 
+ * @returns {JSX.Element} The role permissions management page
+ */
 export default function RolePermissionsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [permissions, setPermissions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newPermission, setNewPermission] = useState({
-    role: '',
-    module: '',
-    permission: { read: false, write: false, delete: false, export: false }
+  const { enqueueSnackbar } = useSnackbar();
+  
+  // Delete dialog state
+  const [deleteDialog, setDeleteDialog] = useState({
+    open: false,
+    role: null,
+    moduleName: null,
+    loading: false,
   });
+  
+  const {
+    permissions,
+    loading,
+    saving,
+    error,
+    hasChanges,
+    fetchPermissions,
+    updatePermission,
+    savePermissions,
+    addPermission,
+    deletePermission,
+    resetPermissions,
+    clearError
+  } = useRolePermissionsManager();
 
-  // Check if user is superadmin
+  // Authorization check
   useEffect(() => {
     if (status === 'loading') return;
     
@@ -118,392 +67,232 @@ export default function RolePermissionsPage() {
     }
   }, [session, status, router]);
 
-  // Fetch permissions
+  // Error handling
   useEffect(() => {
-    if (session?.user?.role === 'superadmin') {
-      fetchPermissions();
+    if (error) {
+      enqueueSnackbar(error, { variant: 'error' });
+      clearError();
     }
-  }, [session]);
+  }, [error, enqueueSnackbar, clearError]);
 
-  const fetchPermissions = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/admin/role-permissions');
-      if (res.ok) {
-        const data = await res.json();
-        setPermissions(data.permissions);
-      }
-    } catch (error) {
-      console.error('Error fetching permissions:', error);
-    } finally {
-      setLoading(false);
+  /**
+   * Handle saving permissions with user feedback
+   */
+  const handleSavePermissions = async () => {
+    const result = await savePermissions();
+    if (result.success) {
+      enqueueSnackbar(result.message, { variant: 'success' });
+    } else {
+      enqueueSnackbar(result.message, { variant: 'error' });
     }
   };
 
-  const updatePermission = (role, moduleName, permissionKey, value) => {
-    setPermissions(prev => 
-      prev.map(perm => 
-        perm.role === role && perm.module === moduleName
-          ? {
-              ...perm,
-              permission: {
-                ...perm.permission,
-                [permissionKey]: value
-              }
-            }
-          : perm
-      )
-    );
+  /**
+   * Handle adding new permission with user feedback
+   */
+  const handleAddPermission = async (newPermissionData) => {
+    const result = await addPermission(newPermissionData);
+    if (result.success) {
+      enqueueSnackbar(result.message, { variant: 'success' });
+      return true; // Signal success to dialog
+    } else {
+      enqueueSnackbar(result.message, { variant: 'error' });
+      return false;
+    }
   };
 
-  const savePermissions = async () => {
-    try {
-      setSaving(true);
-      const res = await fetch('/api/admin/role-permissions', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ permissions })
-      });
+  /**
+   * Handle deleting permission with confirmation dialog
+   */
+  const handleDeletePermission = (role, moduleName) => {
+    setDeleteDialog({
+      open: true,
+      role,
+      moduleName,
+      loading: false,
+    });
+  };
 
-      if (res.ok) {
-        // Show success message
-        alert('Permissions updated successfully!');
+  /**
+   * Execute the actual deletion after confirmation
+   */
+  const executeDeletePermission = async () => {
+    if (!deleteDialog.role || !deleteDialog.moduleName) return;
+    
+    setDeleteDialog(prev => ({ ...prev, loading: true }));
+    
+    try {
+      const result = await deletePermission(deleteDialog.role, deleteDialog.moduleName);
+      if (result.success) {
+        enqueueSnackbar(result.message, { variant: 'success' });
+        setDeleteDialog({ open: false, role: null, moduleName: null, loading: false });
       } else {
-        throw new Error('Failed to update permissions');
+        enqueueSnackbar(result.message, { variant: 'error' });
+        setDeleteDialog(prev => ({ ...prev, loading: false }));
       }
     } catch (error) {
-      console.error('Error saving permissions:', error);
-      alert('Failed to update permissions');
-    } finally {
-      setSaving(false);
+      enqueueSnackbar('An unexpected error occurred', { variant: 'error' });
+      setDeleteDialog(prev => ({ ...prev, loading: false }));
     }
   };
 
-  const addNewPermission = async () => {
-    try {
-      const res = await fetch('/api/admin/role-permissions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newPermission)
-      });
-
-      if (res.ok) {
-        setIsDialogOpen(false);
-        setNewPermission({
-          role: '',
-          module: '',
-          permission: { read: false, write: false, delete: false, export: false }
-        });
-        fetchPermissions();
-      } else {
-        throw new Error('Failed to add permission');
-      }
-    } catch (error) {
-      console.error('Error adding permission:', error);
-      alert('Failed to add permission');
-    }
+  /**
+   * Close the delete dialog
+   */
+  const closeDeleteDialog = () => {
+    if (deleteDialog.loading) return;
+    setDeleteDialog({ open: false, role: null, moduleName: null, loading: false });
   };
 
-  const deletePermission = async (role, moduleName) => {
-    if (!confirm('Are you sure you want to delete this permission?')) return;
-
-    try {
-      const res = await fetch(
-        `/api/admin/role-permissions?role=${role}&module=${moduleName}`, 
-        { method: 'DELETE' }
-      );
-
-      if (res.ok) {
-        fetchPermissions();
-      } else {
-        throw new Error('Failed to delete permission');
-      }
-    } catch (error) {
-      console.error('Error deleting permission:', error);
-      alert('Failed to delete permission');
-    }
+  /**
+   * Handle refreshing permissions with user feedback
+   */
+  const handleRefreshPermissions = async () => {
+    await fetchPermissions();
+    enqueueSnackbar('Permissions refreshed successfully', { variant: 'success' });
   };
 
-  const getPermissionForRoleModule = (role, moduleName) => {
-    return permissions.find(p => p.role === role && p.module === moduleName);
-  };
-
-  const getRoleColor = (role) => {
-    return ROLES.find(r => r.value === role)?.color || 'bg-gray-500';
-  };
-
-  const getModuleInfo = (moduleName) => {
-    return MODULES.find(m => m.value === moduleName);
-  };
-
+  // Loading state
   if (status === 'loading' || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[400px]" role="status" aria-label="Loading permissions">
         <LoadingSpinner size="lg" />
+        <span className="sr-only">Loading role permissions...</span>
       </div>
     );
   }
 
+  // Unauthorized access
   if (!session || session.user.role !== 'superadmin') {
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Access Denied</h2>
+            <p className="text-gray-600">You don&apos;t have permission to access this page.</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <motion.div 
-        className="flex items-center justify-between"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Shield className="h-8 w-8 text-red-500" />
-            Role Permissions Management
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Configure what each role can access in the system
-          </p>
-        </div>
-        
-        <div className="flex gap-2">
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Permission
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Permission</DialogTitle>
-                <DialogDescription>
-                  Configure access permissions for a role and module combination.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label>Role</Label>
-                  <Select 
-                    value={newPermission.role} 
-                    onValueChange={(value) => setNewPermission(prev => ({ ...prev, role: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ROLES.map(role => (
-                        <SelectItem key={role.value} value={role.value}>
-                          {role.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label>Module</Label>
-                  <Select 
-                    value={newPermission.module} 
-                    onValueChange={(value) => setNewPermission(prev => ({ ...prev, module: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select module" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MODULES.map(mod => (
-                        <SelectItem key={mod.value} value={mod.value}>
-                          <div className="flex items-center gap-2">
-                            {mod.icon}
-                            {mod.label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Permissions</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {PERMISSIONS.map(perm => (
-                      <div key={perm.key} className="flex items-center space-x-2">
-                        <Switch
-                          checked={newPermission.permission[perm.key]}
-                          onCheckedChange={(checked) => 
-                            setNewPermission(prev => ({
-                              ...prev,
-                              permission: { ...prev.permission, [perm.key]: checked }
-                            }))
-                          }
-                        />
-                        <Label className="flex items-center gap-1">
-                          {perm.icon}
-                          {perm.label}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <Button 
-                  onClick={addNewPermission} 
-                  className="w-full"
-                  disabled={!newPermission.role || !newPermission.module}
-                >
-                  Add Permission
-                </Button>
+    <PermissionGuard module="role_permissions" allowSuperadminOverride={true}>
+      <div className="space-y-6">
+        {/* Page Header */}
+        <motion.div 
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+              <Shield className="h-8 w-8 text-red-500" aria-hidden="true" />
+              Role Permissions Management
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Configure what each role can access in the system. Changes are highlighted and must be saved.
+            </p>
+            {hasChanges && (
+              <div className="mt-2 flex items-center gap-2 text-sm text-amber-600">
+                <AlertCircle className="h-4 w-4" />
+                <span>You have unsaved changes</span>
               </div>
-            </DialogContent>
-          </Dialog>
-
-          <Button onClick={() => fetchPermissions()} variant="outline">
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          
-          <Button onClick={savePermissions} disabled={saving}>
-            {saving ? (
-              <LoadingSpinner size="sm" className="mr-2" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
             )}
-            Save Changes
-          </Button>
-        </div>
-      </motion.div>
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-2">
+            <AddPermissionDialog
+              onAdd={handleAddPermission}
+              existingPermissions={permissions}
+              loading={saving}
+            />
+            
+            <PermissionActions
+              onSave={handleSavePermissions}
+              onRefresh={handleRefreshPermissions}
+              saving={saving}
+              hasChanges={hasChanges}
+            />
+          </div>
+        </motion.div>
 
-      {/* Permissions Matrix */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle>Permissions Matrix</CardTitle>
-            <CardDescription>
-              Configure permissions for each role and module combination
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[200px]">Role</TableHead>
-                    <TableHead className="w-[250px]">Module</TableHead>
-                    {PERMISSIONS.map(perm => (
-                      <TableHead key={perm.key} className="text-center min-w-[80px]">
-                        <div className="flex items-center justify-center gap-1">
-                          {perm.icon}
-                          {perm.label}
-                        </div>
-                      </TableHead>
-                    ))}
-                    <TableHead className="w-[100px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {permissions.map((perm, index) => {
-                    const moduleInfo = getModuleInfo(perm.module);
-                    return (
-                      <TableRow key={`${perm.role}-${perm.module}`}>
-                        <TableCell>
-                          <Badge className={`${getRoleColor(perm.role)} text-white`}>
-                            {ROLES.find(r => r.value === perm.role)?.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {moduleInfo?.icon}
-                            <div>
-                              <div className="font-medium">{moduleInfo?.label}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {moduleInfo?.description}
-                              </div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        {PERMISSIONS.map(permType => (
-                          <TableCell key={permType.key} className="text-center">
-                            <Switch
-                              checked={perm.permission[permType.key] || false}
-                              onCheckedChange={(checked) => 
-                                updatePermission(perm.role, perm.module, permType.key, checked)
-                              }
-                              disabled={perm.role === 'superadmin' && perm.module === 'role_permissions'}
-                            />
-                          </TableCell>
-                        ))}
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deletePermission(perm.role, perm.module)}
-                            disabled={perm.role === 'superadmin' && perm.module === 'role_permissions'}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+        {/* Permissions Matrix */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.3 }}
+        >
+          <PermissionsMatrix
+            permissions={permissions}
+            onPermissionChange={updatePermission}
+            onDelete={handleDeletePermission}
+            loading={loading}
+          />
+        </motion.div>
+
+        {/* Role Overview Cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.3 }}
+        >
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-xl font-semibold">Role Overview</h2>
+              <p className="text-muted-foreground text-sm">
+                Summary of permissions by role with access statistics
+              </p>
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+            
+            <RoleOverviewCards 
+              permissions={permissions} 
+              loading={loading}
+            />
+          </div>
+        </motion.div>
 
-      {/* Role Overview Cards */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-      >
-        {ROLES.map(role => {
-          const rolePermissions = permissions.filter(p => p.role === role.value);
-          const totalModules = rolePermissions.length;
-          const accessibleModules = rolePermissions.filter(p => 
-            Object.values(p.permission).some(Boolean)
-          ).length;
+        {/* Help Text */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.3 }}
+          className="bg-blue-50 border border-blue-200 rounded-lg p-4"
+        >
+          <h3 className="font-medium text-blue-900 mb-2">Usage Tips</h3>
+          <ul className="text-sm text-blue-800 space-y-1">
+            <li>• Protected permissions (like superadmin access to this page) cannot be modified</li>
+            <li>• Changes are highlighted and must be saved using the &quot;Save Changes&quot; button</li>
+            <li>• Use the role overview cards to quickly see which modules each role can access</li>
+            <li>• Add new permission combinations using the &quot;Add Permission&quot; dialog</li>
+          </ul>
+        </motion.div>
+      </div>
 
-          return (
-            <Card key={role.value}>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Badge className={`${role.color} text-white`}>
-                    {role.label}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="text-sm text-muted-foreground">
-                    {accessibleModules} of {MODULES.length} modules accessible
-                  </div>
-                  <div className="space-y-1">
-                    {rolePermissions.map(perm => {
-                      const moduleInfo = getModuleInfo(perm.module);
-                      const hasAnyPermission = Object.values(perm.permission).some(Boolean);
-                      
-                      return (
-                        <div key={perm.module} className="flex items-center gap-2 text-sm">
-                          {moduleInfo?.icon}
-                          <span className={hasAnyPermission ? '' : 'text-muted-foreground line-through'}>
-                            {moduleInfo?.label}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </motion.div>
-    </div>
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        open={deleteDialog.open}
+        onOpenChange={closeDeleteDialog}
+        onConfirm={executeDeletePermission}
+        loading={deleteDialog.loading}
+        title="Delete Permission"
+        description={`Are you sure you want to delete this permission? This will remove access for the specified role.`}
+        itemName={deleteDialog.role && deleteDialog.moduleName ? 
+          `${deleteDialog.role} → ${deleteDialog.moduleName}` : 
+          null
+        }
+        itemType="Permission"
+        warningText="This action will immediately revoke access for all users with this role to the specified module."
+        consequences={[
+          "Users with this role will lose access to the module",
+          "Any ongoing operations may be interrupted",
+          "The permission will need to be manually recreated if needed"
+        ]}
+        confirmButtonText="Delete Permission"
+      />
+    </PermissionGuard>
   );
 }
