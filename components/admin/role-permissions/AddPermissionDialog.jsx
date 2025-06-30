@@ -64,7 +64,18 @@ export default function AddPermissionDialog({
   };
 
   const handleFieldChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // If role is superadmin, automatically set access permission to true
+      if (field === 'role' && value === 'superadmin') {
+        newData.permission = {
+          access: true
+        };
+      }
+      
+      return newData;
+    });
     
     // Clear errors when user starts typing
     if (errors.length > 0) {
@@ -73,6 +84,11 @@ export default function AddPermissionDialog({
   };
 
   const handlePermissionChange = (checked) => {
+    // Prevent changing permissions for superadmin
+    if (formData.role === 'superadmin') {
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
       permission: { access: checked }
@@ -152,8 +168,9 @@ export default function AddPermissionDialog({
             <div className="flex items-center space-x-2">
               <Switch
                 id="access-permission"
-                checked={formData.permission.access}
+                checked={formData.role === 'superadmin' ? true : formData.permission.access}
                 onCheckedChange={handlePermissionChange}
+                disabled={formData.role === 'superadmin'}
                 aria-describedby="access-permission-description"
               />
               <Label 
@@ -163,9 +180,17 @@ export default function AddPermissionDialog({
                 <Eye className="h-4 w-4" aria-hidden="true" />
                 Access
               </Label>
+              {formData.role === 'superadmin' && (
+                <span className="text-xs text-amber-600 ml-2">
+                  (Auto-enabled for superadmin)
+                </span>
+              )}
             </div>
             <p id="access-permission-description" className="text-xs text-muted-foreground">
-              Allow this role to access the selected module
+              {formData.role === 'superadmin' 
+                ? 'Superadmin automatically has all permissions enabled'
+                : 'Allow this role to access the selected module'
+              }
             </p>
           </div>
 

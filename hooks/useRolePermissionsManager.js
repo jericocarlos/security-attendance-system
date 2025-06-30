@@ -50,10 +50,14 @@ export const useRolePermissionsManager = () => {
         perm.role === role && perm.module === moduleName
           ? {
               ...perm,
-              permission: {
-                ...perm.permission,
-                [permissionKey]: value
-              }
+              permission: role === 'superadmin' 
+                ? {
+                    access: true // For superadmin, always set access to true
+                  }
+                : {
+                    ...perm.permission,
+                    [permissionKey]: value
+                  }
             }
           : perm
       )

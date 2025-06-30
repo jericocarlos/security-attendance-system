@@ -31,6 +31,13 @@ export default function PermissionsMatrix({
     if (isProtectedPermission(role, module)) {
       return; // Don't allow changes to protected permissions
     }
+    
+    // For superadmin, automatically set all permissions to true
+    if (role === 'superadmin') {
+      onPermissionChange(role, module, permissionKey, true);
+      return;
+    }
+    
     onPermissionChange(role, module, permissionKey, value);
   };
 
@@ -147,17 +154,17 @@ export default function PermissionsMatrix({
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center">
                         <Switch
-                          checked={perm.permission.access || false}
+                          checked={perm.role === 'superadmin' ? true : (perm.permission.access || false)}
                           onCheckedChange={(checked) => 
                             handleTogglePermission(perm.role, perm.module, 'access', checked)
                           }
-                          disabled={isProtected}
-                          aria-label={`${isProtected ? 'Protected - cannot change' : 'Toggle'} access permission for ${roleInfo?.label} role on ${moduleInfo?.label} module`}
+                          disabled={isProtected || perm.role === 'superadmin'}
+                          aria-label={`${isProtected || perm.role === 'superadmin' ? 'Protected - cannot change' : 'Toggle'} access permission for ${roleInfo?.label} role on ${moduleInfo?.label} module`}
                         />
-                        {isProtected && (
+                        {(isProtected || perm.role === 'superadmin') && (
                           <AlertTriangle 
                             className="h-4 w-4 text-amber-500 ml-2" 
-                            title="This permission is protected and cannot be modified"
+                            title={perm.role === 'superadmin' ? "Superadmin always has full access" : "This permission is protected and cannot be modified"}
                             aria-hidden="true"
                           />
                         )}
@@ -170,9 +177,9 @@ export default function PermissionsMatrix({
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeletePermission(perm.role, perm.module)}
-                        disabled={isProtected}
-                        aria-label={`${isProtected ? 'Protected - cannot delete' : 'Delete'} permission for ${roleInfo?.label} role on ${moduleInfo?.label} module`}
-                        className={isProtected ? 'cursor-not-allowed opacity-50' : 'hover:bg-red-50'}
+                        disabled={isProtected || perm.role === 'superadmin'}
+                        aria-label={`${isProtected || perm.role === 'superadmin' ? 'Protected - cannot delete' : 'Delete'} permission for ${roleInfo?.label} role on ${moduleInfo?.label} module`}
+                        className={(isProtected || perm.role === 'superadmin') ? 'cursor-not-allowed opacity-50' : 'hover:bg-red-50'}
                       >
                         <Trash2 className="h-4 w-4 text-red-500" aria-hidden="true" />
                       </Button>
@@ -189,7 +196,8 @@ export default function PermissionsMatrix({
           <div className="flex items-center gap-2 text-sm text-amber-800">
             <AlertTriangle className="h-4 w-4" aria-hidden="true" />
             <span>
-              <strong>Protected permissions</strong> (marked with warning icons) cannot be modified to ensure system security.
+              <strong>Protected permissions</strong> (marked with warning icons) cannot be modified to ensure system security. 
+              <strong>Superadmin permissions</strong> are automatically set to true and cannot be changed.
             </span>
           </div>
         </div>
