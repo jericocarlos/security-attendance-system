@@ -65,19 +65,7 @@ const SearchAndFilterControls = memo(({
           onKeyDown={handleSearchKeyDown}
           className="pl-4 pr-10"
           aria-label="Search employees"
-          disabled={loading}
         />
-        {hasSearchQuery && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onSearchChange('')}
-            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
-            aria-label="Clear search"
-          >
-            <FiX className="h-4 w-4" />
-          </Button>
-        )}
       </div>
 
       {/* Filter Controls */}
@@ -87,20 +75,6 @@ const SearchAndFilterControls = memo(({
           <Badge variant="secondary" className="mr-2">
             {activeFiltersCount} filter{activeFiltersCount !== 1 ? 's' : ''} active
           </Badge>
-        )}
-
-        {/* Reset Filters Button */}
-        {(hasActiveFilters || hasSearchQuery) && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onResetFilters}
-            disabled={loading}
-            aria-label="Reset all filters and search"
-          >
-            <FiX className="mr-2 h-4 w-4" />
-            Reset
-          </Button>
         )}
 
         {/* Filter Dialog Button */}
