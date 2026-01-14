@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { executeQuery } from '@/lib/db';
+import { executeQuery, attendancePool, freemealPool } from '@/lib/db';
 
 export async function POST(request) {
   try {
@@ -63,6 +63,46 @@ export async function POST(request) {
         VALUES (?, 'IN', NOW(), NULL)
       `;
       insertLogValues = [employee.ashima_id];
+
+      // ------------------------------- code added 01-14-2026 ------------------------------------------------
+      const attendanceConn = await attendancePool.getConnection();
+      const freemealConn = await freemealPool.getConnection();
+
+      //const conn = await freemealPool.getConnection();
+      await freemealConn.ping();
+     // freemealConn.release();
+      console.log('Freemeal DB connected');
+
+      try {
+        // separate transactions (NOT atomic together)
+        await attendanceConn.beginTransaction();
+        await freemealConn.beginTransaction();
+
+        // 1️⃣ Insert on Attendance DB (Server A)
+        await attendanceConn.execute(insertLogQuery, insertLogValues);
+
+        // 2️⃣ Update on HR DB (Server B)
+        await freemealConn.execute(
+          `
+          UPDATE employees
+          SET is_enabled = 1
+          WHERE ashima_id = ?
+          `,
+          [employee.ashima_id]
+        );
+
+        await attendanceConn.commit();
+        await freemealConn.commit();
+
+      } catch (err) {
+        await attendanceConn.rollback();
+        await freemealConn.rollback();
+        throw err;
+      } finally {
+        attendanceConn.release();
+        freemealConn.release();
+      }
+      // ------------------------------------------------------------------------------------------------------
     } else if (latestLog.log_type === "IN" && !latestLog.out_time) {
       // Last log is IN and has no out_time: this should be OUT and update the previous IN
       nextLogType = "OUT";
