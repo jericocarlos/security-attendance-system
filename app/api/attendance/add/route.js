@@ -70,7 +70,7 @@ export async function POST(request) {
 
       //const conn = await freemealPool.getConnection();
       await freemealConn.ping();
-     // freemealConn.release();
+      // freemealConn.release();
       console.log('Freemeal DB connected');
 
       try {
