@@ -50,6 +50,8 @@ export async function POST(request) {
       LIMIT 1
     `;
     const [latestLog] = await executeQuery({ query: latestLogQuery, values: [employee.ashima_id] });
+    const attendanceConn = await attendancePool.getConnection();
+    const freemealConn = await freemealPool.getConnection();
 
     let nextLogType = "IN";
     let insertLogQuery = "";
@@ -65,8 +67,8 @@ export async function POST(request) {
       insertLogValues = [employee.ashima_id];
 
       // ------------------------------- code added 01-14-2026 ------------------------------------------------
-      const attendanceConn = await attendancePool.getConnection();
-      const freemealConn = await freemealPool.getConnection();
+      // const attendanceConn = await attendancePool.getConnection();
+      // const freemealConn = await freemealPool.getConnection();
 
       //const conn = await freemealPool.getConnection();
       await freemealConn.ping();
@@ -112,12 +114,40 @@ export async function POST(request) {
         SET log_type = 'OUT', out_time = NOW()
         WHERE id = ?
       `;
-      await executeQuery({ query: updateQuery, values: [latestLog.id] });
-    }
 
-    // Only do insert if this is a new IN
-    if (insertLogQuery) {
-      await executeQuery({ query: insertLogQuery, values: insertLogValues });
+      // ------------------------------- code added 01-14-2026 ------------------------------------------------
+      //const conn = await freemealPool.getConnection();
+      await freemealConn.ping();
+      console.log('Freemeal DB connected');
+
+      try {
+        // separate transactions (NOT atomic together)
+        await attendanceConn.beginTransaction();
+        await freemealConn.beginTransaction();
+
+        // 1️⃣ Update on Attendance DB (Server A)
+        await attendanceConn.execute(updateQuery, [latestLog.id]);
+
+        // 2️⃣ Update on HR DB (Server B)
+        await freemealConn.execute(
+          `
+          UPDATE employees
+          SET is_enabled = 0
+          WHERE ashima_id = ?
+          `,
+          [employee.ashima_id]
+        );
+
+        await attendanceConn.commit();
+        await freemealConn.commit();
+      } catch (err) {
+        await attendanceConn.rollback();
+        await freemealConn.rollback();
+        throw err;
+      } finally {
+        attendanceConn.release();
+        freemealConn.release();
+      }
     }
 
     // Update status/last_active as before
