@@ -71,9 +71,9 @@ export async function POST(request) {
       // const freemealConn = await freemealPool.getConnection();
 
       //const conn = await freemealPool.getConnection();
-      await freemealConn.ping();
+      //await freemealConn.ping();
       // freemealConn.release();
-      console.log('Freemeal DB connected');
+      //console.log('Freemeal DB connected');
 
       try {
         // separate transactions (NOT atomic together)
@@ -117,8 +117,8 @@ export async function POST(request) {
 
       // ------------------------------- code added 01-14-2026 ------------------------------------------------
       //const conn = await freemealPool.getConnection();
-      await freemealConn.ping();
-      console.log('Freemeal DB connected');
+      // await freemealConn.ping();
+      // console.log('Freemeal DB connected');
 
       try {
         // separate transactions (NOT atomic together)
