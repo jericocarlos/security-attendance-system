@@ -108,7 +108,7 @@ export async function POST(request) {
           `
           UPDATE interns
           SET is_enabled = 1
-          WHERE ashima_id = ?
+          WHERE id_number = ?
           `,
           [employee.ashima_id]
         );
