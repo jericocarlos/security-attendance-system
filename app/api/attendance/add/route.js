@@ -83,7 +83,7 @@ export async function POST(request) {
         // 1️⃣ Insert on Attendance DB (Server A)
         await attendanceConn.execute(insertLogQuery, insertLogValues);
 
-        // 2️⃣ Update on HR DB (Server B)
+        // 2️⃣ Update Employees on HR DB (Server B)
         await freemealConn.execute(
           `
           UPDATE employees
@@ -93,10 +93,20 @@ export async function POST(request) {
           [employee.ashima_id]
         );
 
-        // 2️⃣ Update on HR DB (Server B)
+        // 2️⃣ Update Trainees on HR DB (Server B)
         await freemealConn.execute(
           `
           UPDATE trainees
+          SET is_enabled = 1
+          WHERE ashima_id = ?
+          `,
+          [employee.ashima_id]
+        );
+
+        // 2️⃣ Update Interns on HR DB (Server B)
+        await freemealConn.execute(
+          `
+          UPDATE interns
           SET is_enabled = 1
           WHERE ashima_id = ?
           `,
