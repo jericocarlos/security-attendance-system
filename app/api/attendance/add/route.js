@@ -93,6 +93,16 @@ export async function POST(request) {
           [employee.ashima_id]
         );
 
+        // 2️⃣ Update on HR DB (Server B)
+        await freemealConn.execute(
+          `
+          UPDATE trainees
+          SET is_enabled = 1
+          WHERE ashima_id = ?
+          `,
+          [employee.ashima_id]
+        );
+
         await attendanceConn.commit();
         await freemealConn.commit();
 
