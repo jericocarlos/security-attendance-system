@@ -1,6 +1,39 @@
 import { NextResponse } from 'next/server';
 import { executeQuery, attendancePool, freemealPool } from '@/lib/db';
 
+// Helper function to update employee status across multiple tables
+async function updateEmployeeStatusByTable(conn, ashimaId, isEnabled) {
+  // Try updating employees table
+  const [result1] = await conn.execute(
+    `UPDATE employees SET is_enabled = ? WHERE ashima_id = ?`,
+    [isEnabled, ashimaId]
+  );
+  
+  if (result1.affectedRows > 0) {
+    return; // Successfully updated employees table
+  }
+  
+  // Try updating interns table by id_number
+  const [result2] = await conn.execute(
+    `UPDATE interns SET is_enabled = ? WHERE id_number = ?`,
+    [isEnabled, ashimaId]
+  );
+  
+  if (result2.affectedRows > 0) {
+    return; // Successfully updated interns table
+  }
+  
+  // Try updating trainees table by ashima_id
+  const [result3] = await conn.execute(
+    `UPDATE trainees SET is_enabled = ? WHERE ashima_id = ?`,
+    [isEnabled, ashimaId]
+  );
+  
+  if (result3.affectedRows > 0) {
+    return; // Successfully updated trainees table
+  }
+}
+
 export async function POST(request) {
   try {
     const { rfid_tag } = await request.json();
@@ -83,15 +116,8 @@ export async function POST(request) {
         // 1️⃣ Insert on Attendance DB (Server A)
         await attendanceConn.execute(insertLogQuery, insertLogValues);
 
-        // 2️⃣ Update Employees on HR DB (Server B)
-        await freemealConn.execute(
-          `
-          UPDATE employees
-          SET is_enabled = 1
-          WHERE ashima_id = ?
-          `,
-          [employee.ashima_id]
-        );
+        // 2️⃣ Update on HR DB (Server B) - check employees, interns, then trainees tables
+        await updateEmployeeStatusByTable(freemealConn, employee.ashima_id, 1);
 
         await attendanceConn.commit();
         await freemealConn.commit();
@@ -128,15 +154,8 @@ export async function POST(request) {
         // 1️⃣ Update on Attendance DB (Server A)
         await attendanceConn.execute(updateQuery, [latestLog.id]);
 
-        // 2️⃣ Update on HR DB (Server B)
-        await freemealConn.execute(
-          `
-          UPDATE employees
-          SET is_enabled = 0
-          WHERE ashima_id = ?
-          `,
-          [employee.ashima_id]
-        );
+        // 2️⃣ Update on HR DB (Server B) - check employees, interns, then trainees tables
+        await updateEmployeeStatusByTable(freemealConn, employee.ashima_id, 0);
 
         await attendanceConn.commit();
         await freemealConn.commit();
