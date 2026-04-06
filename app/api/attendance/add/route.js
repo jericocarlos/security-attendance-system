@@ -34,6 +34,21 @@ async function updateEmployeeStatusByTable(conn, ashimaId, isEnabled) {
   }
 }
 
+async function insertUnclaimedFreemealLogIfNeeded(conn, ashimaId) {
+  const [claimedRows] = await conn.execute(
+    `SELECT 1 FROM freemeal_logs WHERE ashima_id = ? AND DATE(date_claimed) = CURDATE() LIMIT 1`,
+    [ashimaId]
+  );
+
+  if (!claimedRows.length) {
+    await conn.execute(
+      `INSERT INTO unclaimed_freemeal_logs (unclaim_date, ashima_id, log_type)
+       VALUES (?, ?, 'UNCLAIMED')`,
+      [new Date(), ashimaId] // meal_type can be determined based on your business logic, using 'UNKNOWN' as a placeholder
+    );
+  }
+}
+
 export async function POST(request) {
   try {
     const { rfid_tag } = await request.json();
@@ -156,6 +171,10 @@ export async function POST(request) {
 
         // 2️⃣ Update on HR DB (Server B) - check employees, interns, then trainees tables
         await updateEmployeeStatusByTable(freemealConn, employee.ashima_id, 0);
+        
+        // 3️⃣ If the employee is checking OUT and has not claimed a meal today,
+        // insert a record into the unclaimed_freemeal_logs table.
+        await insertUnclaimedFreemealLogIfNeeded(freemealConn, employee.ashima_id);
 
         await attendanceConn.commit();
         await freemealConn.commit();
