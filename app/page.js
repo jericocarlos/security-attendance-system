@@ -9,6 +9,7 @@ import ErrorDisplay from '@/components/layout/home/ErrorDisplay';
 import useAttendance from '@/hooks/useAttendance';
 import { ANIMATIONS } from '@/constants';
 import Image from 'next/image';
+import Silk from '@/components/Silk';
 
 export default function Home() {
   const {
@@ -23,7 +24,18 @@ export default function Home() {
   } = useAttendance();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-900 to-slate-900 text-white overflow-hidden">
+    <div className="min-h-screen relative text-white overflow-hidden">
+      {/* Silk full-screen background */}
+      <div className="fixed inset-0 z-0">
+        <Silk
+          speed={5}
+          scale={1}
+          color="#5227FF"
+          noiseIntensity={1.5}
+          rotation={0}
+        />
+      </div>
+      
       {/* Clock component at the top */}
       <motion.div 
         className="pt-8"
