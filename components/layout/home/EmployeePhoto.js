@@ -4,6 +4,10 @@ import { motion } from 'framer-motion';
 import Image from 'next/image'; // Add this import
 
 export default function EmployeePhoto({ employeeInfo, employeeStatus }) {
+  const photoSrc = typeof employeeInfo?.photo === 'string' && employeeInfo.photo.trim()
+    ? employeeInfo.photo
+    : null;
+
   return (
     <div className="flex flex-col items-center">
       {/* Large employee photo - adjusted size */}
@@ -18,15 +22,16 @@ export default function EmployeePhoto({ employeeInfo, employeeStatus }) {
           whileHover={{ scale: 1.03 }}
           transition={{ type: "spring", stiffness: 400, damping: 10 }}
         >
-          {employeeInfo?.photo ? (
+          {photoSrc ? (
             <div className="relative w-full h-full">
               <Image
-                src={employeeInfo.photo}
+                src={photoSrc}
                 alt={employeeInfo.name}
                 fill
                 sizes="600px"
                 className="object-cover"
                 priority
+                unoptimized={photoSrc.startsWith('data:')}
               />
             </div>
           ) : (

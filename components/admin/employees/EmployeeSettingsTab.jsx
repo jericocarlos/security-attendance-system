@@ -31,6 +31,10 @@ const EmployeeSettingsTab = memo(({
   isResigned = false,
   status = 'active'
 }) => {
+  const previewSrc = typeof imagePreview === 'string' && imagePreview.trim()
+    ? imagePreview
+    : null;
+
   /**
    * Handles file input change with validation
    * @param {Event} event - File input change event
@@ -148,15 +152,16 @@ const EmployeeSettingsTab = memo(({
             </div>
 
             {/* Image Preview */}
-            {imagePreview && (
+            {previewSrc && (
               <div className="relative flex-shrink-0">
                 <div className="relative h-24 w-24 sm:h-32 sm:w-32">
                   <Image
-                    src={imagePreview}
+                    src={previewSrc}
                     alt="Employee photo preview"
                     fill
                     className="rounded-lg object-cover border"
                     sizes="(max-width: 640px) 96px, 128px"
+                    unoptimized={previewSrc.startsWith('data:') || previewSrc.startsWith('blob:')}
                   />
                 </div>
                 {!isResigned && (
