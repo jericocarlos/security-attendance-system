@@ -1,7 +1,14 @@
 import { executeQuery } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET(req) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user || !["superadmin", "admin", "security", "hr"].includes(session.user.role)) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
+  }
+
   try {
     const { searchParams } = new URL(req.url);
 
