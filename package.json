@@ -41,6 +41,7 @@
     "next": "^15.5.9",
     "next-auth": "^4.24.11",
     "notistack": "^3.0.2",
+    "ogl": "^1.0.11",
     "react": "^19.1.0",
     "react-countup": "^6.5.3",
     "react-datepicker": "^8.3.0",
