@@ -125,16 +125,16 @@ export default function Home() {
           )}
 
           {/* Logo on the right */}
-          {/* <div>
+          <div className="relative h-[50px] w-[300px] shrink-0">
             <Image
-              src="/ew-logo-full.png" 
-              alt="EWBPO Logo" 
-              width={300}
-              height={50}
-              className="object-contain"
+              src="/ew-logo-full.png"
+              alt="EWBPO Logo"
+              fill
+              className="object-contain object-right"
+              sizes="300px"
               priority
             />
-          </div> */}
+          </div>
         </div>
       </div>
 
