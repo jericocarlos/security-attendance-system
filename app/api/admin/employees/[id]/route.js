@@ -1,5 +1,11 @@
 import { executeQuery } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+
+function ensureAuthorized(session, allowedRoles) {
+  return !!session?.user && allowedRoles.includes(session.user.role);
+}
 
 // Helper function to decode Base64 to binary with better error handling
 function decodeBase64ToBinary(base64String) {
@@ -20,8 +26,13 @@ function decodeBase64ToBinary(base64String) {
 
 // PUT: Update an Existing Employee
 export async function PUT(req, context) {
+  const session = await getServerSession(authOptions);
+  if (!ensureAuthorized(session, ["superadmin", "admin", "hr"])) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
+  }
+
   try {
-    const { id } = await context.params; // 👈 Add await here
+    const { id } = context.params;
     const body = await req.json();
 
     const {

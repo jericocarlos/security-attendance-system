@@ -1,8 +1,15 @@
 import { executeQuery } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // Get all departments with optional pagination and search
 export async function GET(request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user || !["superadmin", "admin"].includes(session.user.role)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     
@@ -71,6 +78,11 @@ export async function GET(request) {
 
 // Add a new department
 export async function POST(request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user || !["superadmin", "admin"].includes(session.user.role)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
     const { name } = await request.json();
     

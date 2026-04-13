@@ -63,6 +63,9 @@ async function updateEmployeeStatusByTable(conn, ashimaId, isEnabled) {
 // }
 
 export async function POST(request) {
+  let attendanceConn;
+  let freemealConn;
+
   try {
     const { rfid_tag } = await request.json();
 
@@ -109,8 +112,8 @@ export async function POST(request) {
       LIMIT 1
     `;
     const [latestLog] = await executeQuery({ query: latestLogQuery, values: [employee.ashima_id] });
-    const attendanceConn = await attendancePool.getConnection();
-    const freemealConn = await freemealPool.getConnection();
+    attendanceConn = await attendancePool.getConnection();
+    freemealConn = await freemealPool.getConnection();
 
     let nextLogType = "IN";
     let insertLogQuery = "";
@@ -152,9 +155,6 @@ export async function POST(request) {
         await attendanceConn.rollback();
         await freemealConn.rollback();
         throw err;
-      } finally {
-        attendanceConn.release();
-        freemealConn.release();
       }
       // ------------------------------------------------------------------------------------------------------
     } else if (latestLog.log_type === "IN" && !latestLog.out_time) {
@@ -193,9 +193,6 @@ export async function POST(request) {
         await attendanceConn.rollback();
         await freemealConn.rollback();
         throw err;
-      } finally {
-        attendanceConn.release();
-        freemealConn.release();
       }
     }
 
@@ -237,5 +234,13 @@ export async function POST(request) {
       { error: 'Failed to process attendance log.' },
       { status: 500 }
     );
+  } finally {
+    if (attendanceConn) {
+      attendanceConn.release();
+    }
+
+    if (freemealConn) {
+      freemealConn.release();
+    }
   }
 }

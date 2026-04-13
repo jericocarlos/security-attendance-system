@@ -1,8 +1,15 @@
 import { executeQuery } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 // Get a specific position
 export async function GET(request, { params }) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user || !["superadmin", "admin"].includes(session.user.role)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
     const { id } = params;
     
@@ -28,6 +35,11 @@ export async function GET(request, { params }) {
 
 // Update a position
 export async function PUT(request, { params }) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user || !["superadmin", "admin"].includes(session.user.role)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
     const { id } = params;
     const { name, is_leader } = await request.json();
@@ -76,6 +88,11 @@ export async function PUT(request, { params }) {
 
 // Delete a position
 export async function DELETE(request, { params }) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user || !["superadmin", "admin"].includes(session.user.role)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
   try {
     const { id } = params;
     
