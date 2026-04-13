@@ -125,7 +125,7 @@ export default function Home() {
           )}
 
           {/* Logo on the right */}
-          {/* <div>
+          <div>
             <Image
               src="/ew-logo-full.png" 
               alt="EWBPO Logo" 
@@ -134,7 +134,7 @@ export default function Home() {
               className="object-contain"
               priority
             />
-          </div> */}
+          </div>
         </div>
       </div>
 
