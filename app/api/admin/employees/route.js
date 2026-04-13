@@ -1,6 +1,19 @@
 import { executeQuery } from "@/lib/db";
 import { NextResponse } from "next/server";
 
+function formatEmployeePhoto(photo) {
+  if (!photo) {
+    return null;
+  }
+
+  const photoBuffer = Buffer.isBuffer(photo) ? photo : Buffer.from(photo);
+  if (photoBuffer.length === 0) {
+    return null;
+  }
+
+  return `data:image/jpeg;base64,${photoBuffer.toString("base64")}`;
+}
+
 // Helper function to decode Base64 to binary
 function decodeBase64ToBinary(base64String) {
   return Buffer.from(base64String.replace(/^data:image\/\w+;base64,/, ""), "base64");
@@ -65,9 +78,7 @@ export async function GET(req) {
     const employees = await executeQuery({ query, values });
     const formattedEmployees = employees.map((employee) => ({
       ...employee,
-      photo: employee.photo
-        ? `data:image/jpeg;base64,${Buffer.from(employee.photo).toString('base64')}`
-        : null,
+      photo: formatEmployeePhoto(employee.photo),
     }));
 
     const countQuery = `
