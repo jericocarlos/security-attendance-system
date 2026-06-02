@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import HIDListener from '@/lib/HIDListeners';
 import Clock from '@/components/Clock';
@@ -112,16 +113,16 @@ export default function Home() {
           )}
 
           {/* Logo on the right */}
-          {/* <div className="relative h-[70px] w-[300px] shrink-0">
+          <div className="relative h-[70px] w-[300px] shrink-0">
             <Image
               src="/ew-logo-full.png"
               alt="EWBPO Logo"
               fill
               className="object-contain object-right"
-              // sizes="300px"
+              sizes="300px"
               priority
             />
-          </div> */}
+          </div>
         </div>
       </div>
 
