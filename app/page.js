@@ -8,8 +8,6 @@ import EmployeePhoto from '@/components/layout/home/EmployeePhoto';
 import ErrorDisplay from '@/components/layout/home/ErrorDisplay';
 import useAttendance from '@/hooks/useAttendance';
 import { ANIMATIONS } from '@/constants';
-import Image from 'next/image';
-import Silk from '@/components/Silk';
 
 export default function Home() {
   const {
@@ -24,18 +22,7 @@ export default function Home() {
   } = useAttendance();
 
   return (
-    <div className="min-h-screen relative text-white overflow-hidden">
-      {/* Silk full-screen background */}
-      <div className="fixed inset-0 z-0">
-        <Silk
-          speed={5}
-          scale={1}
-          color="#5227FF"
-          noiseIntensity={1.5}
-          rotation={0}
-        />
-      </div>
-      
+    <div className="min-h-screen relative bg-black text-white overflow-hidden">
       {/* Clock component at the top */}
       <motion.div 
         className="pt-8"
