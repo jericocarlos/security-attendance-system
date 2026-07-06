@@ -136,6 +136,15 @@
   50% { opacity: 0.6; }
 }
 
+@keyframes announcement-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
 .animate-fadeIn {
   animation: fadeIn 0.6s ease-out forwards;
 }
@@ -146,4 +155,9 @@
 
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-announcement {
+  animation: announcement-scroll 24s linear infinite;
+  will-change: transform;
 }

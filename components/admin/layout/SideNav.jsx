@@ -9,6 +9,7 @@ import {
   Clipboard,
   Users,
   UserCog,
+  CogIcon,
   Shield,
   Database
 } from "lucide-react";
@@ -45,6 +46,11 @@ const MODULE_DEFINITIONS = {
     name: 'Role Permissions',
     href: '/admin/role-permissions',
     icon: <Shield className="h-[18px] w-[18px]" />,
+  },
+  announcements: {
+    name: 'Announcements',
+    href: '/admin/announcements',
+    icon: <CogIcon className="h-[18px] w-[18px]" />,
   },
 };
 

@@ -1,4 +1,4 @@
-import { Users, Clipboard, UserCog, Calendar, Database, Shield } from "lucide-react";
+import { Users, Clipboard, UserCog, CogIcon, Calendar, Database, Shield } from "lucide-react";
 
 export const NAV_ITEMS = {
   // Super Admin can access everything
@@ -28,11 +28,11 @@ export const NAV_ITEMS = {
       href: '/admin/role-permissions',
       icon: <Shield className="h-[18px] w-[18px]" />,
     },
-    // {
-    //   name: 'Module Assignment',
-    //   href: '/admin/module-assignment',
-    //   icon: <UserCog className="h-[18px] w-[18px]" />,
-    // },
+    {
+      name: 'Announcements',
+      href: '/admin/announcements',
+      icon: <CogIcon className="h-[18px] w-[18px]" />,
+    },
   ],
   admin: [
     {
@@ -54,6 +54,11 @@ export const NAV_ITEMS = {
       name: 'Attendance Logs',
       href: '/admin/attendance-logs',
       icon: <Calendar className="h-[18px] w-[18px]" />,
+    },
+    {
+      name: 'Announcements',
+      href: '/admin/announcements',
+      icon: <CogIcon className="h-[18px] w-[18px]" />,
     },
   ],
   // Security only gets Attendance Logs

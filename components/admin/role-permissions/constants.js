@@ -59,6 +59,12 @@ export const MODULES = [
     label: 'Role Permissions', 
     description: 'Configure role-based access control (Superadmin only)',
     category: 'Admin'
+  },
+  {
+    value: 'announcements',
+    label: 'Announcements',
+    description: 'Manage system-wide announcements and notifications',
+    category: 'Core'
   }
 ];
 
@@ -76,7 +82,8 @@ export const MODULE_ICONS = {
   data_management: 'Database', 
   account_logins: 'UserCog',
   attendance_logs: 'Calendar',
-  role_permissions: 'Shield'
+  role_permissions: 'Shield',
+  announcements: 'CogIcon'
 };
 
 // Default new permission structure
