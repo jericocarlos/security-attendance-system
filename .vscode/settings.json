@@ -1,0 +1,14 @@
+{
+  "css.validate": true,
+  "css.lint.unknownAtRules": "ignore",
+  "css.customData": [
+    ".vscode/tailwind-css-data.json"
+  ],
+  "tailwindCSS.experimental.classRegex": [],
+  "tailwindCSS.includeLanguages": {
+    "javascript": "javascript",
+    "javascriptreact": "javascriptreact",
+    "typescript": "typescript",
+    "typescriptreact": "typescriptreact"
+  }
+}
