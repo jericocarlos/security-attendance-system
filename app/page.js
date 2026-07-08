@@ -127,7 +127,6 @@ export default function Home() {
         )}
       </div>
 
-
       <div className="fixed bottom-0 left-0 z-30 w-full">
         <motion.div
           className="w-full overflow-hidden border-y border-cyan-400/40 bg-cyan-950/90 py-3 shadow-lg shadow-cyan-950/30 backdrop-blur-md"
@@ -148,7 +147,7 @@ export default function Home() {
         <div className="w-full bg-black/50 backdrop-blur-md">
           <div className="container mx-auto relative flex justify-between items-center px-8">
             {/* Title on the left */}
-            <div className="text-2xl font-bold">Attendance-Based Meal System</div>
+            <div className="text-2xl font-bold">Security Attendance System</div>
             
             {/* Spinner absolutely centered */}
             {loading && (
