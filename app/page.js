@@ -37,7 +37,7 @@ export default function Home() {
           if (data.data && data.data.length > 0) {
             const announcement = data.data[0];
             // Combine title and announcement text for display
-            const fullMessage = `${announcement.announcement}`;
+            const fullMessage = `${announcement.announcement1}`;
             setAnnouncementMessage(fullMessage);
           }
         }
@@ -85,33 +85,35 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        {/* Employee data display */}
-        <AnimatePresence>
-          {employeeInfo && (
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center"
-              initial="hidden"
-              animate="visible"
-              exit={{ opacity: 0, y: 20 }}
-              variants={ANIMATIONS.fadeIn}
-            >
-              {/* Left side - Employee Info */}
+        {/* Employee data display and right-side advertisement */}
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-3 gap-16 items-start"
+          initial="hidden"
+          animate="visible"
+          exit={{ opacity: 0, y: 20 }}
+          variants={ANIMATIONS.fadeIn}
+        >
+          {/* Left side - Employee Info */}
+          <div className="md:fixed md:top-65 left-8 w-[850px] md:self-start">
+            {employeeInfo && (
               <EmployeeCard 
                 employeeInfo={employeeInfo} 
                 attendanceLog={attendanceLog}
                 employeeStatus={employeeStatus} 
               />
-              
-              {/* Right side - Photo and status */}
+            )}
+          </div>
+          
+          {/* Middle side - Photo and status */}
+          <div className="md:fixed md:top-65 md:left-1/2 md:transform md:-translate-x-1/2 md:self-start">
+            {employeeInfo && (
               <EmployeePhoto 
                 employeeInfo={employeeInfo}
                 employeeStatus={employeeStatus} 
               />
-              
-            </motion.div>
-            
-          )}
-        </AnimatePresence>
+            )}
+          </div>
+        </motion.div>
 
         {/* Error display */}
         <AnimatePresence>
@@ -127,8 +129,23 @@ export default function Home() {
         )}
       </div>
 
+      {/* Fixed top-right advertisement panel */}
+      <div className="hidden md:flex fixed top-8 right-8 z-20 ml-auto h-[1080px] w-[785px] flex-col rounded-3xl border border-cyan-400/30 bg-white/5 p-6 shadow-xl shadow-cyan-950/30 backdrop-blur-md">
+        <div className="mb-4 text-sm uppercase tracking-[0.3em] text-cyan-200 opacity-80">Advertisement</div>
+        <div className="space-y-4">
+          <div className="rounded-2xl bg-cyan-950/70 p-5 text-white shadow-inner shadow-cyan-950/20">
+            <h3 className="text-2xl font-semibold text-cyan-100">Welcome to EastWest BPO</h3>
+            <p className="mt-2 text-sm leading-6 text-cyan-200">Stay informed with the latest news, training updates, safety reminders, and company highlights while you clock in.</p>
+          </div>
+          <div className="rounded-2xl bg-black/60 p-5 text-cyan-100">
+            <p className="text-lg font-medium">Tip of the day</p>
+            <p className="mt-2 text-sm leading-6 text-cyan-200">Always keep your ID card visible and ready. This helps ensure a faster, smoother check-in experience.</p>
+          </div>
+        </div>
+      </div>
+
       <div className="fixed bottom-0 left-0 z-30 w-full">
-        <motion.div
+        {/* <motion.div
           className="w-full overflow-hidden border-y border-cyan-400/40 bg-cyan-950/90 py-3 shadow-lg shadow-cyan-950/30 backdrop-blur-md"
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -141,10 +158,10 @@ export default function Home() {
             <span className="px-10" aria-hidden="true">{announcementMessage}</span>
             <span className="px-10" aria-hidden="true">{announcementMessage}</span>
           </div>
-        </motion.div>
+        </motion.div> */}
 
         {/* Company branding footer */}
-        <div className="w-full bg-black/50 backdrop-blur-md">
+        <div className="w-full border-t border-cyan-400/40 bg-black/50 backdrop-blur-md">
           <div className="container mx-auto relative flex justify-between items-center px-8">
             {/* Title on the left */}
             <div className="text-2xl font-bold">Security Attendance System</div>

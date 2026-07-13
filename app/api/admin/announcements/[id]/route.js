@@ -23,7 +23,7 @@ export async function PUT(req, context) {
     }
 
     if (typeof announcement !== 'undefined') {
-      updateFields.push("announcement = ?");
+      updateFields.push("announcement1 = ?");
       values.push(announcement ?? null);
     }
 
