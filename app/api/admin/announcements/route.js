@@ -15,7 +15,7 @@ export async function GET(req) {
     const values = [];
 
     if (search) {
-      whereParts.push("(title LIKE ? OR announcement LIKE ?)");
+      whereParts.push("(title LIKE ? OR announcement1 LIKE ?)");
       values.push(`%${search}%`, `%${search}%`);
     }
 
@@ -27,7 +27,7 @@ export async function GET(req) {
     const whereClause = whereParts.length > 0 ? `WHERE ${whereParts.join(" AND ")}` : "";
 
     const query = `
-      SELECT id, title, announcement, status
+      SELECT id, title, announcement1, status
       FROM announcement
       ${whereClause}
       ORDER BY id DESC
@@ -71,7 +71,7 @@ export async function POST(req) {
     const { title, announcement } = body;
 
     const insertQuery = `
-      INSERT INTO announcement (title, announcement, status)
+      INSERT INTO announcement (title, announcement1, status)
       VALUES (?, ?, ?)
     `;
 
