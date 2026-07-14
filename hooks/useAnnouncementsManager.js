@@ -131,17 +131,24 @@ export const useAnnouncementsManager = () => {
         ? `/api/admin/announcements/${currentAnnouncement.id}`
         : '/api/admin/announcements';
 
-      const apiData = {
-        ...formData,
-      };
+      let response;
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(apiData),
-      });
+      // If caller provided a FormData object (file upload), send as multipart
+      if (typeof FormData !== 'undefined' && formData instanceof FormData) {
+        response = await fetch(url, {
+          method,
+          body: formData,
+        });
+      } else {
+        const apiData = { ...formData };
+        response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(apiData),
+        });
+      }
 
       if (!response.ok) {
         const errorData = await response.json();

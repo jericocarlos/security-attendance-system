@@ -3,7 +3,7 @@
  * Handles the basic announcement information form fields
  */
 
-import React, { memo } from 'react';
+import React, { memo, useState, useRef } from 'react';
 import { Controller } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -32,6 +32,9 @@ const AnnouncementDetailsTab = memo(({
   isEditing = false,
   loadingOptions = false
 }) => {
+  const [attachmentPreviews, setAttachmentPreviews] = useState([]);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const attachmentInputRef = useRef(null);
   return (
     <div className="space-y-6" role="tabpanel" aria-labelledby="details-tab">
       {/* Basic Information Section */}
@@ -77,10 +80,10 @@ const AnnouncementDetailsTab = memo(({
         <legend className="sr-only">Announcement Information</legend>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Announcement */}
+          {/* Announcement text OR file upload */}
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="announcement" className="text-sm font-medium">
-              Announcement <span className="text-destructive" aria-label="required">*</span>
+              Announcement (text)
             </Label>
             <Input
               id="announcement"
@@ -89,7 +92,7 @@ const AnnouncementDetailsTab = memo(({
               aria-describedby={errors.announcement ? 'announcement-error' : undefined}
               aria-invalid={!!errors.announcement}
               {...register('announcement', { 
-                required: 'Announcement is required',
+                required: false,
                 minLength: {
                   value: 2,
                   message: 'Announcement must be at least 2 characters long'
@@ -109,6 +112,119 @@ const AnnouncementDetailsTab = memo(({
                 {errors.announcement.message}
               </p>
             )}
+
+            {/* File / Image upload (optional) */}
+            <div className="mt-4">
+              <Label htmlFor="attachment" className="text-sm font-medium">Upload file or image {isEditing ? '(optional)' : '(required)'}</Label>
+              <Controller
+                name="attachment"
+                control={control}
+                rules={{
+                  validate: (value) => {
+                    // value is a FileList when selected; allow when editing
+                    if (isEditing) return true;
+                    if (!value) return 'Attachment is required';
+                    if ((value instanceof FileList && value.length > 0) || (Array.isArray(value) && value.length > 0)) return true;
+                    return 'Attachment is required';
+                  }
+                }}
+                render={({ field }) => {
+                  const handleChange = (e) => {
+                    const filesList = e.target.files;
+                    const files = Array.from(filesList || []);
+                    field.onChange(files);
+                    setSelectedFiles(files);
+
+                    // revoke previous previews
+                    attachmentPreviews.forEach((p) => {
+                      try { URL.revokeObjectURL(p.url); } catch (err) {}
+                    });
+
+                    const previews = files.map((f) => {
+                      return {
+                        name: f.name,
+                        type: f.type,
+                        url: f.type && f.type.startsWith('image/') ? URL.createObjectURL(f) : null,
+                      };
+                    });
+                    setAttachmentPreviews(previews);
+                  };
+
+                  const removeFileAt = (index) => {
+                    const newFiles = selectedFiles.slice();
+                    const removed = newFiles.splice(index, 1);
+                    // revoke preview for removed
+                    const removedPreview = attachmentPreviews[index];
+                    if (removedPreview && removedPreview.url) {
+                      try { URL.revokeObjectURL(removedPreview.url); } catch (e) {}
+                    }
+                    setSelectedFiles(newFiles);
+                    setAttachmentPreviews(attachmentPreviews.filter((_, i) => i !== index));
+                    field.onChange(newFiles);
+
+                    // also update the underlying input value by creating a DataTransfer
+                    if (attachmentInputRef.current) {
+                      const dt = new DataTransfer();
+                      newFiles.forEach((f) => dt.items.add(f));
+                      attachmentInputRef.current.files = dt.files;
+                    }
+                  };
+
+                  const removeAll = () => {
+                    // revoke previews
+                    attachmentPreviews.forEach((p) => { try { if (p.url) URL.revokeObjectURL(p.url); } catch (e) {} });
+                    setSelectedFiles([]);
+                    setAttachmentPreviews([]);
+                    field.onChange(null);
+                    if (attachmentInputRef.current) attachmentInputRef.current.value = '';
+                  };
+
+                  return (
+                    <div className="mt-2">
+                      <input
+                        id="attachment"
+                        ref={(e) => {
+                          attachmentInputRef.current = e;
+                          if (typeof field.ref === 'function') field.ref(e);
+                        }}
+                        type="file"
+                        multiple
+                        accept="image/*,application/pdf"
+                        onChange={handleChange}
+                        className="mt-1"
+                      />
+
+                      {errors.attachment && (
+                        <p id="attachment-error" className="text-sm text-destructive mt-2" role="alert">
+                          {errors.attachment.message}
+                        </p>
+                      )}
+
+                      {attachmentPreviews.length > 0 && (
+                        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {attachmentPreviews.map((p, idx) => (
+                            <div key={`${p.name}-${idx}`} className="flex items-center gap-3">
+                              {p.url ? (
+                                <img src={p.url} alt={p.name} className="h-24 w-24 object-cover rounded" />
+                              ) : (
+                                <div className="h-24 w-24 flex items-center justify-center rounded bg-muted text-sm px-2">{p.name}</div>
+                              )}
+                              <div>
+                                <div className="text-sm">{p.name}</div>
+                                <button type="button" onClick={() => removeFileAt(idx)} className="text-sm text-cyan-300 underline mt-2">Remove</button>
+                              </div>
+                            </div>
+                          ))}
+                          <div className="col-span-full">
+                            <button type="button" onClick={removeAll} className="text-sm text-destructive underline">Remove all</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }}
+              />
+            </div>
           </div>
         </div>
       </fieldset>

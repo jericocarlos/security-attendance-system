@@ -23,6 +23,7 @@ export const useAnnouncementForm = (announcement, open, onSubmit) => {
     defaultValues: {
       title: '',
       announcement: '',
+      attachment: null,
       status: 'enabled',
     },
   });
@@ -74,14 +75,36 @@ export const useAnnouncementForm = (announcement, open, onSubmit) => {
       setSubmissionError(null);
 
       // Process form data
-      const processedData = {
-        ...data,
-      };
+      let processedData = null;
+
+      // If an attachment (FileList) is present, build FormData for multipart upload
+      if (data.attachment && (data.attachment instanceof FileList || Array.isArray(data.attachment))) {
+        const fd = new FormData();
+        // append primitive fields
+        fd.append('title', data.title || '');
+        fd.append('announcement', data.announcement || '');
+        fd.append('status', data.status || 'enabled');
+
+        // append all files
+        const files = Array.from(data.attachment || []);
+        files.forEach((file) => {
+          if (file) fd.append('attachment', file, file.name);
+        });
+
+        processedData = fd;
+      } else if (data.attachment && data.attachment instanceof File) {
+        const fd = new FormData();
+        fd.append('title', data.title || '');
+        fd.append('announcement', data.announcement || '');
+        fd.append('status', data.status || 'enabled');
+        fd.append('attachment', data.attachment, data.attachment.name);
+        processedData = fd;
+      } else {
+        processedData = { ...data };
+      }
 
       // Submit form
-      const result = await onSubmit(
-        processedData
-      );
+      const result = await onSubmit(processedData);
 
       // Reset form on successful submission
       if (result !== false) {
