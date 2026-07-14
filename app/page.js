@@ -25,7 +25,31 @@ export default function Home() {
   } = useAttendance();
 
   const [announcementMessage, setAnnouncementMessage] = useState('Welcome! Announcements will appear here.');
+  const [activeSlide, setActiveSlide] = useState(0);
   const { ToastContainer, success, error: toastError } = useToast();
+
+  const carouselSlides = [
+    {
+      title: 'Welcome to EastWest BPO',
+      body: 'Stay informed with the latest news, training updates, safety reminders, and company highlights while you clock in.'
+    },
+    {
+      title: 'Tip of the day',
+      body: 'Always keep your ID card visible and ready. This helps ensure a faster, smoother check-in experience.'
+    },
+    {
+      title: 'Latest update',
+      body: announcementMessage
+    }
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % carouselSlides.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [carouselSlides.length]);
 
   // Fetch announcement message from database
   useEffect(() => {
@@ -131,17 +155,53 @@ export default function Home() {
 
       {/* Fixed top-right advertisement panel */}
       <div className="hidden md:flex fixed top-8 right-8 z-20 ml-auto h-[1080px] w-[785px] flex-col rounded-3xl border border-cyan-400/30 bg-white/5 p-6 shadow-xl shadow-cyan-950/30 backdrop-blur-md">
-        <div className="mb-4 text-sm uppercase tracking-[0.3em] text-cyan-200 opacity-80">Advertisement</div>
-        <div className="space-y-4">
-          <div className="rounded-2xl bg-cyan-950/70 p-5 text-white shadow-inner shadow-cyan-950/20">
-            <h3 className="text-2xl font-semibold text-cyan-100">Welcome to EastWest BPO</h3>
-            <p className="mt-2 text-sm leading-6 text-cyan-200">Stay informed with the latest news, training updates, safety reminders, and company highlights while you clock in.</p>
-          </div>
-          <div className="rounded-2xl bg-black/60 p-5 text-cyan-100">
-            <p className="text-lg font-medium">Tip of the day</p>
-            <p className="mt-2 text-sm leading-6 text-cyan-200">Always keep your ID card visible and ready. This helps ensure a faster, smoother check-in experience.</p>
+        <div className="mb-4 flex items-center justify-between text-sm uppercase tracking-[0.3em] text-cyan-200 opacity-80">
+          <span>Announcement</span>
+          <div className="flex gap-2">
+            {carouselSlides.map((_, index) => (
+              <button
+                key={index}
+                type="button"
+                aria-label={`Go to slide ${index + 1}`}
+                onClick={() => setActiveSlide(index)}
+                className={`h-2.5 w-2.5 rounded-full transition ${activeSlide === index ? 'bg-cyan-300' : 'bg-cyan-100/40'}`}
+              />
+            ))}
           </div>
         </div>
+
+        <div className="flex-1">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={carouselSlides[activeSlide].title}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.4 }}
+              className="h-full rounded-2xl bg-cyan-950/70 p-5 text-white shadow-inner shadow-cyan-950/20"
+            >
+              <h3 className="text-2xl font-semibold text-cyan-100">{carouselSlides[activeSlide].title}</h3>
+              <p className="mt-2 text-sm leading-6 text-cyan-200">{carouselSlides[activeSlide].body}</p>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* <div className="mt-4 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setActiveSlide((prev) => (prev - 1 + carouselSlides.length) % carouselSlides.length)}
+            className="rounded-full border border-cyan-400/30 px-3 py-1 text-sm text-cyan-100 transition hover:bg-cyan-400/10"
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveSlide((prev) => (prev + 1) % carouselSlides.length)}
+            className="rounded-full border border-cyan-400/30 px-3 py-1 text-sm text-cyan-100 transition hover:bg-cyan-400/10"
+          >
+            Next
+          </button>
+        </div> */}
       </div>
 
       <div className="fixed bottom-0 left-0 z-30 w-full">

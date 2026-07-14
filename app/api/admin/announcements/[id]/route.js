@@ -1,17 +1,50 @@
 import { executeQuery } from "@/lib/db";
 import { NextResponse } from "next/server";
+import fs from 'fs';
+import path from 'path';
 
 // PUT: Update an Existing Announcement
 export async function PUT(req, context) {
   try {
     const { id } = context.params;
-    const body = await req.json();
+    let title;
+    let announcement;
+    let status;
+    let attachmentFilename = null;
 
-    const {
-      title,
-      announcement,
-      status
-    } = body;
+    const contentType = req.headers.get('content-type') || '';
+
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await req.formData();
+      title = formData.get('title');
+      announcement = formData.get('announcement');
+      status = formData.get('status');
+
+      const files = formData.getAll('attachment') || [];
+      if (files && files.length > 0) {
+        const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'announcements');
+        await fs.promises.mkdir(uploadsDir, { recursive: true });
+
+        const paths = [];
+        for (const file of files) {
+          if (file && typeof file.arrayBuffer === 'function') {
+            const buf = Buffer.from(await file.arrayBuffer());
+            const safeName = `${Date.now()}-${String(file.name || 'upload').replace(/\s+/g,'_')}`;
+            const outPath = path.join(uploadsDir, safeName);
+            await fs.promises.writeFile(outPath, buf);
+            paths.push(`/uploads/announcements/${safeName}`);
+          }
+        }
+        if (paths.length > 0) {
+          attachmentFilename = JSON.stringify(paths);
+        }
+      }
+    } else {
+      const body = await req.json();
+      title = body.title;
+      announcement = body.announcement;
+      status = body.status;
+    }
 
     const updateFields = [];
     const values = [];
@@ -30,6 +63,12 @@ export async function PUT(req, context) {
     if (typeof status !== 'undefined') {
       updateFields.push("status = ?");
       values.push(status ?? null);
+    }
+
+    // handle attachment if present
+    if (typeof attachmentFilename !== 'undefined' && attachmentFilename !== null) {
+      updateFields.push("attachment = ?");
+      values.push(attachmentFilename);
     }
 
     if (updateFields.length === 0) {

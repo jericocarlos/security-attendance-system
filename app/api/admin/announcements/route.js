@@ -1,5 +1,7 @@
 import { executeQuery } from "@/lib/db";
 import { NextResponse } from "next/server";
+import fs from 'fs';
+import path from 'path';
 
 // GET: Fetch Announcements with Search, Filters, and Pagination
 export async function GET(req) {
@@ -67,12 +69,52 @@ export async function GET(req) {
 // POST: Add a New Announcement
 export async function POST(req) {
   try {
-    const body = await req.json();
-    const { title, announcement } = body;
+    let title = '';
+    let announcement = '';
+    let attachmentFilename = null;
+
+    const contentType = req.headers.get('content-type') || '';
+
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await req.formData();
+      title = formData.get('title') || '';
+      announcement = formData.get('announcement') || '';
+
+      const files = formData.getAll('attachment') || [];
+      if (files && files.length > 0) {
+        const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'announcements');
+        await fs.promises.mkdir(uploadsDir, { recursive: true });
+
+        const paths = [];
+        for (const file of files) {
+          if (file && typeof file.arrayBuffer === 'function') {
+            const buf = Buffer.from(await file.arrayBuffer());
+            const safeName = `${Date.now()}-${String(file.name || 'upload').replace(/\s+/g,'_')}`;
+            const outPath = path.join(uploadsDir, safeName);
+            await fs.promises.writeFile(outPath, buf);
+            paths.push(`/uploads/announcements/${safeName}`);
+          }
+        }
+        if (paths.length > 0) {
+          attachmentFilename = JSON.stringify(paths);
+        }
+      }
+    } else {
+      const body = await req.json();
+      title = body.title || '';
+      announcement = body.announcement || '';
+    }
+
+    // Ensure attachment column exists (best-effort)
+    try {
+      await executeQuery({ query: "ALTER TABLE announcement ADD COLUMN attachment TEXT DEFAULT NULL" });
+    } catch (e) {
+      // ignore if column already exists or other errors
+    }
 
     const insertQuery = `
-      INSERT INTO announcement (title, announcement1, status)
-      VALUES (?, ?, ?)
+      INSERT INTO announcement (title, announcement1, status, attachment)
+      VALUES (?, ?, ?, ?)
     `;
 
     const result = await executeQuery({
@@ -80,7 +122,8 @@ export async function POST(req) {
       values: [
         title,
         announcement,
-        "enabled"
+        "enabled",
+        attachmentFilename
       ]
     });
 
