@@ -32,7 +32,7 @@ export async function GET(req) {
       SELECT id, title, announcement1 AS announcement, status, attachment
       FROM announcement
       ${whereClause}
-      ORDER BY id DESC
+      ORDER BY title ASC
       LIMIT ? OFFSET ?
     `;
 

@@ -115,7 +115,7 @@ const AnnouncementFormDialog = memo(({
           <DialogDescription id="intern-form-description" className="text-base">
             {isEditing 
               ? 'Update the announcement information below. Changes will be saved immediately.'
-              : 'Fill in the announcement details below. All required fields must be completed.'
+              : 'Fill in the announcement details below. Add a title and announcement, and optionally attach a file or image.'
             }
           </DialogDescription>
 
