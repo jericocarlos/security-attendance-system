@@ -115,18 +115,12 @@ const AnnouncementDetailsTab = memo(({
 
             {/* File / Image upload (optional) */}
             <div className="mt-4">
-              <Label htmlFor="attachment" className="text-sm font-medium">Upload file or image {isEditing ? '(optional)' : '(required)'}</Label>
+              <Label htmlFor="attachment" className="text-sm font-medium">Upload file or image (optional)</Label>
               <Controller
                 name="attachment"
                 control={control}
                 rules={{
-                  validate: (value) => {
-                    // value is a FileList when selected; allow when editing
-                    if (isEditing) return true;
-                    if (!value) return 'Attachment is required';
-                    if ((value instanceof FileList && value.length > 0) || (Array.isArray(value) && value.length > 0)) return true;
-                    return 'Attachment is required';
-                  }
+                  validate: () => true
                 }}
                 render={({ field }) => {
                   const handleChange = (e) => {

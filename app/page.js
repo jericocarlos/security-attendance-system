@@ -38,11 +38,11 @@ export default function Home() {
       title: 'Tip of the day',
       body: 'Always keep your ID card visible and ready. This helps ensure a faster, smoother check-in experience.'
     },
-    {
-      title: 'Latest update',
-      body: announcementMessage,
-      isImageOnly: false
-    },
+    // {
+    //   title: 'Shuttle Route Schedule',
+    //   body: announcementMessage,
+    //   isImageOnly: false
+    // },
     ...announcementImages.map(img => ({
       title: img.title || 'Announcement',
       body: null,
@@ -82,10 +82,14 @@ export default function Home() {
                 try {
                   const attachments = JSON.parse(announcement.attachment);
                   if (Array.isArray(attachments) && attachments.length > 0) {
-                    // Get the first image that ends with image extensions
-                    const imagePath = attachments.find(path => 
+                    const sortedAttachments = [...attachments].sort((a, b) =>
+                      String(a).localeCompare(String(b))
+                    );
+
+                    // Get the first image that ends with image extensions in ascending order
+                    const imagePath = sortedAttachments.find(path => 
                       /\.(jpg|jpeg|png|gif|webp)$/i.test(path)
-                    ) || attachments[0];
+                    ) || sortedAttachments[0];
                     
                     if (imagePath) {
                       imageSlides.push({
@@ -99,8 +103,12 @@ export default function Home() {
                 }
               }
             }
+
+            const sortedImageSlides = [...imageSlides].sort((a, b) =>
+              String(a.imagePath).localeCompare(String(b.imagePath))
+            );
             
-            setAnnouncementImages(imageSlides);
+            setAnnouncementImages(sortedImageSlides);
           }
         }
       } catch (err) {
