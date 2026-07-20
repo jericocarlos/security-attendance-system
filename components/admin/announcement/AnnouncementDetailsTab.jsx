@@ -210,7 +210,7 @@ const AnnouncementDetailsTab = memo(({
                             </div>
                           ))}
                           <div className="col-span-full">
-                            <button type="button" onClick={removeAll} className="text-sm text-destructive underline">Remove all</button>
+                            {/* <button type="button" onClick={removeAll} className="text-sm text-destructive underline">Remove all</button> */}
                           </div>
                         </div>
                       )}
