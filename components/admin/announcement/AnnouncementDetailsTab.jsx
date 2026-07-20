@@ -164,14 +164,14 @@ const AnnouncementDetailsTab = memo(({
                     }
                   };
 
-                  const removeAll = () => {
-                    // revoke previews
-                    attachmentPreviews.forEach((p) => { try { if (p.url) URL.revokeObjectURL(p.url); } catch (e) {} });
-                    setSelectedFiles([]);
-                    setAttachmentPreviews([]);
-                    field.onChange(null);
-                    if (attachmentInputRef.current) attachmentInputRef.current.value = '';
-                  };
+                  // const removeAll = () => {
+                  //   // revoke previews
+                  //   attachmentPreviews.forEach((p) => { try { if (p.url) URL.revokeObjectURL(p.url); } catch (e) {} });
+                  //   setSelectedFiles([]);
+                  //   setAttachmentPreviews([]);
+                  //   field.onChange(null);
+                  //   if (attachmentInputRef.current) attachmentInputRef.current.value = '';
+                  // };
 
                   return (
                     <div className="mt-2">
