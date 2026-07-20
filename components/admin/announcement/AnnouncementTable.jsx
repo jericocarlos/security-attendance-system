@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   useReactTable,
   getCoreRowModel,
@@ -48,19 +49,56 @@ export default function AnnouncementTable({
     {
       header: "Title",
       accessorKey: "title",
-      cell: ({ getValue }) => <span className="font-medium">{getValue()}</span>,
+      cell: ({ getValue }) => {
+        const value = getValue();
+        return <span className="font-medium">{typeof value === 'string' ? value : String(value)}</span>;
+      },
     },
     {
       header: "Announcement",
       accessorKey: "announcement",
-      cell: ({ getValue }) => (
-        <div className="truncate max-w-xl">{getValue()}</div>
-      ),
+      cell: ({ getValue }) => {
+        const value = getValue();
+        const displayValue = typeof value === 'string' ? value : (value ? String(value) : '');
+        return <div className="truncate max-w-xl">{displayValue}</div>;
+      },
     },
     {
       header: "Status",
       accessorKey: "status",
-      cell: ({ getValue }) => <Badge>{getValue()}</Badge>,
+      cell: ({ getValue }) => {
+        const value = getValue();
+        return <Badge>{typeof value === 'string' ? value : String(value)}</Badge>;
+      },
+    },
+    {
+      header: "Attachment",
+      accessorKey: "attachment",
+      cell: ({ getValue }) => {
+        const attachment = getValue();
+        if (!attachment) return <span className="text-gray-500">No attachment</span>;
+        
+        try {
+          const attachments = typeof attachment === 'string' ? JSON.parse(attachment) : attachment;
+          if (Array.isArray(attachments) && attachments.length > 0) {
+            const firstImage = attachments.find(path => /\.(jpg|jpeg|png|gif|webp)$/i.test(path)) || attachments[0];
+            return (
+              <div className="relative w-16 h-16 rounded border border-gray-300 overflow-hidden">
+                <Image 
+                  src={firstImage} 
+                  alt="Attachment" 
+                  fill
+                  className="object-cover"
+                  sizes="64px"
+                />
+              </div>
+            );
+          }
+        } catch (err) {
+          console.error('Failed to parse attachment:', err);
+        }
+        return <span className="text-gray-500">Invalid attachment</span>;
+      },
     },
     {
       header: "Actions",

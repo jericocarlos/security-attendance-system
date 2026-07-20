@@ -29,7 +29,7 @@ export async function GET(req) {
     const whereClause = whereParts.length > 0 ? `WHERE ${whereParts.join(" AND ")}` : "";
 
     const query = `
-      SELECT id, title, announcement1, status
+      SELECT id, title, announcement1 AS announcement, status, attachment
       FROM announcement
       ${whereClause}
       ORDER BY id DESC

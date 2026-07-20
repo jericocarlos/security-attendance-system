@@ -25,6 +25,7 @@ export default function Home() {
   } = useAttendance();
 
   const [announcementMessage, setAnnouncementMessage] = useState('Welcome! Announcements will appear here.');
+  const [announcementImages, setAnnouncementImages] = useState([]);
   const [activeSlide, setActiveSlide] = useState(0);
   const { ToastContainer, success, error: toastError } = useToast();
 
@@ -39,8 +40,15 @@ export default function Home() {
     },
     {
       title: 'Latest update',
-      body: announcementMessage
-    }
+      body: announcementMessage,
+      isImageOnly: false
+    },
+    ...announcementImages.map(img => ({
+      title: img.title || 'Announcement',
+      body: null,
+      isImageOnly: true,
+      imagePath: img.imagePath
+    }))
   ];
 
   useEffect(() => {
@@ -55,14 +63,44 @@ export default function Home() {
   useEffect(() => {
     const fetchAnnouncement = async () => {
       try {
-        const response = await fetch('/api/admin/announcements?limit=1&status=enabled');
+        // Fetch all announcements with enabled status
+        const response = await fetch('/api/admin/announcements?status=enabled&limit=100');
         if (response.ok) {
           const data = await response.json();
           if (data.data && data.data.length > 0) {
-            const announcement = data.data[0];
-            // Combine title and announcement text for display
-            const fullMessage = `${announcement.announcement1}`;
+            const firstAnnouncement = data.data[0];
+            
+            // Get first announcement text for text slide
+            const text = firstAnnouncement.announcement || firstAnnouncement.announcement1 || '';
+            const fullMessage = typeof text === 'string' ? text.trim() : 'No announcement text';
             setAnnouncementMessage(fullMessage);
+            
+            // Parse all announcements with images
+            const imageSlides = [];
+            for (const announcement of data.data) {
+              if (announcement.attachment) {
+                try {
+                  const attachments = JSON.parse(announcement.attachment);
+                  if (Array.isArray(attachments) && attachments.length > 0) {
+                    // Get the first image that ends with image extensions
+                    const imagePath = attachments.find(path => 
+                      /\.(jpg|jpeg|png|gif|webp)$/i.test(path)
+                    ) || attachments[0];
+                    
+                    if (imagePath) {
+                      imageSlides.push({
+                        title: announcement.title || 'Announcement',
+                        imagePath: imagePath
+                      });
+                    }
+                  }
+                } catch (parseErr) {
+                  console.error('Failed to parse attachment:', parseErr);
+                }
+              }
+            }
+            
+            setAnnouncementImages(imageSlides);
           }
         }
       } catch (err) {
@@ -173,15 +211,40 @@ export default function Home() {
         <div className="flex-1">
           <AnimatePresence mode="wait">
             <motion.div
-              key={carouselSlides[activeSlide].title}
+              key={`${carouselSlides[activeSlide].title}-${activeSlide}`}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.4 }}
-              className="h-full rounded-2xl bg-cyan-950/70 p-5 text-white shadow-inner shadow-cyan-950/20"
+              className="h-full rounded-2xl bg-cyan-950/70 p-5 text-white shadow-inner shadow-cyan-950/20 flex flex-col"
             >
-              <h3 className="text-2xl font-semibold text-cyan-100">{carouselSlides[activeSlide].title}</h3>
-              <p className="mt-2 text-sm leading-6 text-cyan-200">{carouselSlides[activeSlide].body}</p>
+              <h3 className="text-2xl font-semibold text-cyan-100">
+                {typeof carouselSlides[activeSlide].title === 'string' 
+                  ? carouselSlides[activeSlide].title 
+                  : String(carouselSlides[activeSlide].title || '')}
+              </h3>
+              
+              {/* Display image for image-only slide */}
+              {carouselSlides[activeSlide].isImageOnly && carouselSlides[activeSlide].imagePath && (
+                <div className="flex-1 relative w-full rounded-lg overflow-hidden my-3">
+                  <Image 
+                    src={carouselSlides[activeSlide].imagePath} 
+                    alt="Announcement" 
+                    fill
+                    className="object-contain"
+                    priority
+                  />
+                </div>
+              )}
+              
+              {/* Display text for text-only announcements */}
+              {carouselSlides[activeSlide].body && (
+                <p className="mt-2 text-sm leading-6 text-cyan-200">
+                  {typeof carouselSlides[activeSlide].body === 'string' 
+                    ? carouselSlides[activeSlide].body 
+                    : String(carouselSlides[activeSlide].body || '')}
+                </p>
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
