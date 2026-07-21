@@ -235,13 +235,10 @@ export default function Home() {
               {/* Display image for image-only slide */}
               {carouselSlides[activeSlide].isImageOnly && carouselSlides[activeSlide].imagePath && (
                 <div className="flex-1 relative w-full rounded-lg overflow-hidden my-3">
-                  <Image 
+                  <img 
                     src={carouselSlides[activeSlide].imagePath} 
                     alt="Announcement" 
-                    fill
-                    className="object-contain"
-                    priority
-                    unoptimized
+                    className="w-full h-full object-contain"
                   />
                 </div>
               )}

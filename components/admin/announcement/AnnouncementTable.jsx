@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import {
   useReactTable,
   getCoreRowModel,
@@ -84,13 +83,10 @@ export default function AnnouncementTable({
             const firstImage = attachments.find(path => /\.(jpg|jpeg|png|gif|webp)$/i.test(path)) || attachments[0];
             return (
               <div className="relative w-16 h-16 rounded border border-gray-300 overflow-hidden">
-                <Image 
+                <img 
                   src={firstImage} 
                   alt="Attachment" 
-                  fill
-                  className="object-cover"
-                  sizes="64px"
-                  unoptimized
+                  className="w-full h-full object-cover"
                 />
               </div>
             );
