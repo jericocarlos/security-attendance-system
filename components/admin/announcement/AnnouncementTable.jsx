@@ -90,6 +90,7 @@ export default function AnnouncementTable({
                   fill
                   className="object-cover"
                   sizes="64px"
+                  unoptimized
                 />
               </div>
             );
