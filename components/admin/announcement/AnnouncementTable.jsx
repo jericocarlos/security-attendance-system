@@ -78,18 +78,41 @@ export default function AnnouncementTable({
         if (!attachment) return <span className="text-gray-500">No attachment</span>;
         
         try {
-          const attachments = typeof attachment === 'string' ? JSON.parse(attachment) : attachment;
+          let attachments = [];
+          if (typeof attachment === 'string') {
+            try {
+              const parsed = JSON.parse(attachment);
+              attachments = Array.isArray(parsed) ? parsed : [parsed];
+            } catch (pErr) {
+              attachments = [attachment];
+            }
+          } else if (Array.isArray(attachment)) {
+            attachments = attachment;
+          }
+
           if (Array.isArray(attachments) && attachments.length > 0) {
-            const firstImage = attachments.find(path => /\.(jpg|jpeg|png|gif|webp)$/i.test(path)) || attachments[0];
-            return (
-              <div className="relative w-16 h-16 rounded border border-gray-300 overflow-hidden">
-                <img 
-                  src={firstImage} 
-                  alt="Attachment" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            );
+            const firstImage = attachments.find(path => typeof path === 'string' && /\.(jpg|jpeg|png|gif|webp)$/i.test(path)) || attachments[0];
+            if (firstImage) {
+              return (
+                <div className="relative w-16 h-16 rounded border border-gray-300 overflow-hidden bg-gray-50 flex items-center justify-center">
+                  <img 
+                    src={firstImage} 
+                    alt="Attachment" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.style.display = 'none';
+                      if (e.currentTarget.nextSibling) {
+                        e.currentTarget.nextSibling.style.display = 'flex';
+                      }
+                    }}
+                  />
+                  <span className="hidden text-[10px] text-gray-400 text-center px-1">
+                    Failed to load
+                  </span>
+                </div>
+              );
+            }
           }
         } catch (err) {
           console.error('Failed to parse attachment:', err);
