@@ -40,7 +40,7 @@ const AnnouncementDetailsTab = memo(({
       {/* Basic Information Section */}
       <fieldset className="space-y-4">
         <legend className="sr-only">Basic Title Information</legend>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Title */}
           <div className="space-y-2">
@@ -54,17 +54,17 @@ const AnnouncementDetailsTab = memo(({
               disabled={isEditing}
               aria-describedby={errors.title ? 'ashima_id-error' : undefined}
               aria-invalid={!!errors.title}
-              {...register('title', { 
+              {...register('title', {
                 required: 'Title is required',
                 pattern: {
-                  value: /^[A-Za-z0-9\- _]+$/,
+                  value: /^[A-Za-z0-9\-() _]+$/,
                   message: 'Title can only contain letters, numbers, spaces, hyphens, and underscores'
                 }
               })}
             />
             {errors.title && (
-              <p 
-                id="title-error" 
+              <p
+                id="title-error"
                 className="text-sm text-destructive"
                 role="alert"
               >
@@ -78,7 +78,7 @@ const AnnouncementDetailsTab = memo(({
       {/* Announcement Section */}
       <fieldset className="space-y-4">
         <legend className="sr-only">Announcement Information</legend>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Announcement text OR file upload */}
           <div className="space-y-2 sm:col-span-2">
@@ -91,7 +91,7 @@ const AnnouncementDetailsTab = memo(({
               autoComplete="announcement"
               aria-describedby={errors.announcement ? 'announcement-error' : undefined}
               aria-invalid={!!errors.announcement}
-              {...register('announcement', { 
+              {...register('announcement', {
                 required: false,
                 minLength: {
                   value: 2,
@@ -104,8 +104,8 @@ const AnnouncementDetailsTab = memo(({
               })}
             />
             {errors.announcement && (
-              <p 
-                id="announcement-error" 
+              <p
+                id="announcement-error"
                 className="text-sm text-destructive"
                 role="alert"
               >
@@ -131,7 +131,7 @@ const AnnouncementDetailsTab = memo(({
 
                     // revoke previous previews
                     attachmentPreviews.forEach((p) => {
-                      try { URL.revokeObjectURL(p.url); } catch (err) {}
+                      try { URL.revokeObjectURL(p.url); } catch (err) { }
                     });
 
                     const previews = files.map((f) => {
@@ -150,7 +150,7 @@ const AnnouncementDetailsTab = memo(({
                     // revoke preview for removed
                     const removedPreview = attachmentPreviews[index];
                     if (removedPreview && removedPreview.url) {
-                      try { URL.revokeObjectURL(removedPreview.url); } catch (e) {}
+                      try { URL.revokeObjectURL(removedPreview.url); } catch (e) { }
                     }
                     setSelectedFiles(newFiles);
                     setAttachmentPreviews(attachmentPreviews.filter((_, i) => i !== index));
@@ -247,7 +247,7 @@ const AnnouncementDetailsTab = memo(({
                     value={statusValue}
                     disabled={!isEditing} // Only allow status change in edit mode
                   >
-                    <SelectTrigger 
+                    <SelectTrigger
                       id="status"
                       className="w-full"
                       aria-label="Select announcement status"
