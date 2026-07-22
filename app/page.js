@@ -80,7 +80,18 @@ export default function Home() {
             for (const announcement of data.data) {
               if (announcement.attachment) {
                 try {
-                  const attachments = JSON.parse(announcement.attachment);
+                  let attachments = [];
+                  if (typeof announcement.attachment === 'string') {
+                    try {
+                      const parsed = JSON.parse(announcement.attachment);
+                      attachments = Array.isArray(parsed) ? parsed : [parsed];
+                    } catch (e) {
+                      attachments = [announcement.attachment];
+                    }
+                  } else if (Array.isArray(announcement.attachment)) {
+                    attachments = announcement.attachment;
+                  }
+
                   if (Array.isArray(attachments) && attachments.length > 0) {
                     const sortedAttachments = [...attachments].sort((a, b) =>
                       String(a).localeCompare(String(b))
@@ -88,7 +99,7 @@ export default function Home() {
 
                     // Get the first image that ends with image extensions in ascending order
                     const imagePath = sortedAttachments.find(path => 
-                      /\.(jpg|jpeg|png|gif|webp)$/i.test(path)
+                      typeof path === 'string' && /\.(jpg|jpeg|png|gif|webp)$/i.test(path)
                     ) || sortedAttachments[0];
                     
                     if (imagePath) {
