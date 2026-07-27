@@ -34,10 +34,10 @@ export default function Home() {
       title: 'Welcome to EastWest BPO',
       body: 'Stay informed with the latest news, training updates, safety reminders, and company highlights while you clock in.'
     },
-    {
-      title: 'Tip of the day',
-      body: 'Always keep your ID card visible and ready. This helps ensure a faster, smoother check-in experience.'
-    },
+    // {
+    //   title: 'Tip of the day',
+    //   body: 'Always keep your ID card visible and ready. This helps ensure a faster, smoother check-in experience.'
+    // },
     ...announcementImages.map(img => ({
       title: img.title || 'Announcement',
       body: null,
