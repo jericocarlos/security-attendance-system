@@ -24,7 +24,7 @@ export default function Home() {
     loading // <-- Destructure loading
   } = useAttendance();
 
-  const [announcementMessage, setAnnouncementMessage] = useState('Welcome! Announcements will appear here.');
+  const [announcementTextSlides, setAnnouncementTextSlides] = useState([]);
   const [announcementImages, setAnnouncementImages] = useState([]);
   const [activeSlide, setActiveSlide] = useState(0);
   const { ToastContainer, success, error: toastError } = useToast();
@@ -38,17 +38,13 @@ export default function Home() {
       title: 'Tip of the day',
       body: 'Always keep your ID card visible and ready. This helps ensure a faster, smoother check-in experience.'
     },
-    // {
-    //   title: 'Shuttle Route Schedule',
-    //   body: announcementMessage,
-    //   isImageOnly: false
-    // },
     ...announcementImages.map(img => ({
       title: img.title || 'Announcement',
       body: null,
       isImageOnly: true,
       imagePath: img.imagePath
-    }))
+    })),
+    ...announcementTextSlides
   ];
 
   useEffect(() => {
@@ -68,14 +64,24 @@ export default function Home() {
         if (response.ok) {
           const data = await response.json();
           if (data.data && data.data.length > 0) {
-            const firstAnnouncement = data.data[0];
-            
-            // Get first announcement text for text slide
-            const text = firstAnnouncement.announcement || firstAnnouncement.announcement1 || '';
-            const fullMessage = typeof text === 'string' ? text.trim() : 'No announcement text';
-            setAnnouncementMessage(fullMessage);
-            
-            // Parse all announcements with images
+            // Show attachment-free announcements as text slides.
+            const textSlides = data.data.reduce((slides, announcement) => {
+              if (announcement.attachment) return slides;
+
+              const text = announcement.announcement || announcement.announcement1 || '';
+              const body = typeof text === 'string' ? text.trim() : String(text).trim();
+              if (body) {
+                slides.push({
+                  title: announcement.title || 'Announcement',
+                  body,
+                  isImageOnly: false,
+                });
+              }
+              return slides;
+            }, []);
+            setAnnouncementTextSlides(textSlides);
+
+            // Parse all announcements with images.
             const imageSlides = [];
             for (const announcement of data.data) {
               if (announcement.attachment) {
@@ -120,6 +126,9 @@ export default function Home() {
             );
             
             setAnnouncementImages(sortedImageSlides);
+          } else {
+            setAnnouncementTextSlides([]);
+            setAnnouncementImages([]);
           }
         }
       } catch (err) {
