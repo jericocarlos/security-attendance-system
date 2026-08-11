@@ -11,8 +11,16 @@ export async function GET(request) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '100');
+    // Keep pagination values as safe integer literals. Some MySQL/MariaDB
+    // configurations reject prepared-statement placeholders in LIMIT/OFFSET.
+    const requestedPage = Number(searchParams.get('page') || 1);
+    const requestedLimit = Number(searchParams.get('limit') || 100);
+    const page = Number.isSafeInteger(requestedPage) && requestedPage > 0
+      ? requestedPage
+      : 1;
+    const limit = Number.isSafeInteger(requestedLimit) && requestedLimit > 0
+      ? Math.min(requestedLimit, 100)
+      : 100;
     const search = searchParams.get('search') || '';
     const offset = (page - 1) * limit;
 
@@ -30,8 +38,7 @@ export async function GET(request) {
       queryParams.push(`%${search}%`);
     }
     
-    query += " ORDER BY e.name ASC LIMIT ? OFFSET ?";
-    queryParams.push(limit, offset);
+    query += ` ORDER BY e.name ASC LIMIT ${limit} OFFSET ${offset}`;
 
     const leaders = await executeQuery({ query, values: queryParams });
 
