@@ -6,7 +6,7 @@ import path from 'path';
 // PUT: Update an Existing Announcement
 export async function PUT(req, context) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     let title;
     let announcement;
     let status;
@@ -109,7 +109,7 @@ export async function PUT(req, context) {
 // Delete an announcement
 export async function DELETE(request, context) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
 
     // Delete announcement
     const deleteQuery = `DELETE FROM announcement WHERE id = ?`;

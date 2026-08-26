@@ -125,6 +125,7 @@ export default function SideNav({ collapsed }) {
                     src="/ew-logo-full.png"
                     alt="EastWest BPO MCI"
                     fill
+                    sizes="224px"
                     className="object-contain"
                     priority
                   />
