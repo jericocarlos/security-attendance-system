@@ -32,7 +32,7 @@ export async function PUT(req, context) {
   }
 
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     const body = await req.json();
 
     const {
