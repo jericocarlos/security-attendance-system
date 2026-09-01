@@ -63,7 +63,9 @@ export const useAnnouncementsManager = () => {
         status: filters.status || '',
       });
 
-      const response = await fetch(`/api/admin/announcements?${searchParams}`);
+      const response = await fetch(`/api/admin/announcements?${searchParams}`, {
+        cache: 'no-store',
+      });
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -222,7 +224,9 @@ export const useAnnouncementsManager = () => {
         throw new Error(errorMessage);
       }
 
-      // Refresh data
+      // Remove it immediately from the UI and then refresh from the API without cache
+      setAnnouncements((prev) => prev.filter((item) => item.id !== announcement.id));
+      setTotalAnnouncements((prev) => Math.max(0, prev - 1));
       await fetchAnnouncements();
       
       enqueueSnackbar('Announcement deleted successfully', { variant: 'success' });
