@@ -60,7 +60,9 @@ export default function Home() {
     const fetchAnnouncement = async () => {
       try {
         // Fetch all announcements with enabled status
-        const response = await fetch('/api/admin/announcements?status=enabled&limit=100');
+        const response = await fetch('/api/admin/announcements?status=enabled&limit=100', {
+          cache: 'no-store'
+        });
         if (response.ok) {
           const data = await response.json();
           if (data.data && data.data.length > 0) {
