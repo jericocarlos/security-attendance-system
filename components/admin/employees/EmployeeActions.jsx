@@ -21,6 +21,7 @@ import {
  * @param {Function} props.onExportEmployees - Handler for exporting employees
  * @param {Function} props.onImportEmployees - Handler for importing employees
  * @param {boolean} props.loading - Loading state
+ * @param {boolean} props.exporting - Export state
  * @param {number} props.totalEmployees - Total number of employees
  */
 const EmployeeActions = memo(({
@@ -28,6 +29,7 @@ const EmployeeActions = memo(({
   onExportEmployees,
   onImportEmployees,
   loading = false,
+  exporting = false,
   totalEmployees = 0
 }) => {
   return (
@@ -37,21 +39,21 @@ const EmployeeActions = memo(({
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            disabled={loading}
-            aria-label="Export or import employee data"
+            disabled={loading || exporting}
+            aria-label={exporting ? "Exporting employees..." : "Export or import employee data"}
           >
             <FiDownload className="mr-2 h-4 w-4" />
-            Export/Import
+            {exporting ? 'Exporting...' : 'Export/Import'}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuItem
             onClick={onExportEmployees}
-            disabled={loading || totalEmployees === 0}
+            disabled={loading || exporting || totalEmployees === 0}
             className="cursor-pointer"
           >
             <FiDownload className="mr-2 h-4 w-4" />
-            Export to CSV
+            {exporting ? 'Exporting...' : 'Export to CSV'}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem

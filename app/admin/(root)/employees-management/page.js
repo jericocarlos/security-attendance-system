@@ -10,7 +10,7 @@
  * - Employee creation and editing
  * - Employee deletion with confirmation
  * - Dashboard statistics
- * - Data export/import (future feature)
+ * - Employee data export
  * - Responsive design and accessibility
  */
 
@@ -49,6 +49,7 @@ export default function EmployeesManagementPage() {
     loading,
     loadingMetadata,
     submitting,
+    exporting,
     
     // Filter and search state
     searchQuery,
@@ -73,6 +74,7 @@ export default function EmployeesManagementPage() {
     openEmployeeForm,
     resetFilters,
     refreshEmployees,
+    handleExportEmployees,
   } = useEmployeesManager();
 
   /**
@@ -91,14 +93,6 @@ export default function EmployeesManagementPage() {
       showEmptyState,
     };
   }, [filters, searchQuery, loading, employees.length]);
-
-  /**
-   * Placeholder handlers for future features
-   */
-  const handleExportEmployees = () => {
-    // TODO: Implement employee data export
-    console.log('Export employees functionality to be implemented');
-  };
 
   const handleImportEmployees = () => {
     // TODO: Implement employee data import
@@ -179,6 +173,7 @@ export default function EmployeesManagementPage() {
                 onAddEmployee={() => openEmployeeForm()}
                 onExportEmployees={handleExportEmployees}
                 onImportEmployees={handleImportEmployees}
+                exporting={exporting}
                 loading={loading}
                 totalEmployees={totalEmployees}
               />

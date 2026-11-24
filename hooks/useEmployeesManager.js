@@ -19,6 +19,7 @@ export const useEmployeesManager = () => {
   const [loading, setLoading] = useState(true);
   const [loadingMetadata, setLoadingMetadata] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   
   // Filter and search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -201,6 +202,71 @@ export const useEmployeesManager = () => {
     fetchEmployees();
   }, [fetchEmployees]);
 
+  const handleExportEmployees = useCallback(async () => {
+    try {
+      setExporting(true);
+
+      const searchParams = new URLSearchParams({
+        search: searchQuery,
+        page: '1',
+        limit: String(totalEmployees),
+        department: filters.department || '',
+        position: filters.position || '',
+        status: filters.status || '',
+        leader: filters.leader || '',
+      });
+      const response = await fetch(`/api/admin/employees?${searchParams}`);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to export employees');
+      }
+
+      const { data = [] } = await response.json();
+      const columns = [
+        ['Employee ID', 'ashima_id'],
+        ['Name', 'name'],
+        ['Department', 'department'],
+        ['Position', 'position'],
+        ['Leader', 'leader_name'],
+        ['RFID Tag', 'rfid_tag'],
+        ['Employee Status', 'emp_stat'],
+        ['Status', 'status'],
+      ];
+      const escapeCsvValue = (value) => {
+        const text = value == null ? '' : String(value);
+        const safeText = /^[\s]*[=+\-@]/.test(text) ? `'${text}` : text;
+        return `"${safeText.replace(/"/g, '""')}"`;
+      };
+      const csv = [
+        columns.map(([label]) => escapeCsvValue(label)).join(','),
+        ...data.map((employee) =>
+          columns.map(([, key]) => escapeCsvValue(employee[key])).join(',')
+        ),
+      ].join('\r\n');
+      const blob = new Blob([`\uFEFF${csv}`], {
+        type: 'text/csv;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `employees_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      enqueueSnackbar('Employees exported successfully', { variant: 'success' });
+    } catch (error) {
+      console.error('Error exporting employees:', error);
+      enqueueSnackbar(error.message || 'Failed to export employees', {
+        variant: 'error',
+      });
+    } finally {
+      setExporting(false);
+    }
+  }, [searchQuery, totalEmployees, filters, enqueueSnackbar]);
+
   // Initial data loading
   useEffect(() => {
     fetchEmployees();
@@ -222,6 +288,7 @@ export const useEmployeesManager = () => {
     loading,
     loadingMetadata,
     submitting,
+    exporting,
     
     // Filter and search state
     searchQuery,
@@ -247,6 +314,7 @@ export const useEmployeesManager = () => {
     openEmployeeForm,
     resetFilters,
     refreshEmployees,
+    handleExportEmployees,
     fetchEmployees,
     fetchMetadata,
   };
