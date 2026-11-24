@@ -50,6 +50,7 @@ export default function EmployeesManagementPage() {
     loadingMetadata,
     submitting,
     exporting,
+    importing,
     
     // Filter and search state
     searchQuery,
@@ -75,6 +76,7 @@ export default function EmployeesManagementPage() {
     resetFilters,
     refreshEmployees,
     handleExportEmployees,
+    handleImportEmployees,
   } = useEmployeesManager();
 
   /**
@@ -93,11 +95,6 @@ export default function EmployeesManagementPage() {
       showEmptyState,
     };
   }, [filters, searchQuery, loading, employees.length]);
-
-  const handleImportEmployees = () => {
-    // TODO: Implement employee data import
-    console.log('Import employees functionality to be implemented');
-  };
 
   /**
    * Handles opening the filter dialog
@@ -174,6 +171,7 @@ export default function EmployeesManagementPage() {
                 onExportEmployees={handleExportEmployees}
                 onImportEmployees={handleImportEmployees}
                 exporting={exporting}
+                importing={importing}
                 loading={loading}
                 totalEmployees={totalEmployees}
               />

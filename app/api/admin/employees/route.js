@@ -137,7 +137,21 @@ export async function POST(req) {
 
   try {
     const body = await req.json();
-    const { ashima_id, name, department_id, position_id, leader, rfid_tag, photo, emp_stat } = body;
+    const {
+      ashima_id,
+      name,
+      department_id,
+      position_id,
+      leader,
+      rfid_tag,
+      photo,
+      emp_stat,
+      status = "active",
+    } = body;
+
+    if (!["active", "inactive", "resigned"].includes(status)) {
+      return NextResponse.json({ message: "Invalid employee status" }, { status: 400 });
+    }
 
     // Decode Base64 photo to binary
     const binaryPhoto = photo ? decodeBase64ToBinary(photo) : null;
@@ -160,7 +174,7 @@ export async function POST(req) {
         rfid_tag || null,
         binaryPhoto,
         emp_stat || "regular",
-        "active"
+        status
       ]
     });
 

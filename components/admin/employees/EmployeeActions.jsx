@@ -3,7 +3,7 @@
  * Contains the primary action buttons for employee management
  */
 
-import React, { memo } from 'react';
+import React, { memo, useRef } from 'react';
 import { FiPlus, FiDownload, FiUpload } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,6 +22,7 @@ import {
  * @param {Function} props.onImportEmployees - Handler for importing employees
  * @param {boolean} props.loading - Loading state
  * @param {boolean} props.exporting - Export state
+ * @param {boolean} props.importing - Import state
  * @param {number} props.totalEmployees - Total number of employees
  */
 const EmployeeActions = memo(({
@@ -30,8 +31,12 @@ const EmployeeActions = memo(({
   onImportEmployees,
   loading = false,
   exporting = false,
+  importing = false,
   totalEmployees = 0
 }) => {
+  const fileInputRef = useRef(null);
+  const isBusy = loading || exporting || importing;
+
   return (
     <div className="flex items-center gap-2">
       {/* Export/Import Dropdown */}
@@ -39,11 +44,11 @@ const EmployeeActions = memo(({
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            disabled={loading || exporting}
-            aria-label={exporting ? "Exporting employees..." : "Export or import employee data"}
+            disabled={isBusy}
+            aria-label={exporting ? "Exporting employees..." : importing ? "Importing employees..." : "Export or import employee data"}
           >
             <FiDownload className="mr-2 h-4 w-4" />
-            {exporting ? 'Exporting...' : 'Export/Import'}
+            {exporting ? 'Exporting...' : importing ? 'Importing...' : 'Export/Import'}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
@@ -57,8 +62,8 @@ const EmployeeActions = memo(({
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={onImportEmployees}
-            disabled={loading}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isBusy}
             className="cursor-pointer"
           >
             <FiUpload className="mr-2 h-4 w-4" />
@@ -66,6 +71,18 @@ const EmployeeActions = memo(({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,text/csv"
+        className="hidden"
+        aria-label="Select employee CSV file"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) onImportEmployees(file);
+          event.target.value = '';
+        }}
+      />
 
       {/* Add Employee Button */}
       <Button

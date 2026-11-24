@@ -6,6 +6,47 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useSnackbar } from 'notistack';
 
+const parseCsv = (text) => {
+  const rows = [];
+  let row = [];
+  let value = '';
+  let insideQuotes = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+
+    if (insideQuotes) {
+      if (character === '"' && text[index + 1] === '"') {
+        value += '"';
+        index += 1;
+      } else if (character === '"') {
+        insideQuotes = false;
+      } else {
+        value += character;
+      }
+    } else if (character === '"' && value.length === 0) {
+      insideQuotes = true;
+    } else if (character === ',') {
+      row.push(value);
+      value = '';
+    } else if (character === '\n' || character === '\r') {
+      row.push(value);
+      if (row.some((cell) => cell.trim())) rows.push(row);
+      row = [];
+      value = '';
+      if (character === '\r' && text[index + 1] === '\n') index += 1;
+    } else {
+      value += character;
+    }
+  }
+
+  if (insideQuotes) throw new Error('The CSV file contains an unclosed quoted field.');
+  row.push(value);
+  if (row.some((cell) => cell.trim())) rows.push(row);
+
+  return rows;
+};
+
 /**
  * Hook for managing employees data and operations
  * @returns {Object} Employee management state and functions
@@ -20,6 +61,7 @@ export const useEmployeesManager = () => {
   const [loadingMetadata, setLoadingMetadata] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
   
   // Filter and search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -227,8 +269,11 @@ export const useEmployeesManager = () => {
         ['Employee ID', 'ashima_id'],
         ['Name', 'name'],
         ['Department', 'department'],
+        ['Department ID', 'department_id'],
         ['Position', 'position'],
+        ['Position ID', 'position_id'],
         ['Leader', 'leader_name'],
+        ['Leader ID', 'leader'],
         ['RFID Tag', 'rfid_tag'],
         ['Employee Status', 'emp_stat'],
         ['Status', 'status'],
@@ -267,6 +312,145 @@ export const useEmployeesManager = () => {
     }
   }, [searchQuery, totalEmployees, filters, enqueueSnackbar]);
 
+  const handleImportEmployees = useCallback(async (file) => {
+    if (!file) return;
+
+    try {
+      setImporting(true);
+      if (!file.name.toLowerCase().endsWith('.csv')) {
+        throw new Error('Please select a CSV file.');
+      }
+
+      const rows = parseCsv((await file.text()).replace(/^\uFEFF/, ''));
+      if (rows.length < 2) {
+        throw new Error('The CSV file must contain a header and at least one employee.');
+      }
+
+      const normalizeHeader = (header) =>
+        header.replace(/^\uFEFF/, '').trim().toLowerCase().replace(/[\s_-]+/g, '');
+      const headerIndexes = new Map(
+        rows[0].map((header, index) => [normalizeHeader(header), index])
+      );
+      const findColumn = (...names) =>
+        names.map(normalizeHeader).map((name) => headerIndexes.get(name))
+          .find((index) => index !== undefined);
+      const employeeIdColumn = findColumn('Employee ID', 'ashima_id');
+      const nameColumn = findColumn('Name');
+
+      if (employeeIdColumn === undefined || nameColumn === undefined) {
+        throw new Error('CSV headers must include Employee ID (or ashima_id) and Name.');
+      }
+
+      const readCell = (row, column) =>
+        column === undefined ? '' : (row[column] || '').trim();
+      const departmentColumn = findColumn('department_id', 'Department');
+      const positionColumn = findColumn('position_id', 'Position');
+      const leaderColumn = findColumn('leader_id', 'Leader', 'leader');
+      const rfidColumn = findColumn('RFID Tag', 'rfid_tag');
+      const employmentStatusColumn = findColumn('Employee Status', 'emp_stat');
+      const statusColumn = findColumn('Status', 'status');
+      const resolveReference = (value, items, label, nameField = 'name') => {
+        if (!value) return null;
+        if (/^\d+$/.test(value)) return value;
+
+        const matches = items.filter((item) =>
+          String(item[nameField] || '').trim().toLowerCase() === value.toLowerCase()
+        );
+        if (matches.length !== 1) {
+          throw new Error(matches.length
+            ? `${label} "${value}" is ambiguous.`
+            : `${label} "${value}" was not found.`);
+        }
+        return String(matches[0].id);
+      };
+      const seenEmployeeIds = new Set();
+      const seenRfidTags = new Set();
+      const failures = [];
+      let importedCount = 0;
+
+      for (let index = 1; index < rows.length; index += 1) {
+        const rowNumber = index + 1;
+        const row = rows[index];
+
+        try {
+          const ashimaId = readCell(row, employeeIdColumn);
+          const name = readCell(row, nameColumn);
+          const departmentValue = readCell(row, departmentColumn);
+          const positionValue = readCell(row, positionColumn);
+          const leaderValue = readCell(row, leaderColumn);
+          const rfidTag = readCell(row, rfidColumn);
+          const empStat = readCell(row, employmentStatusColumn) || 'regular';
+          const status = (readCell(row, statusColumn) || 'active').toLowerCase();
+
+          if (!ashimaId || !name) {
+            throw new Error('Employee ID and Name are required.');
+          }
+          if (!['active', 'inactive', 'resigned'].includes(status)) {
+            throw new Error(`Invalid status "${status}".`);
+          }
+          if (status !== 'resigned' && !rfidTag) {
+            throw new Error('RFID Tag is required unless status is resigned.');
+          }
+
+          const normalizedEmployeeId = ashimaId.toLowerCase();
+          const normalizedRfidTag = rfidTag.toLowerCase();
+          if (seenEmployeeIds.has(normalizedEmployeeId)) {
+            throw new Error(`Duplicate Employee ID "${ashimaId}" in this file.`);
+          }
+          if (normalizedRfidTag && seenRfidTags.has(normalizedRfidTag)) {
+            throw new Error(`Duplicate RFID Tag "${rfidTag}" in this file.`);
+          }
+          seenEmployeeIds.add(normalizedEmployeeId);
+          if (normalizedRfidTag) seenRfidTags.add(normalizedRfidTag);
+
+          const payload = {
+            ashima_id: ashimaId,
+            name,
+            department_id: resolveReference(departmentValue, departments, 'Department'),
+            position_id: resolveReference(positionValue, positions, 'Position'),
+            leader: resolveReference(leaderValue, leaders, 'Leader'),
+            rfid_tag: status === 'resigned' ? null : rfidTag,
+            emp_stat: empStat,
+            status,
+          };
+          const response = await fetch('/api/admin/employees', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to add employee.');
+          }
+          importedCount += 1;
+        } catch (error) {
+          failures.push(`Row ${rowNumber}: ${error.message}`);
+        }
+      }
+
+      if (importedCount > 0) await fetchEmployees();
+      if (failures.length > 0) {
+        console.error('Employee CSV import row errors:', failures);
+        enqueueSnackbar(
+          `Imported ${importedCount}; ${failures.length} row(s) failed. ${failures[0]}`,
+          { variant: importedCount ? 'warning' : 'error', autoHideDuration: 10000 }
+        );
+      } else {
+        enqueueSnackbar(`Imported ${importedCount} employee(s) successfully.`, {
+          variant: 'success',
+        });
+      }
+    } catch (error) {
+      console.error('Error importing employees:', error);
+      enqueueSnackbar(error.message || 'Failed to import employees', {
+        variant: 'error',
+      });
+    } finally {
+      setImporting(false);
+    }
+  }, [departments, positions, leaders, fetchEmployees, enqueueSnackbar]);
+
   // Initial data loading
   useEffect(() => {
     fetchEmployees();
@@ -289,6 +473,7 @@ export const useEmployeesManager = () => {
     loadingMetadata,
     submitting,
     exporting,
+    importing,
     
     // Filter and search state
     searchQuery,
@@ -315,6 +500,7 @@ export const useEmployeesManager = () => {
     resetFilters,
     refreshEmployees,
     handleExportEmployees,
+    handleImportEmployees,
     fetchEmployees,
     fetchMetadata,
   };
